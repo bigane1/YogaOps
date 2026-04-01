@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum CourseType {
+  individuel
+  collectif
+}
+
+enum LocationType {
+  en_ligne
+  presentiel
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+enum PaymentMethod {
+  stripe
+  on_site
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  type        CourseType
+  location    LocationType
+  durationMin Int
+  priceEur    Int
+  capacity    Int
+  isActive    Boolean      @default(true)
+  slots       TimeSlot[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model TimeSlot {
+  id         String    @id @default(cuid())
+  courseId   String
+  startsAt   DateTime
+  available  Int
+  booked     Int       @default(0)
+  course     Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([courseId, startsAt])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  customerName  String
+  customerEmail String
+  status        BookingStatus @default(pending)
+  paymentMethod PaymentMethod
+  zoomLink      String?
+  slotId        String
+  slot          TimeSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  createdAt     DateTime      @default(now())
+}
+
+model PackagePlan {
+  id           String   @id @default(cuid())
+  name         String
+  description  String
+  priceEur     Int
+  sessionCount Int
+  validityDays Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

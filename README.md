@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YogaOps MVP
 
-## Getting Started
+MVP web pour reservation de cours de yoga (FR, EUR) avec:
 
-First, run the development server:
+- pages publiques: accueil, reservation, tarifs
+- backoffice: creation cours / creneaux / abonnements
+- reservation persistante en base avec blocage des creneaux complets
+- structure prete pour integration Stripe + Zoom
+
+## Lancer en local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Puis ouvrir `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Si `node` n'est pas reconnu sur Windows dans votre terminal, fermez et rouvrez Cursor, puis verifiez `node -v`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Initialiser la base
 
-## Learn More
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Variables d'environnement
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copiez `.env.example` en `.env.local` et remplissez les cles:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+## Webhook Stripe (mode test)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Une fois votre domaine ou tunnel disponible:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- endpoint a configurer dans Stripe: `https://votre-domaine/api/stripe/webhook`
+- ecouter: `checkout.session.completed`, `checkout.session.expired`
+
+En local, vous pouvez utiliser Stripe CLI:
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+
+Le flux Stripe implemente:
+
+- reservation avec mode `stripe` -> creation session Checkout
+- retour client sur `/confirmation`
+- confirmation finale via webhook Stripe
+
+## Zoom API
+
+- les cles Zoom restent cote serveur (jamais cote navigateur)
+- les utilisateurs ne voient que le lien Zoom final
+- creation du lien Zoom automatique a la confirmation (si cles Zoom presentes)
+- sinon fallback: lien a renseigner manuellement dans le backoffice
+
+## Emails de confirmation
+
+Les emails partent automatiquement:
+
+- apres webhook Stripe confirme (paiement en ligne)
+- apres reservation sur place (confirmation immediate)
+
+Variables a renseigner:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+- `ADMIN_EMAIL` (copie prof)
+
+## Prochaines etapes techniques
+
+1. Ajouter edition/suppression dans backoffice
+2. Remplacer le code admin par NextAuth
+3. Basculer SQLite vers PostgreSQL pour production VPS

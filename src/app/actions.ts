@@ -1,0 +1,384 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { CourseType, LocationType, PaymentMethod } from "@/generated/prisma/enums";
+import { sendBookingConfirmationEmail } from "@/lib/mail";
+import { prisma } from "@/lib/prisma";
+import { getBaseUrl, getStripeClient } from "@/lib/stripe";
+import { createZoomMeeting } from "@/lib/zoom";
+
+const ADMIN_COOKIE = "yogaops_admin";
+
+function toNumber(value: FormDataEntryValue | null, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+async function isAdmin(): Promise<boolean> {
+  return (await cookies()).get(ADMIN_COOKIE)?.value === "1";
+}
+
+function revalidatePublicAndAdmin() {
+  revalidatePath("/admin");
+  revalidatePath("/reserver");
+  revalidatePath("/tarifs");
+  revalidatePath("/");
+}
+
+export async function reserveSlot(formData: FormData) {
+  const slotId = String(formData.get("slotId") ?? "");
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim();
+  const paymentMethodInput = String(formData.get("paymentMethod") ?? "on_site");
+
+  if (!slotId || !customerName || !customerEmail) return;
+
+  const paymentMethod =
+    paymentMethodInput === "stripe" ? PaymentMethod.stripe : PaymentMethod.on_site;
+
+  const booking = await prisma.$transaction(async (tx) => {
+    const slot = await tx.timeSlot.findUnique({ where: { id: slotId } });
+    if (!slot || slot.available <= 0) {
+      throw new Error("Ce creneau n'est plus disponible.");
+    }
+
+    await tx.timeSlot.update({
+      where: { id: slotId },
+      data: { available: slot.available - 1, booked: slot.booked + 1 },
+    });
+
+    return tx.booking.create({
+      data: {
+        customerName,
+        customerEmail,
+        slotId,
+        paymentMethod,
+        status: paymentMethod === PaymentMethod.stripe ? "pending" : "confirmed",
+      },
+      include: { slot: { include: { course: true } } },
+    });
+  });
+
+  if (paymentMethod === PaymentMethod.stripe) {
+    try {
+      const stripe = getStripeClient();
+      const baseUrl = getBaseUrl();
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        customer_email: customerEmail,
+        success_url: `${baseUrl}/confirmation?bookingId=${booking.id}`,
+        cancel_url: `${baseUrl}/confirmation?bookingId=${booking.id}`,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "eur",
+              unit_amount: booking.slot.course.priceEur * 100,
+              product_data: {
+                name: `${booking.slot.course.title} - YogaOps`,
+              },
+            },
+          },
+        ],
+        metadata: { bookingId: booking.id, slotId },
+      });
+
+      if (session.url) {
+        redirect(session.url);
+      }
+    } catch {
+      await prisma.$transaction(async (tx) => {
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: { status: "cancelled" },
+        });
+        const slot = await tx.timeSlot.findUnique({ where: { id: slotId } });
+        if (!slot) return;
+        await tx.timeSlot.update({
+          where: { id: slot.id },
+          data: { available: slot.available + 1, booked: Math.max(slot.booked - 1, 0) },
+        });
+      });
+      redirect("/reserver");
+    }
+  }
+
+  if (booking.slot.course.location === "en_ligne") {
+    const zoomLink =
+      (await createZoomMeeting({
+        topic: `YogaOps - ${booking.slot.course.title}`,
+        startTime: booking.slot.startsAt,
+        durationMin: booking.slot.course.durationMin,
+      })) ?? "Lien Zoom a renseigner dans le backoffice.";
+
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { zoomLink },
+    });
+
+    await sendBookingConfirmationEmail({
+      bookingId: booking.id,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      courseTitle: booking.slot.course.title,
+      startsAt: booking.slot.startsAt,
+      zoomLink,
+      priceEur: booking.slot.course.priceEur,
+    });
+  } else {
+    await sendBookingConfirmationEmail({
+      bookingId: booking.id,
+      customerName: booking.customerName,
+      customerEmail: booking.customerEmail,
+      courseTitle: booking.slot.course.title,
+      startsAt: booking.slot.startsAt,
+      zoomLink: null,
+      priceEur: booking.slot.course.priceEur,
+    });
+  }
+
+  revalidatePath("/reserver");
+  revalidatePath("/admin");
+  redirect(`/confirmation?bookingId=${booking.id}`);
+}
+
+export async function adminLogin(formData: FormData) {
+  const pin = String(formData.get("pin") ?? "");
+  const expected = process.env.ADMIN_BACKOFFICE_PIN ?? "1234";
+  if (pin !== expected) return;
+  (await cookies()).set(ADMIN_COOKIE, "1", { httpOnly: true, sameSite: "lax" });
+  revalidatePath("/admin");
+}
+
+export async function adminLogout() {
+  (await cookies()).delete(ADMIN_COOKIE);
+  revalidatePath("/admin");
+}
+
+export async function createCourse(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  const type = String(formData.get("type") ?? "collectif");
+  const location = String(formData.get("location") ?? "en_ligne");
+  const priceEur = toNumber(formData.get("priceEur"), 15);
+  const durationMin = toNumber(formData.get("durationMin"), 60);
+  const capacity = toNumber(formData.get("capacity"), type === "individuel" ? 1 : 10);
+
+  await prisma.course.create({
+    data: {
+      title: String(formData.get("title") ?? "Nouveau cours"),
+      description: String(formData.get("description") ?? ""),
+      type: type === "individuel" ? CourseType.individuel : CourseType.collectif,
+      location: location === "presentiel" ? LocationType.presentiel : LocationType.en_ligne,
+      priceEur,
+      durationMin,
+      capacity,
+    },
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function createPackage(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  await prisma.packagePlan.create({
+    data: {
+      name: String(formData.get("name") ?? "Nouvel abonnement"),
+      description: String(formData.get("description") ?? ""),
+      priceEur: toNumber(formData.get("priceEur"), 79),
+      sessionCount: toNumber(formData.get("sessionCount"), 6),
+      validityDays: toNumber(formData.get("validityDays"), 30),
+    },
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function createSlot(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  const courseId = String(formData.get("courseId") ?? "");
+  const startsAt = String(formData.get("startsAt") ?? "");
+  const available = toNumber(formData.get("available"), 1);
+  if (!courseId || !startsAt) return;
+
+  await prisma.timeSlot.create({
+    data: {
+      courseId,
+      startsAt: new Date(startsAt),
+      available,
+      booked: 0,
+    },
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function updateCourse(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const type = String(formData.get("type") ?? "collectif");
+  const location = String(formData.get("location") ?? "en_ligne");
+
+  await prisma.course.update({
+    where: { id },
+    data: {
+      title: String(formData.get("title") ?? "").trim(),
+      description: String(formData.get("description") ?? "").trim(),
+      type: type === "individuel" ? CourseType.individuel : CourseType.collectif,
+      location: location === "presentiel" ? LocationType.presentiel : LocationType.en_ligne,
+      durationMin: toNumber(formData.get("durationMin"), 60),
+      priceEur: toNumber(formData.get("priceEur"), 15),
+      capacity: toNumber(formData.get("capacity"), 10),
+    },
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function deleteCourse(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const slotCount = await prisma.timeSlot.count({ where: { courseId: id } });
+  if (slotCount > 0) {
+    await prisma.course.update({ where: { id }, data: { isActive: false } });
+  } else {
+    await prisma.course.delete({ where: { id } });
+  }
+  revalidatePublicAndAdmin();
+}
+
+export async function updatePackage(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.packagePlan.update({
+    where: { id },
+    data: {
+      name: String(formData.get("name") ?? "").trim(),
+      description: String(formData.get("description") ?? "").trim(),
+      priceEur: toNumber(formData.get("priceEur"), 79),
+      sessionCount: toNumber(formData.get("sessionCount"), 6),
+      validityDays: toNumber(formData.get("validityDays"), 30),
+    },
+  });
+  revalidatePublicAndAdmin();
+}
+
+export async function deletePackage(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.packagePlan.delete({ where: { id } });
+  revalidatePublicAndAdmin();
+}
+
+export async function updateSlot(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const startsAt = String(formData.get("startsAt") ?? "");
+  const available = toNumber(formData.get("available"), 0);
+  const booked = toNumber(formData.get("booked"), 0);
+
+  await prisma.timeSlot.update({
+    where: { id },
+    data: {
+      startsAt: startsAt ? new Date(startsAt) : undefined,
+      available: Math.max(available, 0),
+      booked: Math.max(booked, 0),
+    },
+  });
+  revalidatePublicAndAdmin();
+}
+
+export async function deleteSlot(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  await prisma.timeSlot.delete({ where: { id } });
+  revalidatePublicAndAdmin();
+}
+
+export async function updateBookingStatus(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const targetStatus = String(formData.get("targetStatus") ?? "");
+  if (!bookingId || !targetStatus) return;
+
+  await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      include: { slot: { include: { course: true } } },
+    });
+    if (!booking) return;
+
+    if (targetStatus === "cancelled" && booking.status !== "cancelled") {
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: "cancelled" },
+      });
+      await tx.timeSlot.update({
+        where: { id: booking.slotId },
+        data: { available: booking.slot.available + 1, booked: Math.max(booking.slot.booked - 1, 0) },
+      });
+      return;
+    }
+
+    if (targetStatus === "confirmed" && booking.status !== "confirmed") {
+      let zoomLink = booking.zoomLink;
+      if (booking.slot.course.location === "en_ligne" && !zoomLink) {
+        zoomLink =
+          (await createZoomMeeting({
+            topic: `YogaOps - ${booking.slot.course.title}`,
+            startTime: booking.slot.startsAt,
+            durationMin: booking.slot.course.durationMin,
+          })) ?? "Lien Zoom a renseigner dans le backoffice.";
+      }
+
+      await tx.booking.update({
+        where: { id: bookingId },
+        data: { status: "confirmed", zoomLink },
+      });
+
+      await sendBookingConfirmationEmail({
+        bookingId: booking.id,
+        customerName: booking.customerName,
+        customerEmail: booking.customerEmail,
+        courseTitle: booking.slot.course.title,
+        startsAt: booking.slot.startsAt,
+        zoomLink,
+        priceEur: booking.slot.course.priceEur,
+      });
+    }
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function updateBookingZoomLink(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  const bookingId = String(formData.get("bookingId") ?? "");
+  const zoomLinkRaw = String(formData.get("zoomLink") ?? "").trim();
+  if (!bookingId) return;
+
+  await prisma.booking.update({
+    where: { id: bookingId },
+    data: { zoomLink: zoomLinkRaw || null },
+  });
+
+  revalidatePublicAndAdmin();
+  revalidatePath("/confirmation");
+}
