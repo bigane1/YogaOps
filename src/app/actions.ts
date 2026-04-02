@@ -535,3 +535,26 @@ export async function updateBookingZoomLink(formData: FormData) {
   revalidatePublicAndAdmin();
   revalidatePath("/confirmation");
 }
+
+export async function updateSubscriptionStatus(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const subscriptionId = String(formData.get("subscriptionId") ?? "");
+  const targetStatus = String(formData.get("targetStatus") ?? "");
+  if (!subscriptionId || !targetStatus) return;
+
+  if (
+    targetStatus !== SubscriptionStatus.pending &&
+    targetStatus !== SubscriptionStatus.active &&
+    targetStatus !== SubscriptionStatus.cancelled
+  ) {
+    return;
+  }
+
+  await prisma.subscription.update({
+    where: { id: subscriptionId },
+    data: { status: targetStatus as SubscriptionStatus },
+  });
+
+  revalidatePath("/admin/abonnements");
+  revalidatePath("/abonnement");
+}
