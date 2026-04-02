@@ -5,6 +5,32 @@ export function formatDateFR(date: Date): string {
   return date.toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" });
 }
 
+export function formatTimeFR(date: Date): string {
+  return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+export function startOfDay(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+// Semaine calendrier (lundi 00:00) pour les quotas abonnement
+export function startOfWeekMonday(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay(); // Sun=0..Sat=6
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + mondayOffset);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export async function ensureSeedData() {
   const existing = await prisma.course.count();
   if (existing > 0) return;

@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { CourseType, LocationType, PaymentMethod } from "@/generated/prisma/enums";
+import { CourseType, LocationType, PaymentMethod, SubscriptionStatus } from "@/generated/prisma/enums";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
+import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
 import { createZoomMeeting } from "@/lib/zoom";
 
@@ -36,12 +37,84 @@ export async function reserveSlot(formData: FormData) {
   if (!slotId || !customerName || !customerEmail) return;
 
   const paymentMethod =
-    paymentMethodInput === "stripe" ? PaymentMethod.stripe : PaymentMethod.on_site;
+    paymentMethodInput === "stripe"
+      ? PaymentMethod.stripe
+      : paymentMethodInput === "subscription"
+        ? PaymentMethod.subscription
+        : PaymentMethod.on_site;
 
   const booking = await prisma.$transaction(async (tx) => {
-    const slot = await tx.timeSlot.findUnique({ where: { id: slotId } });
+    const slot = await tx.timeSlot.findUnique({
+      where: { id: slotId },
+      include: { course: true },
+    });
+
     if (!slot || slot.available <= 0) {
       throw new Error("Ce creneau n'est plus disponible.");
+    }
+
+    let subscriptionId: string | undefined;
+
+    if (paymentMethod === PaymentMethod.subscription) {
+      const subscription = await tx.subscription.findFirst({
+        where: {
+          customerEmail,
+          status: SubscriptionStatus.active,
+          startsAt: { lte: slot.startsAt },
+          endsAt: { gt: slot.startsAt },
+          package: { isActive: true },
+        },
+        include: { package: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (!subscription) {
+        throw new Error("Abonnement introuvable ou invalide.");
+      }
+
+      if (
+        subscription.package.allowedCourseType &&
+        subscription.package.allowedCourseType !== slot.course.type
+      ) {
+        throw new Error(
+          "Cet abonnement n'est pas valable pour ce type de cours."
+        );
+      }
+
+      const weekStart = startOfWeekMonday(slot.startsAt);
+      const weekRecord = await tx.subscriptionWeek.findUnique({
+        where: {
+          subscriptionId_weekStart: {
+            subscriptionId: subscription.id,
+            weekStart,
+          },
+        },
+      });
+
+      const sessionCountPerWeek = subscription.package.sessionCount;
+      if (sessionCountPerWeek <= 0) {
+        throw new Error("Abonnement sans seances disponibles.");
+      }
+
+      if (!weekRecord) {
+        await tx.subscriptionWeek.create({
+          data: {
+            subscriptionId: subscription.id,
+            weekStart,
+            remainingSessions: sessionCountPerWeek - 1,
+          },
+        });
+      } else {
+        if (weekRecord.remainingSessions <= 0) {
+          throw new Error("Plus de seances disponibles cette semaine.");
+        }
+        await tx.subscriptionWeek.update({
+          where: { id: weekRecord.id },
+          data: { remainingSessions: weekRecord.remainingSessions - 1 },
+        });
+      }
+
+      subscriptionId = subscription.id;
     }
 
     await tx.timeSlot.update({
@@ -54,6 +127,7 @@ export async function reserveSlot(formData: FormData) {
         customerName,
         customerEmail,
         slotId,
+        subscriptionId,
         paymentMethod,
         status: paymentMethod === PaymentMethod.stripe ? "pending" : "confirmed",
       },
@@ -144,6 +218,60 @@ export async function reserveSlot(formData: FormData) {
   redirect(`/confirmation?bookingId=${booking.id}`);
 }
 
+export async function buySubscriptionStripe(formData: FormData) {
+  const packageId = String(formData.get("packageId") ?? "");
+  const customerName = String(formData.get("customerName") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim();
+
+  if (!packageId || !customerEmail || !customerName) return redirect("/tarifs");
+
+  const pkg = await prisma.packagePlan.findUnique({
+    where: { id: packageId },
+    select: { id: true, name: true, priceEur: true, validityDays: true, sessionCount: true },
+  });
+  if (!pkg || !pkg.id) return redirect("/tarifs");
+
+  const endsAt = new Date(Date.now() + pkg.validityDays * 24 * 60 * 60 * 1000);
+
+  const subscription = await prisma.subscription.create({
+    data: {
+      customerEmail,
+      status: SubscriptionStatus.pending,
+      paymentMethod: PaymentMethod.stripe,
+      packageId: pkg.id,
+      endsAt,
+    },
+  });
+
+  const stripe = getStripeClient();
+  const baseUrl = getBaseUrl();
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    customer_email: customerEmail,
+    success_url: `${baseUrl}/reserver?subscriptionId=${subscription.id}&email=${encodeURIComponent(
+      customerEmail
+    )}`,
+    cancel_url: `${baseUrl}/reserver?subscriptionId=${subscription.id}&email=${encodeURIComponent(
+      customerEmail
+    )}`,
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: "eur",
+          unit_amount: pkg.priceEur * 100,
+          product_data: { name: `${pkg.name} - YogaOps` },
+        },
+      },
+    ],
+    metadata: { subscriptionId: subscription.id },
+  });
+
+  if (session.url) redirect(session.url);
+  redirect("/tarifs");
+}
+
 export async function adminLogin(formData: FormData) {
   const pin = String(formData.get("pin") ?? "");
   const expected = process.env.ADMIN_BACKOFFICE_PIN ?? "1234";
@@ -184,6 +312,14 @@ export async function createCourse(formData: FormData) {
 export async function createPackage(formData: FormData) {
   if (!(await isAdmin())) return;
 
+  const allowedCourseTypeRaw = String(formData.get("allowedCourseType") ?? "");
+  const allowedCourseType =
+    allowedCourseTypeRaw === "individuel"
+      ? CourseType.individuel
+      : allowedCourseTypeRaw === "collectif"
+        ? CourseType.collectif
+        : null;
+
   await prisma.packagePlan.create({
     data: {
       name: String(formData.get("name") ?? "Nouvel abonnement"),
@@ -191,6 +327,7 @@ export async function createPackage(formData: FormData) {
       priceEur: toNumber(formData.get("priceEur"), 79),
       sessionCount: toNumber(formData.get("sessionCount"), 6),
       validityDays: toNumber(formData.get("validityDays"), 30),
+      allowedCourseType,
     },
   });
 
@@ -260,6 +397,14 @@ export async function updatePackage(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
+  const allowedCourseTypeRaw = String(formData.get("allowedCourseType") ?? "");
+  const allowedCourseType =
+    allowedCourseTypeRaw === "individuel"
+      ? CourseType.individuel
+      : allowedCourseTypeRaw === "collectif"
+        ? CourseType.collectif
+        : null;
+
   await prisma.packagePlan.update({
     where: { id },
     data: {
@@ -268,6 +413,7 @@ export async function updatePackage(formData: FormData) {
       priceEur: toNumber(formData.get("priceEur"), 79),
       sessionCount: toNumber(formData.get("sessionCount"), 6),
       validityDays: toNumber(formData.get("validityDays"), 30),
+      allowedCourseType,
     },
   });
   revalidatePublicAndAdmin();
@@ -333,6 +479,37 @@ export async function updateBookingStatus(formData: FormData) {
         where: { id: booking.slotId },
         data: { available: booking.slot.available + 1, booked: Math.max(booking.slot.booked - 1, 0) },
       });
+
+      if (
+        booking.paymentMethod === PaymentMethod.subscription &&
+        booking.subscriptionId
+      ) {
+        const weekStart = startOfWeekMonday(booking.slot.startsAt);
+        const weekRecord = await tx.subscriptionWeek.findUnique({
+          where: {
+            subscriptionId_weekStart: {
+              subscriptionId: booking.subscriptionId,
+              weekStart,
+            },
+          },
+        });
+
+        if (!weekRecord) {
+          await tx.subscriptionWeek.create({
+            data: {
+              subscriptionId: booking.subscriptionId,
+              weekStart,
+              remainingSessions: 1,
+            },
+          });
+        } else {
+          await tx.subscriptionWeek.update({
+            where: { id: weekRecord.id },
+            data: { remainingSessions: weekRecord.remainingSessions + 1 },
+          });
+        }
+      }
+
       return;
     }
 

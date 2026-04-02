@@ -15,7 +15,7 @@ import {
   updatePackage,
   updateSlot,
 } from "@/app/actions";
-import { ensureSeedData, formatDateFR } from "@/lib/db";
+import { ensureSeedData, formatDateFR, formatTimeFR, startOfDay, addDays } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
@@ -53,7 +53,17 @@ export default async function AdminPage() {
     );
   }
 
-  const [courses, packages, slots, bookings] = await Promise.all([
+  const today = startOfDay(new Date());
+  const weekStart = (() => {
+    const d = new Date(today);
+    const day = d.getDay(); // 0..6 (Sun..Sat)
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    return addDays(d, mondayOffset);
+  })();
+  const weekEnd = addDays(weekStart, 7);
+  const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i));
+
+  const [courses, packages, slots, bookings, weekSlots, weekBookings] = await Promise.all([
     prisma.course.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } }),
     prisma.packagePlan.findMany({
       where: { isActive: true },
@@ -67,6 +77,17 @@ export default async function AdminPage() {
       include: { slot: { include: { course: true } } },
       orderBy: { createdAt: "desc" },
       take: 20,
+    }),
+    prisma.timeSlot.findMany({
+      where: { startsAt: { gte: weekStart, lt: weekEnd } },
+      include: { course: true },
+      orderBy: { startsAt: "asc" },
+    }),
+    prisma.booking.findMany({
+      where: { slot: { startsAt: { gte: weekStart, lt: weekEnd } } },
+      include: { slot: { include: { course: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 200,
     }),
   ]);
 
@@ -86,6 +107,139 @@ export default async function AdminPage() {
             Deconnexion
           </button>
         </form>
+
+        <section className="brand-card mt-6 rounded-xl p-6">
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
+            Planning (7 jours)
+          </h2>
+          <p className="mt-1 text-sm opacity-80">
+            Vue Calendly: gerer les reservations et les liens Zoom.
+          </p>
+
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-7">
+            {weekDays.map((d) => {
+              const iso = d.toISOString().slice(0, 10);
+              const daySlots = weekSlots.filter((s) => {
+                return s.startsAt.toISOString().slice(0, 10) === iso;
+              });
+              return (
+                <div key={iso} className="rounded-lg border border-[var(--border-soft)] bg-white/80 p-3">
+                  <div className="text-sm font-semibold" style={{ color: "var(--brand)" }}>
+                    {d.toLocaleDateString("fr-FR", { weekday: "short" })}{" "}
+                    {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    {daySlots.length === 0 ? (
+                      <div className="text-xs opacity-70">Pas de creneaux</div>
+                    ) : null}
+
+                    {daySlots.map((slot) => {
+                      const bookingsForSlot = weekBookings
+                        .filter((b) => b.slotId === slot.id)
+                        .sort((a, b) => {
+                          if (a.status === "pending" && b.status !== "pending") return -1;
+                          if (a.status !== "pending" && b.status === "pending") return 1;
+                          return 0;
+                        });
+
+                      return (
+                        <div key={slot.id} className="rounded-md border border-[var(--border-soft)] bg-white p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="text-sm font-medium">
+                                {formatTimeFR(slot.startsAt)}
+                              </div>
+                              <div className="text-xs opacity-80">{slot.course.title}</div>
+                            </div>
+                            <div className="text-xs opacity-80">
+                              restant: {slot.available}
+                            </div>
+                          </div>
+
+                          <div className="mt-2 space-y-2">
+                            {bookingsForSlot.length === 0 ? (
+                              <div className="text-xs opacity-70">Aucune reservation</div>
+                            ) : null}
+
+                            {bookingsForSlot.map((booking) => (
+                              <div key={booking.id} className="rounded-md border border-[var(--border-soft)] p-2">
+                                <div className="text-xs opacity-90">
+                                  {booking.customerName}
+                                </div>
+                                <div className="text-[11px] opacity-70">
+                                  {booking.customerEmail}
+                                </div>
+                                <div className="mt-1">
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                      booking.status === "confirmed"
+                                        ? "brand-badge-ok"
+                                        : booking.status === "cancelled"
+                                          ? "brand-badge-muted"
+                                          : "brand-alert"
+                                    }`}
+                                  >
+                                    {booking.status}
+                                  </span>
+                                </div>
+
+                                <form
+                                  action={updateBookingZoomLink}
+                                  className="mt-2 grid gap-2"
+                                >
+                                  <input type="hidden" name="bookingId" value={booking.id} />
+                                  <input
+                                    name="zoomLink"
+                                    type="url"
+                                    placeholder="https://zoom.us/j/..."
+                                    defaultValue={booking.zoomLink ?? ""}
+                                    className={fieldSm}
+                                  />
+                                  <button
+                                    type="submit"
+                                    className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]"
+                                  >
+                                    Save Zoom
+                                  </button>
+                                </form>
+
+                                <div className="mt-2 flex gap-2 flex-wrap">
+                                  {booking.status !== "confirmed" ? (
+                                    <form action={updateBookingStatus}>
+                                      <input type="hidden" name="bookingId" value={booking.id} />
+                                      <input type="hidden" name="targetStatus" value="confirmed" />
+                                      <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]">
+                                        Accepter
+                                      </button>
+                                    </form>
+                                  ) : null}
+
+                                  {booking.status !== "cancelled" ? (
+                                    <form action={updateBookingStatus}>
+                                      <input type="hidden" name="bookingId" value={booking.id} />
+                                      <input type="hidden" name="targetStatus" value="cancelled" />
+                                      <button
+                                        type="submit"
+                                        className="rounded border border-red-300 bg-red-50 px-3 py-1 text-[12px] text-red-800 hover:bg-red-100"
+                                      >
+                                        Annuler
+                                      </button>
+                                    </form>
+                                  ) : null}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         <section className="brand-card mt-8 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
@@ -165,6 +319,11 @@ export default async function AdminPage() {
             <input name="description" required placeholder="Description" className={fieldMd} />
             <input name="priceEur" type="number" defaultValue={79} className={fieldMd} />
             <input name="sessionCount" type="number" defaultValue={6} className={fieldMd} />
+            <select name="allowedCourseType" className={fieldMd} defaultValue={""}>
+              <option value="">Les deux (individuel + collectif)</option>
+              <option value="individuel">Seulement individuel</option>
+              <option value="collectif">Seulement collectif</option>
+            </select>
             <input name="validityDays" type="number" defaultValue={30} className={fieldMd} />
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
               Creer abonnement
@@ -179,6 +338,15 @@ export default async function AdminPage() {
                   <input name="description" defaultValue={item.description} className={fieldSm} />
                   <input name="priceEur" type="number" defaultValue={item.priceEur} className={fieldSm} />
                   <input name="sessionCount" type="number" defaultValue={item.sessionCount} className={fieldSm} />
+                  <select
+                    name="allowedCourseType"
+                    className={fieldSm}
+                    defaultValue={item.allowedCourseType ?? ""}
+                  >
+                    <option value="">Les deux</option>
+                    <option value="individuel">Seulement individuel</option>
+                    <option value="collectif">Seulement collectif</option>
+                  </select>
                   <input name="validityDays" type="number" defaultValue={item.validityDays} className={fieldSm} />
                   <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">
                     Modifier

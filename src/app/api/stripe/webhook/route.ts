@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { BookingStatus } from "@/generated/prisma/enums";
+import { BookingStatus, SubscriptionStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
 import { getStripeClient } from "@/lib/stripe";
 import { createZoomMeeting } from "@/lib/zoom";
@@ -29,6 +29,8 @@ export async function POST(req: Request) {
   ) {
     const session = event.data.object as Stripe.Checkout.Session;
     const bookingId = session.metadata?.bookingId;
+    const subscriptionId = session.metadata?.subscriptionId;
+
     if (bookingId) {
       await prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUnique({
@@ -70,6 +72,19 @@ export async function POST(req: Request) {
           priceEur: updatedBooking.slot.course.priceEur,
         });
       }
+    } else if (subscriptionId) {
+      await prisma.$transaction(async (tx) => {
+        const sub = await tx.subscription.findUnique({
+          where: { id: subscriptionId },
+        });
+        if (!sub) return;
+        if (sub.status === SubscriptionStatus.active) return;
+
+        await tx.subscription.update({
+          where: { id: subscriptionId },
+          data: { status: SubscriptionStatus.active },
+        });
+      });
     }
   }
 
@@ -79,6 +94,8 @@ export async function POST(req: Request) {
   ) {
     const session = event.data.object as Stripe.Checkout.Session;
     const bookingId = session.metadata?.bookingId;
+    const subscriptionId = session.metadata?.subscriptionId;
+
     if (bookingId) {
       await prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUnique({ where: { id: bookingId } });
@@ -95,6 +112,17 @@ export async function POST(req: Request) {
         await tx.timeSlot.update({
           where: { id: slot.id },
           data: { available: slot.available + 1, booked: Math.max(slot.booked - 1, 0) },
+        });
+      });
+    } else if (subscriptionId) {
+      await prisma.$transaction(async (tx) => {
+        const sub = await tx.subscription.findUnique({ where: { id: subscriptionId } });
+        if (!sub) return;
+        if (sub.status === SubscriptionStatus.cancelled) return;
+
+        await tx.subscription.update({
+          where: { id: subscriptionId },
+          data: { status: SubscriptionStatus.cancelled },
         });
       });
     }

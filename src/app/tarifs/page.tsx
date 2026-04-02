@@ -1,6 +1,7 @@
 import { SiteNav } from "@/components/site-nav";
 import { ensureSeedData } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { buySubscriptionStripe } from "@/app/actions";
 
 export default async function TarifsPage() {
   await ensureSeedData();
@@ -53,11 +54,42 @@ export default async function TarifsPage() {
                 <h3 className="font-medium">{item.name}</h3>
                 <p className="mt-1 text-sm opacity-80">{item.description}</p>
                 <p className="mt-3 text-sm opacity-90">
-                  {item.sessionCount} seances - validite {item.validityDays} jours
+                  {item.sessionCount} seances / semaine - validite {item.validityDays} jours
+                </p>
+                <p className="mt-1 text-sm opacity-80">
+                  Type de cours:{" "}
+                  {item.allowedCourseType === "individuel"
+                    ? "Individuel"
+                    : item.allowedCourseType === "collectif"
+                      ? "Collectif"
+                      : "Individuel + Collectif"}
                 </p>
                 <p className="mt-2 text-lg font-semibold" style={{ color: "var(--brand)" }}>
                   {item.priceEur} EUR
                 </p>
+
+                <form action={buySubscriptionStripe} className="mt-4 grid gap-2">
+                  <input type="hidden" name="packageId" value={item.id} />
+                  <input
+                    name="customerName"
+                    required
+                    placeholder="Votre nom"
+                    className="brand-field px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="customerEmail"
+                    type="email"
+                    required
+                    placeholder="Votre email"
+                    className="brand-field px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="brand-btn brand-btn-sm rounded-lg px-4 py-2"
+                  >
+                    Acheter via Stripe test
+                  </button>
+                </form>
               </article>
             ))}
           </div>

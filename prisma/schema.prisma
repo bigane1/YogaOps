@@ -31,6 +31,13 @@ enum BookingStatus {
 enum PaymentMethod {
   stripe
   on_site
+  subscription
+}
+
+enum SubscriptionStatus {
+  pending
+  active
+  cancelled
 }
 
 model Course {
@@ -71,6 +78,8 @@ model Booking {
   zoomLink      String?
   slotId        String
   slot          TimeSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   createdAt     DateTime      @default(now())
 }
 
@@ -80,8 +89,40 @@ model PackagePlan {
   description  String
   priceEur     Int
   sessionCount Int
+  allowedCourseType CourseType?
   validityDays Int
   isActive     Boolean  @default(true)
+  subscriptions Subscription[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model Subscription {
+  id            String              @id @default(cuid())
+  customerEmail String
+  status        SubscriptionStatus  @default(pending)
+  paymentMethod PaymentMethod      @default(subscription)
+
+  packageId     String
+  package       PackagePlan         @relation(fields: [packageId], references: [id])
+
+  startsAt      DateTime           @default(now())
+  endsAt        DateTime
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  weeks         SubscriptionWeek[]
+  bookings      Booking[]
+}
+
+model SubscriptionWeek {
+  id                String              @id @default(cuid())
+  subscriptionId    String
+  subscription      Subscription       @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  weekStart         DateTime
+  remainingSessions Int
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@unique([subscriptionId, weekStart])
 }
