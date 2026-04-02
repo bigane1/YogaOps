@@ -31,13 +31,21 @@ export default async function ReserverPage({ searchParams }: Props) {
   const dayStart = selectedDate;
   const dayEnd = addDays(selectedDate, 1);
 
-  const emailParam = params.email ? String(params.email) : "";
+  const emailParamRaw = params.email ? String(params.email) : "";
+  const emailNorm = emailParamRaw.trim().toLowerCase();
+  const emailParam = emailParamRaw.trim();
   const subscriptionIdParam = params.subscriptionId
     ? String(params.subscriptionId)
     : "";
   const errorParam = params.error ? String(params.error) : "";
 
   const weekStart = startOfWeekMonday(selectedDate);
+
+  /** Sur la journee selectionnee : chevauchement [dayStart, dayEnd) (sinon un abo achete le meme jour apres minuit etait invisible). */
+  const subscriptionDateWhere = {
+    startsAt: { lt: dayEnd },
+    endsAt: { gt: dayStart },
+  };
 
   const subscription = subscriptionIdParam
     ? await prisma.subscription.findUnique({
@@ -47,10 +55,9 @@ export default async function ReserverPage({ searchParams }: Props) {
     : emailParam
       ? await prisma.subscription.findFirst({
           where: {
-            customerEmail: emailParam,
+            OR: [{ customerEmail: emailNorm }, { customerEmail: emailParam }],
             status: SubscriptionStatus.active,
-            startsAt: { lte: selectedDate },
-            endsAt: { gt: selectedDate },
+            ...subscriptionDateWhere,
             package: { isActive: true },
           },
           include: { package: true },
@@ -115,9 +122,7 @@ export default async function ReserverPage({ searchParams }: Props) {
         })
       : null);
 
-  const emailQuery = emailParam
-    ? `&email=${encodeURIComponent(emailParam)}`
-    : "";
+  const emailQuery = emailParam ? `&email=${encodeURIComponent(emailParam)}` : "";
   const subscriptionQuery = subscriptionIdParam
     ? `&subscriptionId=${encodeURIComponent(subscriptionIdParam)}`
     : "";
@@ -140,6 +145,35 @@ export default async function ReserverPage({ searchParams }: Props) {
             puis reessayez, ou choisissez &quot;Paiement sur place&quot;.
           </p>
         ) : null}
+
+        <section className="brand-card mt-4 max-w-2xl rounded-xl p-4">
+          <p className="text-sm font-medium" style={{ color: "var(--brand)" }}>
+            Utiliser mon abonnement
+          </p>
+          <p className="mt-1 text-xs opacity-85">
+            L&apos;abonnement est detecte via l&apos;URL (email). Saisissez l&apos;email du compte
+            abonnement puis cliquez <strong>Appliquer</strong> : l&apos;option &quot;Utiliser mon
+            abonnement&quot; se debloque ensuite dans le formulaire.
+          </p>
+          <form method="get" className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+            <input type="hidden" name="date" value={selectedDate.toISOString().slice(0, 10)} />
+            {selectedSlotId ? <input type="hidden" name="slotId" value={selectedSlotId} /> : null}
+            {subscriptionIdParam ? (
+              <input type="hidden" name="subscriptionId" value={subscriptionIdParam} />
+            ) : null}
+            <input
+              name="email"
+              type="email"
+              defaultValue={emailParam}
+              placeholder="Email de votre abonnement"
+              className="brand-field flex-1 px-3 py-2 text-sm"
+              autoComplete="email"
+            />
+            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
+              Appliquer
+            </button>
+          </form>
+        </section>
 
         <section className="mt-8">
           <div className="flex flex-col gap-3">
@@ -173,7 +207,9 @@ export default async function ReserverPage({ searchParams }: Props) {
               </div>
             ) : subscription ? (
               <div className="brand-alert rounded-lg px-3 py-2 text-sm">
-                Abonnement actuel: statut {subscription.status} (seances bloquées tant que actif)
+                Abonnement trouve pour cet email, mais statut : {subscription.status}. Tant qu&apos;il
+                n&apos;est pas <strong>active</strong>, vous ne pouvez pas reserver avec (paiement en
+                attente ou annule).
               </div>
             ) : emailParam ? (
               <div className="opacity-80 text-sm">
@@ -347,7 +383,8 @@ export default async function ReserverPage({ searchParams }: Props) {
                 </fieldset>
                 {!subscriptionActive ? (
                   <p className="text-xs opacity-80">
-                    Pour utiliser un abonnement, achetez-le depuis la page Abonnement ou Tarifs.
+                    Pour utiliser un abonnement : activez-le via la zone &quot;Utiliser mon abonnement&quot;
+                    en haut (email + Appliquer), ou achetez-le sur Abonnement / Tarifs.
                   </p>
                 ) : null}
                 <button

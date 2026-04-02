@@ -10,6 +10,7 @@ type Props = {
 export default async function AbonnementPage({ searchParams }: Props) {
   const params = await searchParams;
   const email = params.email ? String(params.email).trim() : "";
+  const emailNorm = email.toLowerCase();
 
   const [packages, subscription] = await Promise.all([
     prisma.packagePlan.findMany({
@@ -18,7 +19,9 @@ export default async function AbonnementPage({ searchParams }: Props) {
     }),
     email
       ? prisma.subscription.findFirst({
-          where: { customerEmail: email },
+          where: {
+            OR: [{ customerEmail: emailNorm }, { customerEmail: email }],
+          },
           include: { package: true },
           orderBy: { createdAt: "desc" },
         })

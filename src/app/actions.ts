@@ -32,7 +32,8 @@ function revalidatePublicAndAdmin() {
 export async function reserveSlot(formData: FormData) {
   const slotId = String(formData.get("slotId") ?? "");
   const customerName = String(formData.get("customerName") ?? "").trim();
-  const customerEmail = String(formData.get("customerEmail") ?? "").trim();
+  const customerEmailRaw = String(formData.get("customerEmail") ?? "").trim();
+  const customerEmail = customerEmailRaw.toLowerCase();
   const paymentMethodInput = String(formData.get("paymentMethod") ?? "on_site");
 
   if (!slotId || !customerName || !customerEmail) return;
@@ -59,7 +60,7 @@ export async function reserveSlot(formData: FormData) {
     if (paymentMethod === PaymentMethod.subscription) {
       const subscription = await tx.subscription.findFirst({
         where: {
-          customerEmail,
+          OR: [{ customerEmail }, { customerEmail: customerEmailRaw }],
           status: SubscriptionStatus.active,
           startsAt: { lte: slot.startsAt },
           endsAt: { gt: slot.startsAt },
@@ -197,7 +198,7 @@ export async function reserveSlot(formData: FormData) {
 export async function buySubscriptionStripe(formData: FormData) {
   const packageId = String(formData.get("packageId") ?? "");
   const customerName = String(formData.get("customerName") ?? "").trim();
-  const customerEmail = String(formData.get("customerEmail") ?? "").trim();
+  const customerEmail = String(formData.get("customerEmail") ?? "").trim().toLowerCase();
 
   if (!packageId || !customerEmail || !customerName) return redirect("/tarifs");
 
