@@ -1,4 +1,5 @@
 import { SiteNav } from "@/components/site-nav";
+import { ReserverSubscriptionUnlock } from "@/components/reserver-subscription-unlock";
 import { reserveSlot } from "@/app/actions";
 import { SubscriptionStatus } from "@/generated/prisma/enums";
 import {
@@ -146,35 +147,6 @@ export default async function ReserverPage({ searchParams }: Props) {
           </p>
         ) : null}
 
-        <section className="brand-card mt-4 max-w-2xl rounded-xl p-4">
-          <p className="text-sm font-medium" style={{ color: "var(--brand)" }}>
-            Utiliser mon abonnement
-          </p>
-          <p className="mt-1 text-xs opacity-85">
-            L&apos;abonnement est detecte via l&apos;URL (email). Saisissez l&apos;email du compte
-            abonnement puis cliquez <strong>Appliquer</strong> : l&apos;option &quot;Utiliser mon
-            abonnement&quot; se debloque ensuite dans le formulaire.
-          </p>
-          <form method="get" className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
-            <input type="hidden" name="date" value={selectedDate.toISOString().slice(0, 10)} />
-            {selectedSlotId ? <input type="hidden" name="slotId" value={selectedSlotId} /> : null}
-            {subscriptionIdParam ? (
-              <input type="hidden" name="subscriptionId" value={subscriptionIdParam} />
-            ) : null}
-            <input
-              name="email"
-              type="email"
-              defaultValue={emailParam}
-              placeholder="Email de votre abonnement"
-              className="brand-field flex-1 px-3 py-2 text-sm"
-              autoComplete="email"
-            />
-            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
-              Appliquer
-            </button>
-          </form>
-        </section>
-
         <section className="mt-6 md:mt-8">
           <div className="flex flex-col gap-3">
             <p className="text-xs font-medium uppercase tracking-wide opacity-70 md:text-sm md:normal-case md:tracking-normal">
@@ -214,17 +186,21 @@ export default async function ReserverPage({ searchParams }: Props) {
 
             {subscriptionActive ? (
               <div className="brand-badge-ok rounded-lg px-3 py-2 text-sm font-semibold">
-                Abonnement actif • {remainingSessionsThisWeek} seances restantes cette semaine
+                Votre abonnement est bien pris en compte. Il vous reste{" "}
+                <strong>{remainingSessionsThisWeek}</strong> seance
+                {remainingSessionsThisWeek !== 1 ? "s" : ""} cette semaine.
               </div>
             ) : subscription ? (
               <div className="brand-alert rounded-lg px-3 py-2 text-sm">
-                Abonnement trouve pour cet email, mais statut : {subscription.status}. Tant qu&apos;il
-                n&apos;est pas <strong>active</strong>, vous ne pouvez pas reserver avec (paiement en
-                attente ou annule).
+                Nous retrouvons un abonnement avec cet e-mail, mais il n&apos;est pas encore actif
+                (paiement en cours ou annule). Des qu&apos;il est actif, vous pourrez reserver avec vos
+                seances incluses. En attendant, choisissez un autre mode de paiement.
               </div>
             ) : emailParam ? (
               <div className="opacity-80 text-sm">
-                Aucun abonnement actif trouve pour <span style={{ color: "var(--brand)" }}>{emailParam}</span>
+                Aucun abonnement actif pour{" "}
+                <span style={{ color: "var(--brand)" }}>{emailParam}</span>. Verifiez l&apos;e-mail ou
+                souscrivez un abonnement sur la page Abonnement.
               </div>
             ) : null}
           </div>
@@ -330,11 +306,10 @@ export default async function ReserverPage({ searchParams }: Props) {
                   : isOnlineCourse
                     ? "stripe"
                     : "on_site";
-                const paymentOrder: Array<{
-                  value: "stripe" | "on_site" | "subscription";
+                const paymentBase: Array<{
+                  value: "stripe" | "on_site";
                   label: string;
                   hint?: string;
-                  disabled?: boolean;
                 }> = isOnlineCourse
                   ? [
                       {
@@ -347,13 +322,6 @@ export default async function ReserverPage({ searchParams }: Props) {
                         label: "Paiement sur place (carte / especes)",
                         hint: "Pour les seances en presentiel ou accord avec la prof.",
                       },
-                      {
-                        value: "subscription",
-                        label: subscriptionActive
-                          ? "Utiliser mon abonnement (seances incluses)"
-                          : "Utiliser mon abonnement (non disponible)",
-                        disabled: !subscriptionActive,
-                      },
                     ]
                   : [
                       { value: "on_site", label: "Paiement sur place (carte / especes)" },
@@ -362,14 +330,8 @@ export default async function ReserverPage({ searchParams }: Props) {
                         label: "Paiement en ligne (carte bancaire)",
                         hint: "Redirection securisee vers Stripe.",
                       },
-                      {
-                        value: "subscription",
-                        label: subscriptionActive
-                          ? "Utiliser mon abonnement (seances incluses)"
-                          : "Utiliser mon abonnement (non disponible)",
-                        disabled: !subscriptionActive,
-                      },
                     ];
+                const dateIso = selectedDate.toISOString().slice(0, 10);
                 return (
               <form action={reserveSlot} className="mt-4 grid gap-3 max-w-xl">
                 <input type="hidden" name="slotId" value={selectedSlotForForm.id} />
@@ -391,12 +353,10 @@ export default async function ReserverPage({ searchParams }: Props) {
                   <legend className="px-1 text-sm font-medium opacity-90">
                     Mode de paiement
                   </legend>
-                  {paymentOrder.map((opt) => (
+                  {paymentBase.map((opt) => (
                     <label
                       key={opt.value}
-                      className={`flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-2 ${
-                        opt.disabled ? "cursor-not-allowed opacity-50" : "hover:bg-[var(--brand-soft)]"
-                      }`}
+                      className="flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-2 hover:bg-[var(--brand-soft)]"
                     >
                       <span className="flex items-center gap-2 text-sm">
                         <input
@@ -404,7 +364,6 @@ export default async function ReserverPage({ searchParams }: Props) {
                           name="paymentMethod"
                           value={opt.value}
                           defaultChecked={defaultPayment === opt.value}
-                          disabled={opt.disabled}
                           className="shrink-0"
                         />
                         {opt.label}
@@ -414,11 +373,59 @@ export default async function ReserverPage({ searchParams }: Props) {
                       ) : null}
                     </label>
                   ))}
+
+                  {subscriptionActive ? (
+                    <label className="flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-2 hover:bg-[var(--brand-soft)]">
+                      <span className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="subscription"
+                          defaultChecked={defaultPayment === "subscription"}
+                          className="shrink-0"
+                        />
+                        <span>
+                          Utiliser mon abonnement
+                          <span className="mt-0.5 block text-xs font-normal opacity-80">
+                            {remainingSessionsThisWeek} seance
+                            {remainingSessionsThisWeek !== 1 ? "s" : ""} restante
+                            {remainingSessionsThisWeek !== 1 ? "s" : ""} cette semaine
+                          </span>
+                        </span>
+                      </span>
+                    </label>
+                  ) : (
+                    <div className="rounded-md border border-dashed border-[var(--border-soft)] bg-white/60 px-2 py-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <label className="flex min-w-0 flex-1 cursor-not-allowed items-start gap-2 opacity-55">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="subscription"
+                            disabled
+                            className="pointer-events-none mt-0.5 shrink-0"
+                          />
+                          <span className="text-sm">
+                            Utiliser mon abonnement
+                            <span className="mt-1 block text-xs font-normal opacity-90">
+                              Indisponible tant que votre abonnement n&apos;est pas rattache.
+                            </span>
+                          </span>
+                        </label>
+                        <ReserverSubscriptionUnlock
+                          dateIso={dateIso}
+                          slotId={selectedSlotForForm.id}
+                          subscriptionId={subscriptionIdParam || undefined}
+                          defaultEmail={emailParam}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </fieldset>
                 {!subscriptionActive ? (
                   <p className="text-xs opacity-80">
-                    Pour utiliser un abonnement : activez-le via la zone &quot;Utiliser mon abonnement&quot;
-                    en haut (email + Appliquer), ou achetez-le sur Abonnement / Tarifs.
+                    Pas encore d&apos;abonnement ? Rendez-vous sur la page Abonnement pour souscrire un
+                    forfait.
                   </p>
                 ) : null}
                 <button

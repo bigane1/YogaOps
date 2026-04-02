@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { formatDateFR } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
 
 type Props = {
   searchParams: Promise<{ bookingId?: string }>;
@@ -40,8 +41,11 @@ export default async function ConfirmationPage({ searchParams }: Props) {
             <p className="text-sm opacity-80">
               Statut:{" "}
               <span className="brand-badge-ok inline-block rounded-full px-2 py-0.5 text-xs font-medium">
-                {booking.status}
+                {bookingStatusLabelFr(booking.status)}
               </span>
+            </p>
+            <p className="mt-1 text-sm opacity-80">
+              Paiement: {paymentMethodLabelFr(booking.paymentMethod)}
             </p>
             {booking.status === "pending" ? (
               <p className="brand-alert mt-3 rounded-lg p-3 text-sm">

@@ -2,6 +2,7 @@ import { SiteNav } from "@/components/site-nav";
 import { buySubscriptionStripe } from "@/app/actions";
 import { startOfWeekMonday } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { subscriptionStatusLabelFr } from "@/lib/labels-fr";
 
 type Props = {
   searchParams: Promise<{ email?: string }>;
@@ -75,7 +76,7 @@ export default async function AbonnementPage({ searchParams }: Props) {
           {subscription ? (
             <div className="mt-4 rounded-lg brand-alert p-3 text-sm">
               <p>
-                Statut: <strong>{subscription.status}</strong>
+                Statut: <strong>{subscriptionStatusLabelFr(subscription.status)}</strong>
               </p>
               <p>
                 Plan: <strong>{subscription.package.name}</strong>

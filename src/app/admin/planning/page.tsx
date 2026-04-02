@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink } from "@/app/actions";
 import { addDays, ensureSeedData, formatTimeFR, startOfDay } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
 
 const fieldSm = "brand-field rounded px-2 py-1 text-sm";
 
@@ -86,9 +87,9 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
           <form className="grid gap-2 sm:grid-cols-4">
             <select name="status" defaultValue={statusFilter} className="brand-field rounded-md px-3 py-2 text-sm">
               <option value="all">Tous statuts</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="pending">En attente</option>
+              <option value="confirmed">Confirmée</option>
+              <option value="cancelled">Annulée</option>
             </select>
             <select name="type" defaultValue={typeFilter} className="brand-field rounded-md px-3 py-2 text-sm">
               <option value="all">Tous types</option>
@@ -97,7 +98,7 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
             </select>
             <select name="payment" defaultValue={paymentFilter} className="brand-field rounded-md px-3 py-2 text-sm">
               <option value="all">Tous paiements</option>
-              <option value="stripe">Stripe</option>
+              <option value="stripe">Carte en ligne (Stripe)</option>
               <option value="on_site">Sur place</option>
               <option value="subscription">Abonnement</option>
             </select>
@@ -159,9 +160,11 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
                                     <p className="truncate text-[11px] opacity-70">{booking.customerEmail}</p>
                                   </div>
                                   <div className="flex gap-1">
-                                    <span className="rounded-full bg-[#eee] px-2 py-0.5 text-[11px]">{booking.paymentMethod}</span>
+                                    <span className="rounded-full bg-[#eee] px-2 py-0.5 text-[11px]">
+                                      {paymentMethodLabelFr(booking.paymentMethod)}
+                                    </span>
                                     <span className={`rounded-full px-2 py-0.5 text-[11px] ${booking.status === "confirmed" ? "brand-badge-ok" : "brand-alert"}`}>
-                                      {booking.status}
+                                      {bookingStatusLabelFr(booking.status)}
                                     </span>
                                   </div>
                                 </div>
@@ -202,7 +205,7 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
                                 {cancelledBookings.map((booking) => (
                                   <div key={booking.id} className="flex items-center justify-between text-[11px]">
                                     <span className="truncate">{booking.customerName}</span>
-                                    <span className="opacity-70">{booking.paymentMethod}</span>
+                                    <span className="opacity-70">{paymentMethodLabelFr(booking.paymentMethod)}</span>
                                   </div>
                                 ))}
                               </div>

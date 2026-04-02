@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink } from "@/app/actions";
 import { ensureSeedData, formatDateFR } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
 
 const fieldSm = "brand-field rounded px-2 py-1 text-sm";
 
@@ -49,9 +50,9 @@ export default async function AdminReservationsPage() {
                   {booking.customerName} - {booking.customerEmail} - {booking.slot.course.title} - {formatDateFR(booking.slot.startsAt)}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-[#eee] px-2 py-0.5">Paiement: {booking.paymentMethod}</span>
+                  <span className="rounded-full bg-[#eee] px-2 py-0.5">Paiement: {paymentMethodLabelFr(booking.paymentMethod)}</span>
                   <span className={`rounded-full px-2 py-0.5 ${booking.status === "confirmed" ? "brand-badge-ok" : booking.status === "cancelled" ? "brand-badge-muted" : "brand-alert"}`}>
-                    Statut: {booking.status}
+                    Statut: {bookingStatusLabelFr(booking.status)}
                   </span>
                 </div>
                 <form action={updateBookingZoomLink} className="mt-2 grid gap-2 sm:grid-cols-4">

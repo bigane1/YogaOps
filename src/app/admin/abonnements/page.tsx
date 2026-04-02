@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { adminLogin, adminLogout, createPackage, deletePackage, updatePackage, updateSubscriptionStatus } from "@/app/actions";
 import { ensureSeedData } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { paymentMethodLabelFr, subscriptionStatusLabelFr } from "@/lib/labels-fr";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
 const fieldSm = "brand-field rounded px-2 py-1 text-sm";
@@ -95,10 +96,12 @@ export default async function AdminAbonnementsPage() {
                 <p>
                   <span className="font-medium">{sub.customerEmail}</span> - Plan: {sub.package.name}
                 </p>
-                <p className="mt-1 text-xs opacity-75">Paiement: {sub.paymentMethod} - Fin: {sub.endsAt.toLocaleDateString("fr-FR")}</p>
+                <p className="mt-1 text-xs opacity-75">
+                  Paiement: {paymentMethodLabelFr(sub.paymentMethod)} - Fin: {sub.endsAt.toLocaleDateString("fr-FR")}
+                </p>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-2 py-0.5 text-xs ${sub.status === "active" ? "brand-badge-ok" : sub.status === "cancelled" ? "brand-badge-muted" : "brand-alert"}`}>
-                    {sub.status}
+                    {subscriptionStatusLabelFr(sub.status)}
                   </span>
                   {sub.status !== "active" ? (
                     <form action={updateSubscriptionStatus}>
