@@ -1,8 +1,8 @@
 import Stripe from "stripe";
 import { BookingStatus, SubscriptionStatus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/prisma";
+import { resolveOrCreateSharedZoomLink } from "@/lib/booking-zoom";
 import { getStripeClient } from "@/lib/stripe";
-import { createZoomMeeting } from "@/lib/zoom";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
 
 export async function POST(req: Request) {
@@ -40,44 +40,19 @@ export async function POST(req: Request) {
         if (!booking) return;
         if (booking.status === BookingStatus.confirmed) return;
 
-        let zoomLink = booking.zoomLink;
-        if (booking.slot.course.location === "en_ligne") {
-          const isCollective = booking.slot.course.type === "collectif";
-
-          if (isCollective) {
-            const slotWithLink = await tx.timeSlot.findUnique({
-              where: { id: booking.slotId },
-              select: { zoomLink: true },
-            });
-
-            if (slotWithLink?.zoomLink) {
-              zoomLink = slotWithLink.zoomLink;
-            } else {
-              zoomLink =
-                (await createZoomMeeting({
-                  topic: `YogaOps - ${booking.slot.course.title}`,
-                  startTime: booking.slot.startsAt,
-                  durationMin: booking.slot.course.durationMin,
-                })) ?? "Lien Zoom a renseigner dans le backoffice.";
-
-              await tx.timeSlot.update({
-                where: { id: booking.slotId },
-                data: { zoomLink },
-              });
-            }
-          } else {
-            zoomLink =
-              (await createZoomMeeting({
-                topic: `YogaOps - ${booking.slot.course.title}`,
-                startTime: booking.slot.startsAt,
-                durationMin: booking.slot.course.durationMin,
-              })) ?? "Lien Zoom a renseigner dans le backoffice.";
-          }
-        }
+        const zoomLink = await resolveOrCreateSharedZoomLink(tx, {
+          bookingId,
+          slotId: booking.slotId,
+          courseTitle: booking.slot.course.title,
+          slotStartsAt: booking.slot.startsAt,
+          durationMin: booking.slot.course.durationMin,
+          location: booking.slot.course.location,
+          bookingZoomLink: booking.zoomLink,
+        });
 
         await tx.booking.update({
           where: { id: bookingId },
-          data: { status: BookingStatus.confirmed, zoomLink },
+          data: { status: BookingStatus.confirmed, zoomLink: zoomLink ?? undefined },
         });
       });
 

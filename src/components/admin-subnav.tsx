@@ -15,14 +15,17 @@ export function AdminSubnav() {
   const pathname = usePathname();
 
   return (
-    <nav className="mt-4 flex flex-wrap gap-2">
+    <nav
+      className="scrollbar-hide mt-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible"
+      aria-label="Navigation backoffice"
+    >
       {items.map((item) => {
         const active = pathname === item.href;
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`rounded-md px-3 py-2 text-sm ${
+            className={`shrink-0 whitespace-nowrap rounded-md px-3 py-2 text-sm ${
               active ? "brand-badge-ok font-semibold" : "brand-btn-secondary"
             }`}
           >

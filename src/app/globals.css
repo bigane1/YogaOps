@@ -102,3 +102,13 @@ button {
   background: #fff;
   border-radius: 0.375rem;
 }
+
+/* Admin / menus: defilement horizontal sans barre visible (mobile) */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

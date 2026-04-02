@@ -9,7 +9,7 @@ import { sendBookingConfirmationEmail } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
-import { createZoomMeeting } from "@/lib/zoom";
+import { resolveOrCreateSharedZoomLink } from "@/lib/booking-zoom";
 
 const ADMIN_COOKIE = "yogaops_admin";
 
@@ -491,19 +491,19 @@ export async function updateBookingStatus(formData: FormData) {
     }
 
     if (targetStatus === "confirmed" && booking.status !== "confirmed") {
-      let zoomLink = booking.zoomLink;
-      if (booking.slot.course.location === "en_ligne" && !zoomLink) {
-        zoomLink =
-          (await createZoomMeeting({
-            topic: `YogaOps - ${booking.slot.course.title}`,
-            startTime: booking.slot.startsAt,
-            durationMin: booking.slot.course.durationMin,
-          })) ?? "Lien Zoom a renseigner dans le backoffice.";
-      }
+      const zoomLink = await resolveOrCreateSharedZoomLink(tx, {
+        bookingId,
+        slotId: booking.slotId,
+        courseTitle: booking.slot.course.title,
+        slotStartsAt: booking.slot.startsAt,
+        durationMin: booking.slot.course.durationMin,
+        location: booking.slot.course.location,
+        bookingZoomLink: booking.zoomLink,
+      });
 
       await tx.booking.update({
         where: { id: bookingId },
-        data: { status: "confirmed", zoomLink },
+        data: { status: "confirmed", zoomLink: zoomLink ?? undefined },
       });
 
       await sendBookingConfirmationEmail({
