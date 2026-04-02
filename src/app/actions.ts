@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { CourseType, LocationType, PaymentMethod, SubscriptionStatus } from "@/generated/prisma/enums";
 import { sendBookingConfirmationEmail } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
@@ -159,10 +160,14 @@ export async function reserveSlot(formData: FormData) {
         metadata: { bookingId: booking.id, slotId },
       });
 
-      if (session.url) {
-        redirect(session.url);
+      if (!session.url) {
+        throw new Error("Stripe Checkout: URL de paiement absente.");
       }
-    } catch {
+      redirect(session.url);
+    } catch (err) {
+      if (isRedirectError(err)) {
+        throw err;
+      }
       await prisma.$transaction(async (tx) => {
         await tx.booking.update({
           where: { id: booking.id },

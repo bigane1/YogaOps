@@ -101,6 +101,20 @@ export default async function ReserverPage({ searchParams }: Props) {
     ? slots.find((s) => s.id === selectedSlotId) ?? null
     : null;
 
+  /** Deep link avec slotId : afficher le formulaire même si le créneau est hors filtre abonnement (validation côté serveur). */
+  const selectedSlotForForm =
+    selectedSlot ??
+    (selectedSlotId
+      ? await prisma.timeSlot.findFirst({
+          where: {
+            id: selectedSlotId,
+            available: { gt: 0 },
+            startsAt: { gte: dayStart, lt: dayEnd },
+          },
+          include: { course: true },
+        })
+      : null);
+
   const emailQuery = emailParam
     ? `&email=${encodeURIComponent(emailParam)}`
     : "";
@@ -221,17 +235,74 @@ export default async function ReserverPage({ searchParams }: Props) {
             })}
           </div>
 
-          {selectedSlot && selectedSlot.available > 0 ? (
+          {selectedSlotForForm && selectedSlotForForm.available > 0 ? (
             <section className="mt-6 brand-card rounded-xl p-6">
               <h3 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
                 Finaliser la reservation
               </h3>
               <p className="mt-1 text-sm opacity-80">
-                {selectedSlot.course.title} • {formatTimeFR(selectedSlot.startsAt)} •{" "}
-                {selectedSlot.course.durationMin} min • {selectedSlot.course.priceEur} EUR
+                {selectedSlotForForm.course.title} •{" "}
+                {formatTimeFR(selectedSlotForForm.startsAt)} •{" "}
+                {selectedSlotForForm.course.durationMin} min •{" "}
+                {selectedSlotForForm.course.priceEur} EUR
               </p>
+              {selectedSlotId && selectedSlotForForm && !selectedSlot ? (
+                <p className="brand-alert mt-3 rounded-lg p-3 text-sm">
+                  Creneau ouvert via le lien direct. Verifiez que ce cours correspond a votre
+                  abonnement (type et dates), sinon la reservation sera refusee.
+                </p>
+              ) : null}
+              {(() => {
+                const isOnlineCourse =
+                  selectedSlotForForm.course.location === "en_ligne";
+                const defaultPayment = subscriptionActive
+                  ? "subscription"
+                  : isOnlineCourse
+                    ? "stripe"
+                    : "on_site";
+                const paymentOrder: Array<{
+                  value: "stripe" | "on_site" | "subscription";
+                  label: string;
+                  hint?: string;
+                  disabled?: boolean;
+                }> = isOnlineCourse
+                  ? [
+                      {
+                        value: "stripe",
+                        label: "Paiement en ligne (carte bancaire)",
+                        hint: "Redirection securisee vers Stripe pour regler la seance.",
+                      },
+                      {
+                        value: "on_site",
+                        label: "Paiement sur place (carte / especes)",
+                        hint: "Pour les seances en presentiel ou accord avec la prof.",
+                      },
+                      {
+                        value: "subscription",
+                        label: subscriptionActive
+                          ? "Utiliser mon abonnement (seances incluses)"
+                          : "Utiliser mon abonnement (non disponible)",
+                        disabled: !subscriptionActive,
+                      },
+                    ]
+                  : [
+                      { value: "on_site", label: "Paiement sur place (carte / especes)" },
+                      {
+                        value: "stripe",
+                        label: "Paiement en ligne (carte bancaire)",
+                        hint: "Redirection securisee vers Stripe.",
+                      },
+                      {
+                        value: "subscription",
+                        label: subscriptionActive
+                          ? "Utiliser mon abonnement (seances incluses)"
+                          : "Utiliser mon abonnement (non disponible)",
+                        disabled: !subscriptionActive,
+                      },
+                    ];
+                return (
               <form action={reserveSlot} className="mt-4 grid gap-3 max-w-xl">
-                <input type="hidden" name="slotId" value={selectedSlot.id} />
+                <input type="hidden" name="slotId" value={selectedSlotForForm.id} />
                 <input
                   name="customerName"
                   required
@@ -246,25 +317,37 @@ export default async function ReserverPage({ searchParams }: Props) {
                   defaultValue={emailParam || ""}
                   className="brand-field px-3 py-2 text-sm"
                 />
-                <select
-                  name="paymentMethod"
-                  defaultValue={subscriptionActive ? "subscription" : "on_site"}
-                  className="brand-field px-3 py-2 text-sm"
-                >
-                  <option value="on_site">
-                    Paiement sur place (carte/especes)
-                  </option>
-                  <option value="stripe">Paiement en ligne (Stripe test)</option>
-                  <option value="subscription" disabled={!subscriptionActive}>
-                    {subscriptionActive
-                      ? "Utiliser mon abonnement"
-                      : "Utiliser mon abonnement (indisponible)"}
-                  </option>
-                </select>
+                <fieldset className="grid gap-2 rounded-lg border border-[var(--border-soft)] p-3">
+                  <legend className="px-1 text-sm font-medium opacity-90">
+                    Mode de paiement
+                  </legend>
+                  {paymentOrder.map((opt) => (
+                    <label
+                      key={opt.value}
+                      className={`flex cursor-pointer flex-col gap-0.5 rounded-md px-2 py-2 ${
+                        opt.disabled ? "cursor-not-allowed opacity-50" : "hover:bg-[var(--brand-soft)]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value={opt.value}
+                          defaultChecked={defaultPayment === opt.value}
+                          disabled={opt.disabled}
+                          className="shrink-0"
+                        />
+                        {opt.label}
+                      </span>
+                      {opt.hint ? (
+                        <span className="pl-6 text-xs opacity-80">{opt.hint}</span>
+                      ) : null}
+                    </label>
+                  ))}
+                </fieldset>
                 {!subscriptionActive ? (
                   <p className="text-xs opacity-80">
-                    Pour utiliser un abonnement, achetez-le d&apos;abord depuis l&apos;onglet
-                    Tarifs.
+                    Pour utiliser un abonnement, achetez-le depuis la page Abonnement ou Tarifs.
                   </p>
                 ) : null}
                 <button
@@ -274,6 +357,8 @@ export default async function ReserverPage({ searchParams }: Props) {
                   Confirmer
                 </button>
               </form>
+                );
+              })()}
               <a
                 href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}`}
                 className="mt-3 inline-block text-sm opacity-80 underline"
