@@ -129,7 +129,7 @@ export async function reserveSlot(formData: FormData) {
         slotId,
         subscriptionId,
         paymentMethod,
-        status: paymentMethod === PaymentMethod.stripe ? "pending" : "confirmed",
+        status: "pending",
       },
       include: { slot: { include: { course: true } } },
     });
@@ -177,40 +177,6 @@ export async function reserveSlot(formData: FormData) {
       });
       redirect("/reserver");
     }
-  }
-
-  if (booking.slot.course.location === "en_ligne") {
-    const zoomLink =
-      (await createZoomMeeting({
-        topic: `YogaOps - ${booking.slot.course.title}`,
-        startTime: booking.slot.startsAt,
-        durationMin: booking.slot.course.durationMin,
-      })) ?? "Lien Zoom a renseigner dans le backoffice.";
-
-    await prisma.booking.update({
-      where: { id: booking.id },
-      data: { zoomLink },
-    });
-
-    await sendBookingConfirmationEmail({
-      bookingId: booking.id,
-      customerName: booking.customerName,
-      customerEmail: booking.customerEmail,
-      courseTitle: booking.slot.course.title,
-      startsAt: booking.slot.startsAt,
-      zoomLink,
-      priceEur: booking.slot.course.priceEur,
-    });
-  } else {
-    await sendBookingConfirmationEmail({
-      bookingId: booking.id,
-      customerName: booking.customerName,
-      customerEmail: booking.customerEmail,
-      courseTitle: booking.slot.course.title,
-      startsAt: booking.slot.startsAt,
-      zoomLink: null,
-      priceEur: booking.slot.course.priceEur,
-    });
   }
 
   revalidatePath("/reserver");

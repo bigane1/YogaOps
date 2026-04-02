@@ -61,6 +61,7 @@ model TimeSlot {
   startsAt   DateTime
   available  Int
   booked     Int       @default(0)
+  zoomLink   String?
   course     Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   bookings   Booking[]
   createdAt  DateTime  @default(now())

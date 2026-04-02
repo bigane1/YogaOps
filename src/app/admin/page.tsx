@@ -144,16 +144,17 @@ export default async function AdminPage() {
                         });
 
                       return (
-                        <div key={slot.id} className="rounded-md border border-[var(--border-soft)] bg-white p-3">
+                        <div
+                          key={slot.id}
+                          className="rounded-md border border-[var(--border-soft)] bg-white p-3"
+                        >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <div className="text-sm font-medium">
-                                {formatTimeFR(slot.startsAt)}
-                              </div>
-                              <div className="text-xs opacity-80">{slot.course.title}</div>
+                              <div className="text-sm font-semibold">{formatTimeFR(slot.startsAt)}</div>
+                              <div className="text-xs opacity-85">{slot.course.title}</div>
                             </div>
-                            <div className="text-xs opacity-80">
-                              restant: {slot.available}
+                            <div className="text-xs rounded-full px-2 py-0.5 brand-badge-muted">
+                              reste {slot.available}
                             </div>
                           </div>
 
@@ -163,72 +164,79 @@ export default async function AdminPage() {
                             ) : null}
 
                             {bookingsForSlot.map((booking) => (
-                              <div key={booking.id} className="rounded-md border border-[var(--border-soft)] p-2">
-                                <div className="text-xs opacity-90">
-                                  {booking.customerName}
-                                </div>
-                                <div className="text-[11px] opacity-70">
-                                  {booking.customerEmail}
-                                </div>
-                                <div className="mt-1">
-                                  <span
-                                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                                      booking.status === "confirmed"
-                                        ? "brand-badge-ok"
-                                        : booking.status === "cancelled"
-                                          ? "brand-badge-muted"
-                                          : "brand-alert"
-                                    }`}
-                                  >
-                                    {booking.status}
-                                  </span>
-                                </div>
+                              <details
+                                key={booking.id}
+                                className="rounded-md border border-[var(--border-soft)] bg-[#fcfafe] p-2"
+                              >
+                                <summary className="cursor-pointer list-none">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-medium truncate">{booking.customerName}</p>
+                                      <p className="text-[11px] opacity-70 truncate">{booking.customerEmail}</p>
+                                    </div>
+                                    <span
+                                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                                        booking.status === "confirmed"
+                                          ? "brand-badge-ok"
+                                          : booking.status === "cancelled"
+                                            ? "brand-badge-muted"
+                                            : "brand-alert"
+                                      }`}
+                                    >
+                                      {booking.status}
+                                    </span>
+                                  </div>
+                                  <p className="mt-1 text-[11px] opacity-70">Details</p>
+                                </summary>
 
-                                <form
-                                  action={updateBookingZoomLink}
-                                  className="mt-2 grid gap-2"
-                                >
-                                  <input type="hidden" name="bookingId" value={booking.id} />
-                                  <input
-                                    name="zoomLink"
-                                    type="url"
-                                    placeholder="https://zoom.us/j/..."
-                                    defaultValue={booking.zoomLink ?? ""}
-                                    className={fieldSm}
-                                  />
-                                  <button
-                                    type="submit"
-                                    className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]"
-                                  >
-                                    Save Zoom
-                                  </button>
-                                </form>
+                                <div className="mt-2 border-t border-[var(--border-soft)] pt-2">
+                                  <p className="text-[11px] opacity-75">Ref: {booking.id}</p>
+                                  <form action={updateBookingZoomLink} className="mt-2 grid gap-2">
+                                    <input type="hidden" name="bookingId" value={booking.id} />
+                                    <input
+                                      name="zoomLink"
+                                      type="url"
+                                      placeholder="https://zoom.us/j/..."
+                                      defaultValue={booking.zoomLink ?? booking.slot.zoomLink ?? ""}
+                                      className={fieldSm}
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]"
+                                    >
+                                      Enregistrer Zoom
+                                    </button>
+                                  </form>
 
-                                <div className="mt-2 flex gap-2 flex-wrap">
-                                  {booking.status !== "confirmed" ? (
-                                    <form action={updateBookingStatus}>
-                                      <input type="hidden" name="bookingId" value={booking.id} />
-                                      <input type="hidden" name="targetStatus" value="confirmed" />
-                                      <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]">
-                                        Accepter
-                                      </button>
-                                    </form>
-                                  ) : null}
+                                  <div className="mt-2 flex gap-2 flex-wrap">
+                                    {booking.status !== "confirmed" ? (
+                                      <form action={updateBookingStatus}>
+                                        <input type="hidden" name="bookingId" value={booking.id} />
+                                        <input type="hidden" name="targetStatus" value="confirmed" />
+                                        <button
+                                          type="submit"
+                                          className="brand-btn-secondary brand-btn-sm rounded-md border px-3 py-1 text-[12px]"
+                                        >
+                                          Accepter
+                                        </button>
+                                      </form>
+                                    ) : null}
 
-                                  {booking.status !== "cancelled" ? (
-                                    <form action={updateBookingStatus}>
-                                      <input type="hidden" name="bookingId" value={booking.id} />
-                                      <input type="hidden" name="targetStatus" value="cancelled" />
-                                      <button
-                                        type="submit"
-                                        className="rounded border border-red-300 bg-red-50 px-3 py-1 text-[12px] text-red-800 hover:bg-red-100"
-                                      >
-                                        Annuler
-                                      </button>
-                                    </form>
-                                  ) : null}
+                                    {booking.status !== "cancelled" ? (
+                                      <form action={updateBookingStatus}>
+                                        <input type="hidden" name="bookingId" value={booking.id} />
+                                        <input type="hidden" name="targetStatus" value="cancelled" />
+                                        <button
+                                          type="submit"
+                                          className="rounded border border-red-300 bg-red-50 px-3 py-1 text-[12px] text-red-800 hover:bg-red-100"
+                                        >
+                                          Annuler
+                                        </button>
+                                      </form>
+                                    ) : null}
+                                  </div>
                                 </div>
-                              </div>
+                              </details>
                             ))}
                           </div>
                         </div>
@@ -250,7 +258,12 @@ export default async function AdminPage() {
           </p>
           <form action={createCourse} className="mt-3 grid gap-2 sm:grid-cols-2">
             <input name="title" required placeholder="Titre" className={fieldMd} />
-            <input name="description" required placeholder="Description" className={fieldMd} />
+            <input
+              name="description"
+              required
+              placeholder="Description du cours"
+              className={fieldMd}
+            />
             <select name="type" className={fieldMd}>
               <option value="individuel">Individuel</option>
               <option value="collectif">Collectif</option>
@@ -259,9 +272,27 @@ export default async function AdminPage() {
               <option value="en_ligne">En ligne (Zoom)</option>
               <option value="presentiel">Presentiel</option>
             </select>
-            <input name="durationMin" type="number" defaultValue={60} className={fieldMd} />
-            <input name="priceEur" type="number" defaultValue={15} className={fieldMd} />
-            <input name="capacity" type="number" defaultValue={10} className={fieldMd} />
+            <input
+              name="durationMin"
+              type="number"
+              defaultValue={60}
+              placeholder="Duree en minutes"
+              className={fieldMd}
+            />
+            <input
+              name="priceEur"
+              type="number"
+              defaultValue={15}
+              placeholder="Prix en EUR"
+              className={fieldMd}
+            />
+            <input
+              name="capacity"
+              type="number"
+              defaultValue={10}
+              placeholder="Capacite max"
+              className={fieldMd}
+            />
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
               Creer le cours
             </button>
@@ -277,8 +308,18 @@ export default async function AdminPage() {
               <li key={course.id} className="brand-list-item p-3">
                 <form action={updateCourse} className="grid gap-2 sm:grid-cols-4">
                   <input type="hidden" name="id" value={course.id} />
-                  <input name="title" defaultValue={course.title} className={fieldSm} />
-                  <input name="description" defaultValue={course.description} className={fieldSm} />
+                  <input
+                    name="title"
+                    defaultValue={course.title}
+                    placeholder="Titre du cours"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="description"
+                    defaultValue={course.description}
+                    placeholder="Description du cours"
+                    className={fieldSm}
+                  />
                   <select name="type" defaultValue={course.type} className={fieldSm}>
                     <option value="individuel">Individuel</option>
                     <option value="collectif">Collectif</option>
@@ -287,9 +328,27 @@ export default async function AdminPage() {
                     <option value="en_ligne">En ligne</option>
                     <option value="presentiel">Presentiel</option>
                   </select>
-                  <input name="durationMin" type="number" defaultValue={course.durationMin} className={fieldSm} />
-                  <input name="priceEur" type="number" defaultValue={course.priceEur} className={fieldSm} />
-                  <input name="capacity" type="number" defaultValue={course.capacity} className={fieldSm} />
+                  <input
+                    name="durationMin"
+                    type="number"
+                    defaultValue={course.durationMin}
+                    placeholder="Duree (min)"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="priceEur"
+                    type="number"
+                    defaultValue={course.priceEur}
+                    placeholder="Prix EUR"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="capacity"
+                    type="number"
+                    defaultValue={course.capacity}
+                    placeholder="Capacite"
+                    className={fieldSm}
+                  />
                   <div className="flex gap-2">
                     <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">
                       Modifier
@@ -315,16 +374,44 @@ export default async function AdminPage() {
             Abonnements
           </h2>
           <form action={createPackage} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
-            <input name="name" required placeholder="Nom abonnement" className={fieldMd} />
-            <input name="description" required placeholder="Description" className={fieldMd} />
-            <input name="priceEur" type="number" defaultValue={79} className={fieldMd} />
-            <input name="sessionCount" type="number" defaultValue={6} className={fieldMd} />
+            <input
+              name="name"
+              required
+              placeholder="Nom abonnement (ex: Nidra)"
+              className={fieldMd}
+            />
+            <input
+              name="description"
+              required
+              placeholder="Description abonnement"
+              className={fieldMd}
+            />
+            <input
+              name="priceEur"
+              type="number"
+              defaultValue={79}
+              placeholder="Prix EUR"
+              className={fieldMd}
+            />
+            <input
+              name="sessionCount"
+              type="number"
+              defaultValue={6}
+              placeholder="Seances par semaine"
+              className={fieldMd}
+            />
             <select name="allowedCourseType" className={fieldMd} defaultValue={""}>
               <option value="">Les deux (individuel + collectif)</option>
               <option value="individuel">Seulement individuel</option>
               <option value="collectif">Seulement collectif</option>
             </select>
-            <input name="validityDays" type="number" defaultValue={30} className={fieldMd} />
+            <input
+              name="validityDays"
+              type="number"
+              defaultValue={30}
+              placeholder="Validite (jours)"
+              className={fieldMd}
+            />
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
               Creer abonnement
             </button>
@@ -334,10 +421,32 @@ export default async function AdminPage() {
               <li key={item.id} className="brand-list-item p-3">
                 <form action={updatePackage} className="grid gap-2 sm:grid-cols-4">
                   <input type="hidden" name="id" value={item.id} />
-                  <input name="name" defaultValue={item.name} className={fieldSm} />
-                  <input name="description" defaultValue={item.description} className={fieldSm} />
-                  <input name="priceEur" type="number" defaultValue={item.priceEur} className={fieldSm} />
-                  <input name="sessionCount" type="number" defaultValue={item.sessionCount} className={fieldSm} />
+                  <input
+                    name="name"
+                    defaultValue={item.name}
+                    placeholder="Nom abonnement"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="description"
+                    defaultValue={item.description}
+                    placeholder="Description abonnement"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="priceEur"
+                    type="number"
+                    defaultValue={item.priceEur}
+                    placeholder="Prix EUR"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="sessionCount"
+                    type="number"
+                    defaultValue={item.sessionCount}
+                    placeholder="Seances / semaine"
+                    className={fieldSm}
+                  />
                   <select
                     name="allowedCourseType"
                     className={fieldSm}
@@ -347,7 +456,13 @@ export default async function AdminPage() {
                     <option value="individuel">Seulement individuel</option>
                     <option value="collectif">Seulement collectif</option>
                   </select>
-                  <input name="validityDays" type="number" defaultValue={item.validityDays} className={fieldSm} />
+                  <input
+                    name="validityDays"
+                    type="number"
+                    defaultValue={item.validityDays}
+                    placeholder="Validite (jours)"
+                    className={fieldSm}
+                  />
                   <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">
                     Modifier
                   </button>
@@ -378,8 +493,20 @@ export default async function AdminPage() {
                 </option>
               ))}
             </select>
-            <input name="startsAt" type="datetime-local" required className={fieldMd} />
-            <input name="available" type="number" defaultValue={8} className={fieldMd} />
+            <input
+              name="startsAt"
+              type="datetime-local"
+              required
+              placeholder="Date et heure"
+              className={fieldMd}
+            />
+            <input
+              name="available"
+              type="number"
+              defaultValue={8}
+              placeholder="Places disponibles"
+              className={fieldMd}
+            />
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
               Ajouter creneau
             </button>
@@ -397,10 +524,23 @@ export default async function AdminPage() {
                     name="startsAt"
                     type="datetime-local"
                     defaultValue={new Date(slot.startsAt).toISOString().slice(0, 16)}
+                    placeholder="Date et heure"
                     className={fieldSm}
                   />
-                  <input name="booked" type="number" defaultValue={slot.booked} className={fieldSm} />
-                  <input name="available" type="number" defaultValue={slot.available} className={fieldSm} />
+                  <input
+                    name="booked"
+                    type="number"
+                    defaultValue={slot.booked}
+                    placeholder="Nb reserves"
+                    className={fieldSm}
+                  />
+                  <input
+                    name="available"
+                    type="number"
+                    defaultValue={slot.available}
+                    placeholder="Nb disponibles"
+                    className={fieldSm}
+                  />
                   <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">
                     Modifier
                   </button>
@@ -438,7 +578,7 @@ export default async function AdminPage() {
                     name="zoomLink"
                     type="url"
                     placeholder="https://zoom.us/j/..."
-                    defaultValue={booking.zoomLink ?? ""}
+                    defaultValue={booking.zoomLink ?? booking.slot.zoomLink ?? ""}
                     className={`sm:col-span-3 ${fieldSm}`}
                   />
                   <button

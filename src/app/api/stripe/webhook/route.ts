@@ -42,12 +42,37 @@ export async function POST(req: Request) {
 
         let zoomLink = booking.zoomLink;
         if (booking.slot.course.location === "en_ligne") {
-          zoomLink =
-            (await createZoomMeeting({
-              topic: `YogaOps - ${booking.slot.course.title}`,
-              startTime: booking.slot.startsAt,
-              durationMin: booking.slot.course.durationMin,
-            })) ?? "Lien Zoom a renseigner dans le backoffice.";
+          const isCollective = booking.slot.course.type === "collectif";
+
+          if (isCollective) {
+            const slotWithLink = await tx.timeSlot.findUnique({
+              where: { id: booking.slotId },
+              select: { zoomLink: true },
+            });
+
+            if (slotWithLink?.zoomLink) {
+              zoomLink = slotWithLink.zoomLink;
+            } else {
+              zoomLink =
+                (await createZoomMeeting({
+                  topic: `YogaOps - ${booking.slot.course.title}`,
+                  startTime: booking.slot.startsAt,
+                  durationMin: booking.slot.course.durationMin,
+                })) ?? "Lien Zoom a renseigner dans le backoffice.";
+
+              await tx.timeSlot.update({
+                where: { id: booking.slotId },
+                data: { zoomLink },
+              });
+            }
+          } else {
+            zoomLink =
+              (await createZoomMeeting({
+                topic: `YogaOps - ${booking.slot.course.title}`,
+                startTime: booking.slot.startsAt,
+                durationMin: booking.slot.course.durationMin,
+              })) ?? "Lien Zoom a renseigner dans le backoffice.";
+          }
         }
 
         await tx.booking.update({

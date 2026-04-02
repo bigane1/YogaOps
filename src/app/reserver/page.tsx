@@ -183,6 +183,14 @@ export default async function ReserverPage({ searchParams }: Props) {
                       {isOnline ? "En ligne (Zoom)" : "Presentiel"}
                     </span>
                   </div>
+                  {slot.course.description ? (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-sm font-medium opacity-90">
+                        Voir la description
+                      </summary>
+                      <p className="mt-1 text-sm opacity-80">{slot.course.description}</p>
+                    </details>
+                  ) : null}
 
                   <p className="mt-2 text-sm opacity-90">
                     {formatTimeFR(slot.startsAt)} - {slot.course.durationMin} min -{" "}
@@ -230,28 +238,27 @@ export default async function ReserverPage({ searchParams }: Props) {
                   defaultValue={emailParam || ""}
                   className="brand-field px-3 py-2 text-sm"
                 />
-                {subscriptionActive ? (
-                  <select
-                    name="paymentMethod"
-                    defaultValue="subscription"
-                    className="brand-field px-3 py-2 text-sm"
-                  >
-                    <option value="subscription">
-                      Paiement avec abonnement (seances/semaine)
-                    </option>
-                  </select>
-                ) : (
-                  <select
-                    name="paymentMethod"
-                    defaultValue="on_site"
-                    className="brand-field px-3 py-2 text-sm"
-                  >
-                    <option value="on_site">
-                      Paiement sur place (carte/especes)
-                    </option>
-                    <option value="stripe">Paiement en ligne (Stripe test)</option>
-                  </select>
-                )}
+                <select
+                  name="paymentMethod"
+                  defaultValue={subscriptionActive ? "subscription" : "on_site"}
+                  className="brand-field px-3 py-2 text-sm"
+                >
+                  <option value="on_site">
+                    Paiement sur place (carte/especes)
+                  </option>
+                  <option value="stripe">Paiement en ligne (Stripe test)</option>
+                  <option value="subscription" disabled={!subscriptionActive}>
+                    {subscriptionActive
+                      ? "Utiliser mon abonnement"
+                      : "Utiliser mon abonnement (indisponible)"}
+                  </option>
+                </select>
+                {!subscriptionActive ? (
+                  <p className="text-xs opacity-80">
+                    Pour utiliser un abonnement, achetez-le d&apos;abord depuis l&apos;onglet
+                    Tarifs.
+                  </p>
+                ) : null}
                 <button
                   type="submit"
                   className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2"

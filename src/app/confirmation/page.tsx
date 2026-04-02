@@ -32,21 +32,32 @@ export default async function ConfirmationPage({ searchParams }: Props) {
           </p>
         ) : (
           <section className="brand-card mt-6 rounded-xl p-6">
+            {/** For collective courses we can reuse slot-level zoomLink */}
+            {(() => {
+              const displayZoomLink = booking.zoomLink ?? booking.slot.zoomLink;
+              return (
+                <>
             <p className="text-sm opacity-80">
               Statut:{" "}
               <span className="brand-badge-ok inline-block rounded-full px-2 py-0.5 text-xs font-medium">
                 {booking.status}
               </span>
             </p>
+            {booking.status === "pending" ? (
+              <p className="brand-alert mt-3 rounded-lg p-3 text-sm">
+                Votre reservation est bien enregistree. Un email de confirmation
+                sera envoye des que la prof valide votre demande.
+              </p>
+            ) : null}
             <h2 className="mt-3 text-xl font-medium">{booking.slot.course.title}</h2>
             <p className="mt-2 opacity-90">
               {formatDateFR(booking.slot.startsAt)} - {booking.slot.course.priceEur} EUR
             </p>
             <p className="mt-2 opacity-90">Client: {booking.customerName}</p>
 
-            {booking.zoomLink ? (
+            {displayZoomLink ? (
               <p className="brand-alert mt-4 rounded-lg p-3 text-sm break-all">
-                Lien Zoom: {booking.zoomLink}
+                Lien Zoom: {displayZoomLink}
               </p>
             ) : (
               <p className="brand-alert mt-4 rounded-lg p-3 text-sm opacity-90">
@@ -54,6 +65,9 @@ export default async function ConfirmationPage({ searchParams }: Props) {
                 backoffice).
               </p>
             )}
+                </>
+              );
+            })()}
           </section>
         )}
 
