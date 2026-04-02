@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   title: "YogaOps - Reservation de cours de yoga",
   description:
     "Reservation de cours individuel et collectif avec abonnement, paiement et Zoom.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#f5f1f6",
 };
 
 export default function RootLayout({
