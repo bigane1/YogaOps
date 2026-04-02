@@ -175,7 +175,12 @@ export async function reserveSlot(formData: FormData) {
           data: { available: slot.available + 1, booked: Math.max(slot.booked - 1, 0) },
         });
       });
-      redirect("/reserver");
+      const slotDate = booking.slot.startsAt.toISOString().slice(0, 10);
+      redirect(
+        `/reserver?date=${slotDate}&slotId=${slotId}&email=${encodeURIComponent(
+          customerEmail
+        )}&error=stripe_checkout`
+      );
     }
   }
 

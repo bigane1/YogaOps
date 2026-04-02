@@ -17,6 +17,7 @@ type Props = {
     slotId?: string;
     email?: string;
     subscriptionId?: string;
+    error?: string;
   }>;
 };
 
@@ -34,6 +35,7 @@ export default async function ReserverPage({ searchParams }: Props) {
   const subscriptionIdParam = params.subscriptionId
     ? String(params.subscriptionId)
     : "";
+  const errorParam = params.error ? String(params.error) : "";
 
   const weekStart = startOfWeekMonday(selectedDate);
 
@@ -118,6 +120,12 @@ export default async function ReserverPage({ searchParams }: Props) {
         <p className="mt-2 max-w-2xl opacity-90">
           Comme sur Calendly : choisissez une date, puis un horaire disponible.
         </p>
+        {errorParam === "stripe_checkout" ? (
+          <p className="brand-alert mt-4 rounded-lg p-3 text-sm">
+            Le paiement en ligne n&apos;a pas pu etre initialise. Verifiez la configuration Stripe
+            puis reessayez, ou choisissez &quot;Paiement sur place&quot;.
+          </p>
+        ) : null}
 
         <section className="mt-8">
           <div className="flex flex-col gap-3">
