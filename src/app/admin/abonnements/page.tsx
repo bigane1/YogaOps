@@ -47,7 +47,7 @@ export default async function AdminAbonnementsPage() {
         </form>
 
         <section className="brand-card mt-6 rounded-xl p-6">
-          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Plans d'abonnement</h2>
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Plans d&rsquo;abonnement</h2>
           <form action={createPackage} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
             <input name="name" required placeholder="Nom abonnement (ex: Nidra)" className={fieldMd} />
             <input name="description" required placeholder="Description abonnement" className={fieldMd} />
