@@ -1,7 +1,9 @@
 # CI + déploiement automatique sur VPS (SSH + git).
 #
-# Obligatoire dans GitHub (Settings → Secrets and variables → Actions) :
-#   Secret VPS_SSH_PRIVATE_KEY — clé privée PEM dont la clé publique est sur le VPS (~/.ssh/authorized_keys)
+# Secrets GitHub (Settings → Secrets and variables → Actions) — au moins un des deux :
+#   VPS_SSH_PRIVATE_KEY — clé privée PEM complète (recommandé ; publique dans authorized_keys sur le VPS)
+#   VPS_SSH_PASSWORD — mot de passe SSH du compte (ex. ubuntu), si pas de clé
+#   Sans l’un ou l’autre : erreur « can't connect without a private SSH key or password ».
 #
 # Optionnel (sinon valeurs par défaut OVH ci-dessous) :
 #   Secrets ou variables : VPS_HOST, VPS_USER
@@ -63,12 +65,23 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      - name: Vérifier auth SSH (clé ou mot de passe)
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          SSH_PASS: ${{ secrets.VPS_SSH_PASSWORD }}
+        run: |
+          if [ -z "${SSH_KEY:-}" ] && [ -z "${SSH_PASS:-}" ]; then
+            echo "::error::Ajoutez au moins VPS_SSH_PRIVATE_KEY ou VPS_SSH_PASSWORD dans les secrets du dépôt (Actions)."
+            exit 1
+          fi
+
       - name: Déployer sur le VPS
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST || '51.91.253.165' }}
           username: ${{ secrets.VPS_USER || vars.VPS_USER || 'ubuntu' }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          password: ${{ secrets.VPS_SSH_PASSWORD }}
           port: ${{ vars.VPS_SSH_PORT || 22 }}
           # build Next sur un petit VPS peut dépasser le défaut (~10 min)
           command_timeout: 45m
