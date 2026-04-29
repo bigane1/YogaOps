@@ -3,9 +3,11 @@
 # Configuration GitHub :
 #   Secrets : VPS_HOST, VPS_USER, VPS_SSH_PRIVATE_KEY (clé privée PEM, sans mot de passe)
 #   Variables : VPS_APP_DIR (chemin absolu du clone git sur le serveur, ex. /var/www/yogaops)
+#               VPS_DEPLOY_ENABLED = true pour activer le job deploy (obligatoire une fois le VPS prêt)
 #   Optionnel  : VPS_SSH_PORT (défaut 22)
 #
-#   Si VPS_HOST n’est pas défini, le job « deploy » est ignoré (CI verte, pas de déploiement).
+#   Sans VPS_DEPLOY_ENABLED=true, le job « deploy » est ignoré (CI verte, pas de déploiement).
+#   Note : « secrets » ne peut pas être utilisé dans if: au niveau du job ; on utilise une variable.
 #
 # Côté VPS (une fois) :
 #   - git clone du dépôt dans VPS_APP_DIR
@@ -57,7 +59,7 @@ jobs:
 
   deploy:
     needs: ci
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.VPS_HOST != ''
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.VPS_DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-vps-production
