@@ -70,6 +70,8 @@ jobs:
           username: ${{ secrets.VPS_USER || vars.VPS_USER || 'ubuntu' }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ vars.VPS_SSH_PORT || 22 }}
+          # build Next sur un petit VPS peut dépasser le défaut (~10 min)
+          command_timeout: 45m
           script: |
             set -euo pipefail
             cd "${{ vars.VPS_APP_DIR || '/home/ubuntu/YogaOps' }}"

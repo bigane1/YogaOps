@@ -7,6 +7,8 @@ cd "$ROOT"
 
 export NODE_ENV=production
 
+echo "=== YogaOps deploy : $(pwd) — Node $(node -v) ==="
+
 npm ci
 npx prisma migrate deploy
 npx prisma generate
@@ -14,16 +16,24 @@ npm run build
 
 PM2_APP_NAME="${PM2_APP_NAME:-yogaops}"
 
+# pm2 global OU npx (pas besoin d’installer pm2 à la main sur le VPS)
+run_pm2() {
+  if command -v pm2 >/dev/null 2>&1; then
+    pm2 "$@"
+  elif [[ -x ./node_modules/.bin/pm2 ]]; then
+    ./node_modules/.bin/pm2 "$@"
+  else
+    npx --yes pm2 "$@"
+  fi
+}
+
 if [[ -n "${DEPLOY_RESTART_CMD:-}" ]]; then
   bash -c "$DEPLOY_RESTART_CMD"
-elif command -v pm2 >/dev/null 2>&1; then
-  if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    pm2 restart "$PM2_APP_NAME"
-  else
-    pm2 start npm --name "$PM2_APP_NAME" -- start
-    pm2 save
-  fi
 else
-  echo "Installez PM2 ou définissez DEPLOY_RESTART_CMD (ex: systemctl restart yogaops)" >&2
-  exit 1
+  if run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+    run_pm2 restart "$PM2_APP_NAME"
+  else
+    run_pm2 start npm --name "$PM2_APP_NAME" -- start
+    run_pm2 save
+  fi
 fi
