@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,9 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YogaOps - Reservation de cours de yoga",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr"),
+  title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
   description:
-    "Reservation de cours individuel et collectif avec abonnement, paiement et Zoom.",
+    "Yoga pour femmes: gestion du stress, soulagement du dos, seances en ligne, sur place et yoga sur chaise en entreprise.",
+  openGraph: {
+    title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+    description:
+      "Seances de yoga pour femmes: bien-etre, mal de dos, stress au travail et interventions en entreprise.",
+    type: "website",
+    locale: "fr_FR",
+    url: "/",
+  },
 };
 
 export const viewport: Viewport = {
@@ -34,7 +44,10 @@ export default function RootLayout({
       lang="fr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

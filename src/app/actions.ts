@@ -5,7 +5,13 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { CourseType, LocationType, PaymentMethod, SubscriptionStatus } from "@/generated/prisma/enums";
-import { sendBookingConfirmationEmail } from "@/lib/mail";
+import {
+  createBlogPostInDb,
+  deleteBlogPostInDb,
+  updateBlogPostInDb,
+} from "@/lib/blog";
+import { sendBookingConfirmationEmail, sendContactEmail } from "@/lib/mail";
+import { defaultLandingContent, updateLandingContentInDb } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
@@ -27,6 +33,10 @@ function revalidatePublicAndAdmin() {
   revalidatePath("/reserver");
   revalidatePath("/tarifs");
   revalidatePath("/");
+  revalidatePath("/blog");
+  revalidatePath("/cgv");
+  revalidatePath("/cgu");
+  revalidatePath("/mentions-legales");
 }
 
 export async function reserveSlot(formData: FormData) {
@@ -558,4 +568,144 @@ export async function updateSubscriptionStatus(formData: FormData) {
 
   revalidatePath("/admin/abonnements");
   revalidatePath("/abonnement");
+}
+
+function toText(value: FormDataEntryValue | null, fallback: string): string {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
+function toItems(value: FormDataEntryValue | null, fallback: string[]): string[] {
+  const text = String(value ?? "");
+  const items = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : fallback;
+}
+
+export async function updateLandingContent(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  await updateLandingContentInDb({
+    heroTitle: toText(formData.get("heroTitle"), defaultLandingContent.heroTitle),
+    heroIntro: toText(formData.get("heroIntro"), defaultLandingContent.heroIntro),
+    specializationMessage: toText(
+      formData.get("specializationMessage"),
+      defaultLandingContent.specializationMessage,
+    ),
+    fatigueMessage: toText(formData.get("fatigueMessage"), defaultLandingContent.fatigueMessage),
+    enterpriseMessage: toText(
+      formData.get("enterpriseMessage"),
+      defaultLandingContent.enterpriseMessage,
+    ),
+    outdoorMessage: toText(formData.get("outdoorMessage"), defaultLandingContent.outdoorMessage),
+    firstSessionOffer: toText(
+      formData.get("firstSessionOffer"),
+      defaultLandingContent.firstSessionOffer,
+    ),
+    socialProofTitle: toText(
+      formData.get("socialProofTitle"),
+      defaultLandingContent.socialProofTitle,
+    ),
+    socialProofItems: toItems(
+      formData.get("socialProofItems"),
+      defaultLandingContent.socialProofItems,
+    ),
+    teacherBioTitle: toText(formData.get("teacherBioTitle"), defaultLandingContent.teacherBioTitle),
+    teacherBioText: toText(formData.get("teacherBioText"), defaultLandingContent.teacherBioText),
+    practicalInfoTitle: toText(
+      formData.get("practicalInfoTitle"),
+      defaultLandingContent.practicalInfoTitle,
+    ),
+    practicalInfoItems: toItems(
+      formData.get("practicalInfoItems"),
+      defaultLandingContent.practicalInfoItems,
+    ),
+    finalCtaTitle: toText(formData.get("finalCtaTitle"), defaultLandingContent.finalCtaTitle),
+    finalCtaText: toText(formData.get("finalCtaText"), defaultLandingContent.finalCtaText),
+    finalCtaButtonLabel: toText(
+      formData.get("finalCtaButtonLabel"),
+      defaultLandingContent.finalCtaButtonLabel,
+    ),
+    footerAddress: toText(formData.get("footerAddress"), defaultLandingContent.footerAddress),
+    footerPhone: toText(formData.get("footerPhone"), defaultLandingContent.footerPhone),
+    footerEmail: toText(formData.get("footerEmail"), defaultLandingContent.footerEmail),
+    facebookUrl: toText(formData.get("facebookUrl"), defaultLandingContent.facebookUrl),
+    instagramUrl: toText(formData.get("instagramUrl"), defaultLandingContent.instagramUrl),
+    tiktokUrl: toText(formData.get("tiktokUrl"), defaultLandingContent.tiktokUrl),
+    linkedinUrl: toText(formData.get("linkedinUrl"), defaultLandingContent.linkedinUrl),
+    cgvContent: toText(formData.get("cgvContent"), defaultLandingContent.cgvContent),
+    cguContent: toText(formData.get("cguContent"), defaultLandingContent.cguContent),
+    legalNoticeContent: toText(
+      formData.get("legalNoticeContent"),
+      defaultLandingContent.legalNoticeContent,
+    ),
+  });
+
+  revalidatePublicAndAdmin();
+}
+
+export async function sendContactMessage(formData: FormData) {
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+  const website = String(formData.get("website") ?? "").trim();
+  const startedAtRaw = String(formData.get("startedAt") ?? "").trim();
+
+  if (website) {
+    redirect("/?contact=ok#contact-form");
+  }
+
+  const startedAt = Number(startedAtRaw);
+  const elapsedMs = Number.isFinite(startedAt) ? Date.now() - startedAt : 0;
+  if (elapsedMs > 0 && elapsedMs < 1500) {
+    redirect("/?contact=error#contact-form");
+  }
+
+  if (!fullName || !email || !message) {
+    redirect("/?contact=error#contact-form");
+  }
+
+  await sendContactEmail({
+    fullName,
+    email,
+    message,
+  });
+
+  redirect("/?contact=ok#contact-form");
+}
+
+export async function createBlogPost(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const title = String(formData.get("title") ?? "").trim();
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+  const isPublished = String(formData.get("isPublished") ?? "1") === "1";
+  if (!title || !excerpt || !content) return;
+
+  await createBlogPostInDb({ title, excerpt, content, isPublished });
+  revalidatePublicAndAdmin();
+}
+
+export async function updateBlogPost(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = Number(formData.get("id") ?? 0);
+  const title = String(formData.get("title") ?? "").trim();
+  const excerpt = String(formData.get("excerpt") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+  const isPublished = String(formData.get("isPublished") ?? "1") === "1";
+  if (!id || !title || !excerpt || !content) return;
+
+  await updateBlogPostInDb({ id, title, excerpt, content, isPublished });
+  revalidatePublicAndAdmin();
+}
+
+export async function deleteBlogPost(formData: FormData) {
+  if (!(await isAdmin())) return;
+  const id = Number(formData.get("id") ?? 0);
+  if (!id) return;
+
+  await deleteBlogPostInDb(id);
+  revalidatePublicAndAdmin();
 }

@@ -9,6 +9,9 @@ const links = [
   { href: "/reserver", label: "Reserver" },
   { href: "/tarifs", label: "Tarifs" },
   { href: "/abonnement", label: "Abonnement" },
+  { href: "/entreprises", label: "Entreprises" },
+  { href: "/blog", label: "Blog" },
+  { href: "/admin", label: "Backoffice" },
 ];
 
 export function SiteNav() {

@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f1f6;
+  --background: #f8f1f5;
   --foreground: #5f4563;
   --card: #ffffff;
-  --brand: #8f6d90;
-  --brand-soft: #e9ddec;
-  --border-soft: #dac9df;
+  --brand: #b37ea6;
+  --brand-soft: #f3e4ef;
+  --accent: #7ea892;
+  --accent-soft: #e5f1e9;
+  --border-soft: #dccccf;
 }
 
 @theme inline {
@@ -41,7 +43,8 @@ button {
 }
 
 .brand-btn:hover {
-  filter: brightness(0.95);
+  filter: brightness(0.96);
+  box-shadow: 0 10px 20px rgba(126, 168, 146, 0.25);
 }
 
 .page-shell {
@@ -73,17 +76,17 @@ button {
 
 .brand-btn-secondary {
   background: #fff;
-  color: var(--brand);
-  border: 1px solid var(--border-soft);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, white);
 }
 
 .brand-btn-secondary:hover {
-  background: var(--brand-soft);
+  background: var(--accent-soft);
 }
 
 .brand-badge-ok {
-  background: var(--brand-soft);
-  color: var(--brand);
+  background: var(--accent-soft);
+  color: #4e7962;
 }
 
 .brand-badge-muted {
@@ -92,7 +95,11 @@ button {
 }
 
 .brand-alert {
-  background: var(--brand-soft);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-soft) 75%, white),
+    color-mix(in srgb, var(--accent-soft) 60%, white)
+  );
   border: 1px solid var(--border-soft);
   color: var(--foreground);
 }

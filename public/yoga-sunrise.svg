@@ -1,0 +1,22 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Illustration yoga sunrise</title>
+  <desc id="desc">Une silhouette en posture de yoga devant un lever de soleil</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f4d9eb"/>
+      <stop offset="100%" stop-color="#fff8ef"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffd36e"/>
+      <stop offset="100%" stop-color="#ff9e80"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <circle cx="600" cy="360" r="150" fill="url(#sun)" opacity="0.85"/>
+  <ellipse cx="600" cy="635" rx="340" ry="80" fill="#dfc4e3"/>
+  <circle cx="600" cy="430" r="40" fill="#8f6d90"/>
+  <path d="M500 520 C550 490 650 490 700 520" stroke="#8f6d90" stroke-width="28" stroke-linecap="round" fill="none"/>
+  <path d="M525 550 C560 590 640 590 675 550" stroke="#8f6d90" stroke-width="26" stroke-linecap="round" fill="none"/>
+  <path d="M420 525 C460 510 490 540 520 560" stroke="#8f6d90" stroke-width="24" stroke-linecap="round" fill="none"/>
+  <path d="M780 525 C740 510 710 540 680 560" stroke="#8f6d90" stroke-width="24" stroke-linecap="round" fill="none"/>
+</svg>

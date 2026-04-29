@@ -1,0 +1,21 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Illustration yoga balance</title>
+  <desc id="desc">Une personne en posture d equilibre de yoga</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ece4f5"/>
+      <stop offset="100%" stop-color="#fff9f2"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg2)"/>
+  <ellipse cx="600" cy="650" rx="330" ry="70" fill="#dcc9e2"/>
+  <circle cx="600" cy="360" r="42" fill="#8f6d90"/>
+  <path d="M600 405 L600 560" stroke="#8f6d90" stroke-width="30" stroke-linecap="round"/>
+  <path d="M600 455 L485 520" stroke="#8f6d90" stroke-width="24" stroke-linecap="round"/>
+  <path d="M600 455 L715 520" stroke="#8f6d90" stroke-width="24" stroke-linecap="round"/>
+  <path d="M600 560 L510 660" stroke="#8f6d90" stroke-width="26" stroke-linecap="round"/>
+  <path d="M600 560 L720 555" stroke="#8f6d90" stroke-width="26" stroke-linecap="round"/>
+  <circle cx="720" cy="555" r="12" fill="#8f6d90"/>
+  <path d="M460 530 C430 535 410 555 390 585" stroke="#d9bfdc" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <path d="M740 530 C770 535 790 555 810 585" stroke="#d9bfdc" stroke-width="16" stroke-linecap="round" fill="none"/>
+</svg>

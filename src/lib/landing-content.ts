@@ -1,0 +1,482 @@
+import { prisma } from "@/lib/prisma";
+
+const CGV_TEMPLATE = `CGV - Conditions Generales de Vente (Micro-entreprise)
+
+1. Objet
+Les presentes Conditions Generales de Vente (CGV) regissent la vente de seances de yoga (individuelles, collectives, en ligne, en presentiel ou en entreprise) et des formules associees proposees par YogaOps.
+
+2. Prestations proposees
+Les prestations sont decrites sur le site (format, duree, tarifs). YogaOps se reserve le droit d adapter le contenu pedagogique des seances selon le niveau et l etat de forme des participantes.
+
+3. Reservation
+La reservation d une seance est effectuee via le site et vaut acceptation pleine et entiere des presentes CGV.
+
+4. Tarifs et paiement
+Les prix sont indiques en euros. Le paiement peut etre realise selon les moyens proposes sur le site (paiement en ligne ou sur place selon le cas).
+
+5. Annulation et report
+Toute demande d annulation ou de report doit etre transmise des que possible.
+Sauf mention contraire dans une offre specifique:
+- annulation plus de 24h avant: report possible selon disponibilites;
+- annulation moins de 24h avant ou absence: seance due.
+En cas d annulation par YogaOps, une nouvelle date est proposee ou un remboursement est effectue selon la situation.
+
+6. Conditions de participation
+Chaque participante confirme etre apte a la pratique d une activite physique douce.
+En cas de pathologie, grossesse, blessure ou doute, il est recommande de demander l avis d un professionnel de sante avant la seance.
+
+7. Responsabilite
+YogaOps met en oeuvre tous les moyens raisonnables pour assurer des seances de qualite et securisees.
+La responsabilite de YogaOps ne saurait etre engagee en cas de mauvaise execution liee a une information incomplete ou inexacte fournie par la cliente, ou a un cas de force majeure.
+
+8. Propriete intellectuelle
+Les contenus, supports, textes, visuels et methodes proposes restent la propriete de YogaOps, sauf mention contraire.
+
+9. Donnees personnelles
+Les donnees collectees via le site sont utilisees pour la gestion des reservations, la relation client et le suivi administratif.
+
+10. Mediation de la consommation
+Conformement aux articles L.612-1 et suivants du Code de la consommation, la cliente peut recourir gratuitement a un mediateur de la consommation en vue de la resolution amiable d un litige.
+Nom et coordonnees du mediateur: a completer.
+
+11. Droit applicable
+Les presentes CGV sont soumises au droit francais.
+
+12. Informations micro-entreprise
+Statut: micro-entreprise.
+TVA non applicable, article 293 B du CGI (si franchise en base applicable).`;
+
+const CGU_TEMPLATE = `CGU - Conditions Generales d Utilisation
+
+1. Objet
+Les presentes CGU encadrent l acces et l utilisation du site YogaOps.
+
+2. Acceptation
+En naviguant sur le site, l utilisatrice reconnait avoir pris connaissance des CGU et les accepter sans reserve.
+
+3. Acces au site
+Le site est accessible 24h/24, 7j/7, sauf interruption pour maintenance, mise a jour ou cas de force majeure.
+
+4. Utilisation du site
+L utilisatrice s engage a:
+- fournir des informations exactes lors des formulaires;
+- ne pas porter atteinte au bon fonctionnement du site;
+- ne pas tenter d acceder de maniere non autorisee aux donnees ou systemes.
+
+5. Contenus et propriete intellectuelle
+L ensemble des contenus du site (marque, textes, photos, graphismes, logos) est protege.
+Toute reproduction, representation ou diffusion sans autorisation prealable est interdite.
+
+6. Liens externes
+Le site peut contenir des liens vers des sites tiers. YogaOps n est pas responsable du contenu de ces sites externes.
+
+7. Responsabilite
+YogaOps met en oeuvre des moyens raisonnables pour fournir des informations fiables et actualisees, sans garantir l absence totale d erreurs ou d interruptions.
+
+8. Donnees personnelles
+L utilisation du site peut entrainer la collecte de donnees personnelles strictement necessaires au traitement des reservations et demandes de contact.
+
+9. Modification des CGU
+YogaOps peut modifier les presentes CGU a tout moment. La version en vigueur est celle publiee sur le site.
+
+10. Droit applicable
+Les presentes CGU sont soumises au droit francais.`;
+
+const LEGAL_NOTICE_TEMPLATE = `Mentions legales (Micro-entreprise)
+
+1. Editeur du site
+Nom commercial: YogaOps
+Responsable de publication: la professeure exploitante du service
+Email de contact: contact@yogaops.fr
+Telephone: +33 6 00 00 00 00
+Statut juridique: micro-entreprise
+Nom / Prenom de l exploitante: a completer
+Adresse de domiciliation: a completer
+SIREN: a completer
+RCS/RM: a completer si applicable
+TVA: TVA non applicable, article 293 B du CGI (si franchise en base)
+
+2. Hebergement
+Hebergeur: a completer avec les informations de votre hebergeur (raison sociale, adresse, contact).
+
+3. Activite
+Le site propose des services de reservation de seances de yoga (en ligne, presentiel et interventions en entreprise).
+
+4. Propriete intellectuelle
+Les contenus du site sont proteges par le droit de la propriete intellectuelle.
+Toute reproduction, adaptation ou publication, totale ou partielle, sans autorisation ecrite est interdite.
+
+5. Donnees personnelles
+Les informations collectees via les formulaires sont utilisees pour gerer les reservations, repondre aux demandes et assurer le suivi client.
+Les donnees sont conservees uniquement pendant la duree necessaire a ces finalites, sauf obligation legale contraire.
+
+6. Cookies et mesures d audience
+Le site peut utiliser des cookies techniques necessaires a son fonctionnement.
+En cas d ajout de cookies de mesure d audience ou marketing, un bandeau de consentement doit etre mis en place.
+
+7. Mediation de la consommation
+Conformement au Code de la consommation, vous pouvez recourir gratuitement a un mediateur de la consommation en cas de litige.
+Nom et coordonnees du mediateur: a completer.
+
+8. Contact
+Pour toute question juridique ou relative a vos donnees, vous pouvez contacter YogaOps via l email indique ci-dessus.`;
+
+export type LandingContent = {
+  heroTitle: string;
+  heroIntro: string;
+  specializationMessage: string;
+  fatigueMessage: string;
+  enterpriseMessage: string;
+  outdoorMessage: string;
+  firstSessionOffer: string;
+  socialProofTitle: string;
+  socialProofItems: string[];
+  teacherBioTitle: string;
+  teacherBioText: string;
+  practicalInfoTitle: string;
+  practicalInfoItems: string[];
+  finalCtaTitle: string;
+  finalCtaText: string;
+  finalCtaButtonLabel: string;
+  footerAddress: string;
+  footerPhone: string;
+  footerEmail: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  tiktokUrl: string;
+  linkedinUrl: string;
+  cgvContent: string;
+  cguContent: string;
+  legalNoticeContent: string;
+};
+
+export const defaultLandingContent: LandingContent = {
+  heroTitle:
+    "Yoga pour femmes: soulager le stress, le dos et retrouver de l energie",
+  heroIntro:
+    "Je propose des seances de yoga pour femmes, en ligne et sur place, avec une approche douce et efficace pour reduire le stress du quotidien, apaiser les tensions du dos et reprendre confiance dans son corps.",
+  specializationMessage:
+    "J ai aussi une experience de recruteuse IT, ce qui me permet de bien comprendre le stress de ce metier pour les femmes. Je propose des seances ciblees pour respirer, prendre du recul et mieux affronter les difficultes professionnelles. Cette specialisation complete mon accompagnement general sans limiter les autres profils.",
+  fatigueMessage:
+    "Entre les transports, le travail, la pression quotidienne et l equilibre entre vie professionnelle et vie de famille, la fatigue peut vite s accumuler. Ces seances offrent un vrai moment de bien-etre pour prendre soin de son esprit, ralentir et se reconnecter a soi.",
+  enterpriseMessage:
+    "Accompagnement aussi en entreprise avec yoga sur chaise pour baisser la pression au travail et prevenir les douleurs liees a la posture.",
+  outdoorMessage:
+    "Participez aussi a des seances de yoga en plein air en groupe pour prendre du plaisir, bouger ensemble et faire de belles rencontres.",
+  firstSessionOffer: "Premiere seance gratuite, en individuel ou en groupe.",
+  socialProofTitle: "Elles en parlent mieux que moi",
+  socialProofItems: [
+    "J ai retrouve de l energie et je dors beaucoup mieux apres mes seances.",
+    "Mes douleurs de dos ont vraiment diminue en quelques semaines.",
+    "Les cours en groupe sont bienveillants et motivants, je me sens comprise.",
+  ],
+  teacherBioTitle: "Votre professeure",
+  teacherBioText:
+    "Professeure de yoga specialisee dans l accompagnement des femmes actives, j anime des seances en ligne, sur place et en entreprise. Mon approche est progressive, accessible et centree sur le bien-etre global.",
+  practicalInfoTitle: "Infos pratiques",
+  practicalInfoItems: [
+    "Formats: individuel, groupe, entreprise, yoga sur chaise.",
+    "Lieux: en ligne, en presentiel et en plein air selon la saison.",
+    "Duree: de 30 a 60 minutes selon vos besoins.",
+    "Niveaux: debutantes et intermediaires bienvenues.",
+  ],
+  finalCtaTitle: "Prete a prendre soin de vous ?",
+  finalCtaText:
+    "Commencez sereinement avec une premiere seance gratuite. Ensemble, nous construisons une pratique adaptee a votre rythme.",
+  finalCtaButtonLabel: "Reserver ma premiere seance",
+  footerAddress: "Adresse: 12 rue du Bien-Etre, 75000 Paris",
+  footerPhone: "Telephone: +33 6 00 00 00 00",
+  footerEmail: "Email: contact@yogaops.fr",
+  facebookUrl: "https://www.facebook.com/",
+  instagramUrl: "https://www.instagram.com/",
+  tiktokUrl: "https://www.tiktok.com/",
+  linkedinUrl: "https://www.linkedin.com/",
+  cgvContent:
+    CGV_TEMPLATE,
+  cguContent:
+    CGU_TEMPLATE,
+  legalNoticeContent:
+    LEGAL_NOTICE_TEMPLATE,
+};
+
+function parseItems(raw: string | null | undefined, fallback: string[]): string[] {
+  if (!raw) return fallback;
+  const items = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return items.length > 0 ? items : fallback;
+}
+
+export async function ensureLandingContentTable() {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS LandingContent (
+      id INTEGER PRIMARY KEY,
+      heroTitle TEXT NOT NULL,
+      heroIntro TEXT NOT NULL,
+      specializationMessage TEXT NOT NULL,
+      fatigueMessage TEXT NOT NULL,
+      enterpriseMessage TEXT NOT NULL,
+      outdoorMessage TEXT NOT NULL,
+      firstSessionOffer TEXT NOT NULL,
+      socialProofTitle TEXT NOT NULL,
+      socialProofItems TEXT NOT NULL,
+      teacherBioTitle TEXT NOT NULL,
+      teacherBioText TEXT NOT NULL,
+      practicalInfoTitle TEXT NOT NULL,
+      practicalInfoItems TEXT NOT NULL,
+      finalCtaTitle TEXT NOT NULL,
+      finalCtaText TEXT NOT NULL,
+      finalCtaButtonLabel TEXT NOT NULL,
+      footerAddress TEXT NOT NULL,
+      footerPhone TEXT NOT NULL,
+      footerEmail TEXT NOT NULL,
+      facebookUrl TEXT NOT NULL,
+      instagramUrl TEXT NOT NULL,
+      tiktokUrl TEXT NOT NULL,
+      linkedinUrl TEXT NOT NULL,
+      cgvContent TEXT NOT NULL,
+      cguContent TEXT NOT NULL,
+      legalNoticeContent TEXT NOT NULL,
+      updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  const columns = (await prisma.$queryRawUnsafe<{ name: string }[]>(
+    "PRAGMA table_info(LandingContent)",
+  )) as { name: string }[];
+  const existingColumns = new Set(columns.map((column) => column.name));
+  const requiredColumns = [
+    "specializationMessage",
+    "footerAddress",
+    "footerPhone",
+    "footerEmail",
+    "facebookUrl",
+    "instagramUrl",
+    "tiktokUrl",
+    "linkedinUrl",
+    "cgvContent",
+    "cguContent",
+    "legalNoticeContent",
+  ];
+
+  for (const column of requiredColumns) {
+    if (existingColumns.has(column)) continue;
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE LandingContent ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`,
+    );
+  }
+}
+
+export async function seedLandingContentIfMissing() {
+  await ensureLandingContentTable();
+
+  const existing = (await prisma.$queryRawUnsafe<{ count: number }[]>(
+    "SELECT COUNT(*) as count FROM LandingContent WHERE id = 1",
+  )) as { count: number }[];
+  const hasRow = Number(existing?.[0]?.count ?? 0) > 0;
+  if (hasRow) return;
+
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO LandingContent (
+      id, heroTitle, heroIntro, specializationMessage, fatigueMessage, enterpriseMessage, outdoorMessage, firstSessionOffer,
+      socialProofTitle, socialProofItems, teacherBioTitle, teacherBioText, practicalInfoTitle,
+      practicalInfoItems, finalCtaTitle, finalCtaText, finalCtaButtonLabel, footerAddress,
+      footerPhone, footerEmail, facebookUrl, instagramUrl, tiktokUrl, linkedinUrl,
+      cgvContent, cguContent, legalNoticeContent, updatedAt
+    ) VALUES (
+      1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP
+    )`,
+    defaultLandingContent.heroTitle,
+    defaultLandingContent.heroIntro,
+    defaultLandingContent.specializationMessage,
+    defaultLandingContent.fatigueMessage,
+    defaultLandingContent.enterpriseMessage,
+    defaultLandingContent.outdoorMessage,
+    defaultLandingContent.firstSessionOffer,
+    defaultLandingContent.socialProofTitle,
+    defaultLandingContent.socialProofItems.join("\n"),
+    defaultLandingContent.teacherBioTitle,
+    defaultLandingContent.teacherBioText,
+    defaultLandingContent.practicalInfoTitle,
+    defaultLandingContent.practicalInfoItems.join("\n"),
+    defaultLandingContent.finalCtaTitle,
+    defaultLandingContent.finalCtaText,
+    defaultLandingContent.finalCtaButtonLabel,
+    defaultLandingContent.footerAddress,
+    defaultLandingContent.footerPhone,
+    defaultLandingContent.footerEmail,
+    defaultLandingContent.facebookUrl,
+    defaultLandingContent.instagramUrl,
+    defaultLandingContent.tiktokUrl,
+    defaultLandingContent.linkedinUrl,
+    defaultLandingContent.cgvContent,
+    defaultLandingContent.cguContent,
+    defaultLandingContent.legalNoticeContent,
+  );
+}
+
+export async function upgradeLegalTemplatesIfNeeded() {
+  await ensureLandingContentTable();
+
+  // Upgrade legacy placeholder legal texts, without overriding custom edits.
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET cgvContent = ?,
+         cguContent = ?,
+         legalNoticeContent = ?
+     WHERE id = 1
+       AND (
+         cgvContent LIKE 'CGV - Conditions Generales de Vente%'
+         OR cguContent LIKE 'CGU - Conditions Generales d Utilisation%'
+         OR legalNoticeContent LIKE 'Mentions legales%'
+       )`,
+    CGV_TEMPLATE,
+    CGU_TEMPLATE,
+    LEGAL_NOTICE_TEMPLATE,
+  );
+
+  // Explicit upgrade path for prior non-micro templates added in earlier versions.
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET cgvContent = ?,
+         legalNoticeContent = ?
+     WHERE id = 1
+       AND (
+         cgvContent LIKE 'CGV - Conditions Generales de Vente%'
+         OR legalNoticeContent LIKE 'Mentions legales%'
+       )`,
+    CGV_TEMPLATE,
+    LEGAL_NOTICE_TEMPLATE,
+  );
+}
+
+type LandingRow = {
+  heroTitle: string;
+  heroIntro: string;
+  specializationMessage: string;
+  fatigueMessage: string;
+  enterpriseMessage: string;
+  outdoorMessage: string;
+  firstSessionOffer: string;
+  socialProofTitle: string;
+  socialProofItems: string;
+  teacherBioTitle: string;
+  teacherBioText: string;
+  practicalInfoTitle: string;
+  practicalInfoItems: string;
+  finalCtaTitle: string;
+  finalCtaText: string;
+  finalCtaButtonLabel: string;
+  footerAddress: string;
+  footerPhone: string;
+  footerEmail: string;
+  facebookUrl: string;
+  instagramUrl: string;
+  tiktokUrl: string;
+  linkedinUrl: string;
+  cgvContent: string;
+  cguContent: string;
+  legalNoticeContent: string;
+};
+
+export async function getLandingContent(): Promise<LandingContent> {
+  await seedLandingContentIfMissing();
+  await upgradeLegalTemplatesIfNeeded();
+  const rows = (await prisma.$queryRawUnsafe<LandingRow[]>(
+    "SELECT * FROM LandingContent WHERE id = 1 LIMIT 1",
+  )) as LandingRow[];
+  const row = rows?.[0];
+  if (!row) return defaultLandingContent;
+
+  return {
+    heroTitle: row.heroTitle || defaultLandingContent.heroTitle,
+    heroIntro: row.heroIntro || defaultLandingContent.heroIntro,
+    specializationMessage:
+      row.specializationMessage || defaultLandingContent.specializationMessage,
+    fatigueMessage: row.fatigueMessage || defaultLandingContent.fatigueMessage,
+    enterpriseMessage: row.enterpriseMessage || defaultLandingContent.enterpriseMessage,
+    outdoorMessage: row.outdoorMessage || defaultLandingContent.outdoorMessage,
+    firstSessionOffer: row.firstSessionOffer || defaultLandingContent.firstSessionOffer,
+    socialProofTitle: row.socialProofTitle || defaultLandingContent.socialProofTitle,
+    socialProofItems: parseItems(row.socialProofItems, defaultLandingContent.socialProofItems),
+    teacherBioTitle: row.teacherBioTitle || defaultLandingContent.teacherBioTitle,
+    teacherBioText: row.teacherBioText || defaultLandingContent.teacherBioText,
+    practicalInfoTitle: row.practicalInfoTitle || defaultLandingContent.practicalInfoTitle,
+    practicalInfoItems: parseItems(row.practicalInfoItems, defaultLandingContent.practicalInfoItems),
+    finalCtaTitle: row.finalCtaTitle || defaultLandingContent.finalCtaTitle,
+    finalCtaText: row.finalCtaText || defaultLandingContent.finalCtaText,
+    finalCtaButtonLabel: row.finalCtaButtonLabel || defaultLandingContent.finalCtaButtonLabel,
+    footerAddress: row.footerAddress || defaultLandingContent.footerAddress,
+    footerPhone: row.footerPhone || defaultLandingContent.footerPhone,
+    footerEmail: row.footerEmail || defaultLandingContent.footerEmail,
+    facebookUrl: row.facebookUrl || defaultLandingContent.facebookUrl,
+    instagramUrl: row.instagramUrl || defaultLandingContent.instagramUrl,
+    tiktokUrl: row.tiktokUrl || defaultLandingContent.tiktokUrl,
+    linkedinUrl: row.linkedinUrl || defaultLandingContent.linkedinUrl,
+    cgvContent: row.cgvContent || defaultLandingContent.cgvContent,
+    cguContent: row.cguContent || defaultLandingContent.cguContent,
+    legalNoticeContent: row.legalNoticeContent || defaultLandingContent.legalNoticeContent,
+  };
+}
+
+export async function updateLandingContentInDb(content: LandingContent) {
+  await seedLandingContentIfMissing();
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET heroTitle = ?,
+         heroIntro = ?,
+         specializationMessage = ?,
+         fatigueMessage = ?,
+         enterpriseMessage = ?,
+         outdoorMessage = ?,
+         firstSessionOffer = ?,
+         socialProofTitle = ?,
+         socialProofItems = ?,
+         teacherBioTitle = ?,
+         teacherBioText = ?,
+         practicalInfoTitle = ?,
+         practicalInfoItems = ?,
+         finalCtaTitle = ?,
+         finalCtaText = ?,
+         finalCtaButtonLabel = ?,
+         footerAddress = ?,
+         footerPhone = ?,
+         footerEmail = ?,
+         facebookUrl = ?,
+         instagramUrl = ?,
+         tiktokUrl = ?,
+         linkedinUrl = ?,
+         cgvContent = ?,
+         cguContent = ?,
+         legalNoticeContent = ?,
+         updatedAt = CURRENT_TIMESTAMP
+     WHERE id = 1`,
+    content.heroTitle,
+    content.heroIntro,
+    content.specializationMessage,
+    content.fatigueMessage,
+    content.enterpriseMessage,
+    content.outdoorMessage,
+    content.firstSessionOffer,
+    content.socialProofTitle,
+    content.socialProofItems.join("\n"),
+    content.teacherBioTitle,
+    content.teacherBioText,
+    content.practicalInfoTitle,
+    content.practicalInfoItems.join("\n"),
+    content.finalCtaTitle,
+    content.finalCtaText,
+    content.finalCtaButtonLabel,
+    content.footerAddress,
+    content.footerPhone,
+    content.footerEmail,
+    content.facebookUrl,
+    content.instagramUrl,
+    content.tiktokUrl,
+    content.linkedinUrl,
+    content.cgvContent,
+    content.cguContent,
+    content.legalNoticeContent,
+  );
+}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/site-nav";
 import { ReserverSubscriptionUnlock } from "@/components/reserver-subscription-unlock";
 import { reserveSlot } from "@/app/actions";
@@ -20,6 +21,12 @@ type Props = {
     subscriptionId?: string;
     error?: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Reserver un cours de yoga | YogaOps",
+  description:
+    "Consultez les prochains creneaux et reservez votre seance de yoga en ligne ou en presentiel.",
 };
 
 export default async function ReserverPage({ searchParams }: Props) {

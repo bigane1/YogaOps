@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/site-nav";
 import { ensureSeedData } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { buySubscriptionStripe } from "@/app/actions";
+
+export const metadata: Metadata = {
+  title: "Tarifs yoga femmes et entreprise | YogaOps",
+  description:
+    "Decouvrez les prix des seances de yoga individuelles, collectives, en ligne, sur place et les abonnements.",
+};
 
 export default async function TarifsPage() {
   await ensureSeedData();

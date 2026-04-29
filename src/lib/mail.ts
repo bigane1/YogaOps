@@ -10,6 +10,12 @@ type ConfirmationMailInput = {
   priceEur: number;
 };
 
+type ContactMailInput = {
+  fullName: string;
+  email: string;
+  message: string;
+};
+
 function getTransporter() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT ?? "587");
@@ -62,6 +68,33 @@ export async function sendBookingConfirmationEmail(
     to: input.customerEmail,
     cc: adminEmail || undefined,
     subject: "YogaOps - Confirmation de reservation",
+    text,
+  });
+}
+
+export async function sendContactEmail(input: ContactMailInput): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) return;
+
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;
+  if (!adminEmail) return;
+
+  const text = [
+    "Nouveau message depuis le formulaire de contact YogaOps.",
+    "",
+    `Nom: ${input.fullName}`,
+    `Email: ${input.email}`,
+    "",
+    "Message:",
+    input.message,
+  ].join("\n");
+
+  await transporter.sendMail({
+    from,
+    to: adminEmail,
+    replyTo: input.email,
+    subject: `YogaOps - Nouveau contact de ${input.fullName}`,
     text,
   });
 }

@@ -1,4 +1,6 @@
 import { CourseType, LocationType } from "@/generated/prisma/enums";
+import { seedBlogIfMissing } from "@/lib/blog";
+import { seedLandingContentIfMissing } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 
 export function formatDateFR(date: Date): string {
@@ -32,6 +34,9 @@ export function startOfWeekMonday(date: Date): Date {
 }
 
 export async function ensureSeedData() {
+  await seedLandingContentIfMissing();
+  await seedBlogIfMissing();
+
   const existing = await prisma.course.count();
   if (existing > 0) return;
 

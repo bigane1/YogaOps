@@ -1,11 +1,21 @@
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout } from "@/app/actions";
+import {
+  adminLogin,
+  adminLogout,
+  createBlogPost,
+  deleteBlogPost,
+  updateBlogPost,
+  updateLandingContent,
+} from "@/app/actions";
+import { listAdminBlogPosts } from "@/lib/blog";
 import { ensureSeedData, addDays, startOfDay } from "@/lib/db";
+import { getLandingContent } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
+const fieldSm = "brand-field rounded px-2 py-1 text-sm";
 
 export default async function AdminPage() {
   await ensureSeedData();
@@ -41,11 +51,20 @@ export default async function AdminPage() {
 
   const today = startOfDay(new Date());
   const weekEnd = addDays(today, 7);
-  const [coursesCount, slotsCount, bookingsPendingCount, subscriptionsActiveCount] = await Promise.all([
+  const [
+    coursesCount,
+    slotsCount,
+    bookingsPendingCount,
+    subscriptionsActiveCount,
+    landing,
+    blogPosts,
+  ] = await Promise.all([
     prisma.course.count({ where: { isActive: true } }),
     prisma.timeSlot.count({ where: { startsAt: { gte: today, lt: weekEnd } } }),
     prisma.booking.count({ where: { status: "pending" } }),
     prisma.subscription.count({ where: { status: "active" } }),
+    getLandingContent(),
+    listAdminBlogPosts(),
   ]);
 
   return (
@@ -65,6 +84,190 @@ export default async function AdminPage() {
             Deconnexion
           </button>
         </form>
+
+        <section className="brand-card mt-8 rounded-xl p-6">
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
+            Blog (editable)
+          </h2>
+          <form action={createBlogPost} className="mt-4 grid gap-2">
+            <input name="title" required placeholder="Titre article" className={fieldMd} />
+            <input name="excerpt" required placeholder="Resume court" className={fieldMd} />
+            <textarea name="content" required rows={5} placeholder="Contenu" className={fieldMd} />
+            <select name="isPublished" className={fieldMd}>
+              <option value="1">Publie</option>
+              <option value="0">Brouillon</option>
+            </select>
+            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
+              Ajouter article
+            </button>
+          </form>
+
+          <ul className="mt-4 space-y-3 text-sm">
+            {blogPosts.map((post) => (
+              <li key={post.id} className="brand-list-item p-3">
+                <form action={updateBlogPost} className="grid gap-2">
+                  <input type="hidden" name="id" value={post.id} />
+                  <input name="title" defaultValue={post.title} className={fieldSm} />
+                  <input name="excerpt" defaultValue={post.excerpt} className={fieldSm} />
+                  <textarea
+                    name="content"
+                    defaultValue={post.content}
+                    rows={4}
+                    className={fieldSm}
+                  />
+                  <select
+                    name="isPublished"
+                    defaultValue={post.isPublished ? "1" : "0"}
+                    className={fieldSm}
+                  >
+                    <option value="1">Publie</option>
+                    <option value="0">Brouillon</option>
+                  </select>
+                  <button
+                    type="submit"
+                    className="brand-btn brand-btn-sm w-fit rounded px-3 py-1 text-white"
+                  >
+                    Modifier
+                  </button>
+                </form>
+                <form action={deleteBlogPost} className="mt-2">
+                  <input type="hidden" name="id" value={post.id} />
+                  <button
+                    type="submit"
+                    className="rounded border border-red-300 bg-red-50 px-3 py-1 text-sm text-red-800 hover:bg-red-100"
+                  >
+                    Supprimer
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="brand-card mt-8 rounded-xl p-6">
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
+            Landing page (editable)
+          </h2>
+          <p className="mt-1 text-sm opacity-80">
+            Modifiez les textes de la page d accueil. Les listes se saisissent une ligne par element.
+          </p>
+          <form action={updateLandingContent} className="mt-4 grid gap-3">
+            <input name="heroTitle" defaultValue={landing.heroTitle} className={fieldMd} />
+            <textarea
+              name="heroIntro"
+              defaultValue={landing.heroIntro}
+              rows={3}
+              className={fieldMd}
+            />
+            <textarea
+              name="specializationMessage"
+              defaultValue={landing.specializationMessage}
+              rows={3}
+              className={fieldMd}
+            />
+            <textarea
+              name="fatigueMessage"
+              defaultValue={landing.fatigueMessage}
+              rows={3}
+              className={fieldMd}
+            />
+            <textarea
+              name="enterpriseMessage"
+              defaultValue={landing.enterpriseMessage}
+              rows={2}
+              className={fieldMd}
+            />
+            <textarea
+              name="outdoorMessage"
+              defaultValue={landing.outdoorMessage}
+              rows={2}
+              className={fieldMd}
+            />
+            <input
+              name="firstSessionOffer"
+              defaultValue={landing.firstSessionOffer}
+              className={fieldMd}
+            />
+
+            <input
+              name="socialProofTitle"
+              defaultValue={landing.socialProofTitle}
+              className={fieldMd}
+            />
+            <textarea
+              name="socialProofItems"
+              defaultValue={landing.socialProofItems.join("\n")}
+              rows={4}
+              className={fieldMd}
+            />
+
+            <input
+              name="teacherBioTitle"
+              defaultValue={landing.teacherBioTitle}
+              className={fieldMd}
+            />
+            <textarea
+              name="teacherBioText"
+              defaultValue={landing.teacherBioText}
+              rows={3}
+              className={fieldMd}
+            />
+
+            <input
+              name="practicalInfoTitle"
+              defaultValue={landing.practicalInfoTitle}
+              className={fieldMd}
+            />
+            <textarea
+              name="practicalInfoItems"
+              defaultValue={landing.practicalInfoItems.join("\n")}
+              rows={4}
+              className={fieldMd}
+            />
+
+            <input name="finalCtaTitle" defaultValue={landing.finalCtaTitle} className={fieldMd} />
+            <textarea
+              name="finalCtaText"
+              defaultValue={landing.finalCtaText}
+              rows={3}
+              className={fieldMd}
+            />
+            <input
+              name="finalCtaButtonLabel"
+              defaultValue={landing.finalCtaButtonLabel}
+              className={fieldMd}
+            />
+            <input name="footerAddress" defaultValue={landing.footerAddress} className={fieldMd} />
+            <input name="footerPhone" defaultValue={landing.footerPhone} className={fieldMd} />
+            <input name="footerEmail" defaultValue={landing.footerEmail} className={fieldMd} />
+            <input name="facebookUrl" defaultValue={landing.facebookUrl} className={fieldMd} />
+            <input name="instagramUrl" defaultValue={landing.instagramUrl} className={fieldMd} />
+            <input name="tiktokUrl" defaultValue={landing.tiktokUrl} className={fieldMd} />
+            <input name="linkedinUrl" defaultValue={landing.linkedinUrl} className={fieldMd} />
+            <textarea
+              name="cgvContent"
+              defaultValue={landing.cgvContent}
+              rows={8}
+              className={fieldMd}
+            />
+            <textarea
+              name="cguContent"
+              defaultValue={landing.cguContent}
+              rows={8}
+              className={fieldMd}
+            />
+            <textarea
+              name="legalNoticeContent"
+              defaultValue={landing.legalNoticeContent}
+              rows={8}
+              className={fieldMd}
+            />
+
+            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
+              Enregistrer contenu landing
+            </button>
+          </form>
+        </section>
 
         <section className="brand-card mt-6 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
