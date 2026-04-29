@@ -1,9 +1,12 @@
 # CI + déploiement automatique sur VPS (SSH + git).
 #
 # Configuration GitHub :
-#   Secrets : VPS_HOST, VPS_USER, VPS_SSH_PRIVATE_KEY (clé privée PEM, sans mot de passe)
-#   Variables : VPS_APP_DIR (chemin absolu du clone git sur le serveur, ex. /var/www/yogaops)
-#   Optionnel  : VPS_SSH_PORT (défaut 22)
+#   Obligatoire :
+#     Secret VPS_SSH_PRIVATE_KEY (clé privée PEM)
+#     VPS_APP_DIR (variable : chemin du clone sur le serveur, ex. /var/www/yogaops)
+#   Host / utilisateur SSH : secret VPS_HOST et VPS_USER **ou** variables VPS_HOST et VPS_USER
+#     (si l’IP était en « variable » au lieu de « secret », le déploiement voyait un host vide.)
+#   Optionnel : VPS_SSH_PORT (défaut 22)
 #
 # Côté VPS (une fois) :
 #   - git clone du dépôt dans VPS_APP_DIR
@@ -62,11 +65,25 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      - name: Vérifier host et utilisateur SSH
+        env:
+          H: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          U: ${{ secrets.VPS_USER || vars.VPS_USER }}
+        run: |
+          if [ -z "$H" ]; then
+            echo "::error::VPS_HOST est vide. Ajoutez le secret VPS_HOST ou la variable de dépôt VPS_HOST (IP ou nom du serveur)."
+            exit 1
+          fi
+          if [ -z "$U" ]; then
+            echo "::error::VPS_USER est vide. Ajoutez le secret VPS_USER ou la variable VPS_USER."
+            exit 1
+          fi
+
       - name: Déployer sur le VPS
         uses: appleboy/ssh-action@v1.2.2
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
+          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          username: ${{ secrets.VPS_USER || vars.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ vars.VPS_SSH_PORT || 22 }}
           script: |
