@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { sendContactMessage } from "@/app/actions";
+import { ContactFormStartedAt } from "@/components/contact-form-started-at";
 import { SiteNav } from "@/components/site-nav";
 import { ensureSeedData } from "@/lib/db";
 import { getLandingContent } from "@/lib/landing-content";
@@ -216,7 +217,7 @@ export default async function Home({ searchParams }: Props) {
           <ul className="mt-3 grid gap-3 md:grid-cols-3">
             {landing.socialProofItems.map((item) => (
               <li key={item} className="brand-list-item rounded-lg p-4 text-sm opacity-90">
-                "{item}"
+                « {item} »
               </li>
             ))}
           </ul>
@@ -268,7 +269,7 @@ export default async function Home({ searchParams }: Props) {
             </p>
           ) : null}
           <form action={sendContactMessage} className="mt-4 grid max-w-2xl gap-3">
-            <input type="hidden" name="startedAt" value={Date.now()} />
+            <ContactFormStartedAt />
             <div className="hidden" aria-hidden="true">
               <label htmlFor="website">Website</label>
               <input
