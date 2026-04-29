@@ -62,6 +62,16 @@ jobs:
       cancel-in-progress: false
 
     steps:
+      # Évite une erreur peu claire « missing server host » si les secrets ne sont pas configurés.
+      - name: Vérifier les secrets VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          if [ -z "$VPS_HOST" ]; then
+            echo "::error::Secret VPS_HOST manquant. Ajoutez dans GitHub : Settings → Secrets and variables → Actions → VPS_HOST, VPS_USER, VPS_SSH_PRIVATE_KEY (et la variable VPS_APP_DIR)."
+            exit 1
+          fi
+
       - name: Déployer sur le VPS
         uses: appleboy/ssh-action@v1.2.2
         with:
@@ -69,7 +79,6 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ vars.VPS_SSH_PORT || 22 }}
-          script_stop: true
           script: |
             set -euo pipefail
             cd "${{ vars.VPS_APP_DIR }}"
