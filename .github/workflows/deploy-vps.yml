@@ -1,19 +1,16 @@
 # CI + déploiement automatique sur VPS (SSH + git).
 #
-# Configuration GitHub (Settings → Secrets and variables → Actions) :
-#   Secrets : VPS_SSH_PRIVATE_KEY (clé privée PEM)
-#             VPS_HOST et VPS_USER (recommandé : pas stockés en clair dans les variables)
-#   OU Variables : VPS_HOST, VPS_USER (IP/nom du serveur + user SSH — si pas en secrets)
-#   Variable : VPS_APP_DIR (chemin absolu du clone sur le serveur, ex. /var/www/yogaops)
-#   Optionnel : VPS_SSH_PORT (défaut 22)
+# Obligatoire dans GitHub (Settings → Secrets and variables → Actions) :
+#   Secret VPS_SSH_PRIVATE_KEY — clé privée PEM dont la clé publique est sur le VPS (~/.ssh/authorized_keys)
 #
-# Si VPS_HOST / VPS_USER sont absents, le job « deploy » est ignoré (CI verte) avec un avertissement.
+# Optionnel (sinon valeurs par défaut OVH ci-dessous) :
+#   Secrets ou variables : VPS_HOST, VPS_USER
+#   Variable : VPS_APP_DIR (chemin du clone sur le serveur)
+#   Variable : VPS_SSH_PORT (défaut 22)
 #
-# Côté VPS (une fois) :
-#   - git clone du dépôt dans VPS_APP_DIR
-#   - fichier .env avec DATABASE_URL, Stripe, SMTP, etc.
-#   - utilisateur SSH avec clé autorisée, accès au dossier du projet
-#   - Node.js LTS + npm ; PM2 (`npm i -g pm2`) ou script scripts/vps-deploy.sh
+# Défauts si non définis : host IPv4 OVH, user ubuntu, dossier /home/ubuntu/YogaOps
+#
+# Côté VPS : clone du dépôt dans VPS_APP_DIR (ou ce chemin par défaut), .env, Node LTS, PM2 ou DEPLOY_RESTART_CMD.
 
 name: CI & déploiement VPS
 
@@ -57,30 +54,9 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
 
-  # Détermine si les identifiants SSH sont présents sans faire échouer le workflow.
-  vps-gate:
-    name: Config VPS pour déploiement
-    needs: ci
-    if: needs.ci.result == 'success' && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - id: check
-        run: |
-          H='${{ secrets.VPS_HOST || vars.VPS_HOST }}'
-          U='${{ secrets.VPS_USER || vars.VPS_USER }}'
-          if [ -n "$H" ] && [ -n "$U" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "VPS SSH : host et utilisateur présents — le déploiement peut s'exécuter."
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Déploiement VPS ignoré : ajoutez VPS_HOST et VPS_USER (secrets ou variables du dépôt). Actuellement ils sont vides pour ce workflow."
-          fi
-
   deploy:
-    needs: [ci, vps-gate]
-    if: needs.ci.result == 'success' && needs.vps-gate.result == 'success' && needs.vps-gate.outputs.ready == 'true'
+    needs: ci
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-vps-production
@@ -90,13 +66,13 @@ jobs:
       - name: Déployer sur le VPS
         uses: appleboy/ssh-action@v1.2.2
         with:
-          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
-          username: ${{ secrets.VPS_USER || vars.VPS_USER }}
+          host: ${{ secrets.VPS_HOST || vars.VPS_HOST || '51.91.253.165' }}
+          username: ${{ secrets.VPS_USER || vars.VPS_USER || 'ubuntu' }}
           key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           port: ${{ vars.VPS_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
-            cd "${{ vars.VPS_APP_DIR }}"
+            cd "${{ vars.VPS_APP_DIR || '/home/ubuntu/YogaOps' }}"
             git fetch origin main
             git checkout main
             git reset --hard origin/main
