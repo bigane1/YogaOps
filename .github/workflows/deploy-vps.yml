@@ -99,6 +99,8 @@ jobs:
             fi
             echo "=== Dossier app : $APP_DIR ==="
             if [ ! -d "$APP_DIR/.git" ]; then
+              sudo mkdir -p "$APP_DIR"
+              sudo chown "$(whoami):$(whoami)" "$APP_DIR"
               git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
             fi
             cd "$APP_DIR"
