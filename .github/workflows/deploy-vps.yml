@@ -89,11 +89,13 @@ jobs:
             set -euo pipefail
             APP_DIR="${{ vars.VPS_APP_DIR }}"
             if [ -z "$APP_DIR" ]; then
-              FOUND=$(find /var /home -maxdepth 6 -name ".git" -type d 2>/dev/null \
-                      | xargs -I{} dirname {} \
-                      | xargs -I{} sh -c 'git -C {} remote get-url origin 2>/dev/null | grep -q "YogaOps" && echo {}' \
-                      | head -1)
-              APP_DIR="${FOUND:-/home/ubuntu/YogaOps}"
+              for CANDIDATE in /var/www/YogaOps /var/www/yogaops /var/YogaOps /home/ubuntu/YogaOps /root/YogaOps; do
+                if [ -d "$CANDIDATE/.git" ]; then
+                  APP_DIR="$CANDIDATE"
+                  break
+                fi
+              done
+              APP_DIR="${APP_DIR:-/home/ubuntu/YogaOps}"
             fi
             echo "=== Dossier app : $APP_DIR ==="
             if [ ! -d "$APP_DIR/.git" ]; then
