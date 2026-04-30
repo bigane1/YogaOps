@@ -124,6 +124,8 @@ Pour toute question juridique ou relative a vos donnees, vous pouvez contacter Y
 export type LandingContent = {
   heroTitle: string;
   heroIntro: string;
+  heroImage1Url: string;
+  heroImage2Url: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -153,6 +155,10 @@ export type LandingContent = {
 export const defaultLandingContent: LandingContent = {
   heroTitle:
     "Yoga pour femmes: soulager le stress, le dos et retrouver de l energie",
+  heroImage1Url:
+    "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  heroImage2Url:
+    "https://images.pexels.com/photos/4056529/pexels-photo-4056529.jpeg?auto=compress&cs=tinysrgb&w=1200",
   heroIntro:
     "Je propose des seances de yoga pour femmes, en ligne et sur place, avec une approche douce et efficace pour reduire le stress du quotidien, apaiser les tensions du dos et reprendre confiance dans son corps.",
   specializationMessage:
@@ -258,6 +264,8 @@ export async function ensureLandingContentTable() {
     "cgvContent",
     "cguContent",
     "legalNoticeContent",
+    "heroImage1Url",
+    "heroImage2Url",
   ];
 
   for (const column of requiredColumns) {
@@ -354,6 +362,8 @@ export async function upgradeLegalTemplatesIfNeeded() {
 type LandingRow = {
   heroTitle: string;
   heroIntro: string;
+  heroImage1Url: string;
+  heroImage2Url: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -392,6 +402,8 @@ export async function getLandingContent(): Promise<LandingContent> {
   return {
     heroTitle: row.heroTitle || defaultLandingContent.heroTitle,
     heroIntro: row.heroIntro || defaultLandingContent.heroIntro,
+    heroImage1Url: row.heroImage1Url || defaultLandingContent.heroImage1Url,
+    heroImage2Url: row.heroImage2Url || defaultLandingContent.heroImage2Url,
     specializationMessage:
       row.specializationMessage || defaultLandingContent.specializationMessage,
     fatigueMessage: row.fatigueMessage || defaultLandingContent.fatigueMessage,
@@ -426,6 +438,8 @@ export async function updateLandingContentInDb(content: LandingContent) {
     `UPDATE LandingContent
      SET heroTitle = ?,
          heroIntro = ?,
+         heroImage1Url = ?,
+         heroImage2Url = ?,
          specializationMessage = ?,
          fatigueMessage = ?,
          enterpriseMessage = ?,
@@ -454,6 +468,8 @@ export async function updateLandingContentInDb(content: LandingContent) {
      WHERE id = 1`,
     content.heroTitle,
     content.heroIntro,
+    content.heroImage1Url,
+    content.heroImage2Url,
     content.specializationMessage,
     content.fatigueMessage,
     content.enterpriseMessage,

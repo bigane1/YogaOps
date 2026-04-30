@@ -30,19 +30,30 @@ export default async function BlogPage() {
             </article>
           ) : (
             posts.map((post) => (
-              <article key={post.id} className="brand-card rounded-xl p-6">
-                <h2 className="text-xl font-semibold">
-                  <Link href={`/blog/${post.slug}`} className="hover:underline">
-                    {post.title}
+              <article key={post.id} className="brand-card rounded-xl overflow-hidden">
+                {post.coverImage && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    className="h-48 w-full object-cover"
+                    loading="lazy"
+                  />
+                )}
+                <div className="p-6">
+                  <h2 className="text-xl font-semibold">
+                    <Link href={`/blog/${post.slug}`} className="hover:underline">
+                      {post.title}
+                    </Link>
+                  </h2>
+                  <p className="mt-2 text-sm opacity-80">{post.excerpt}</p>
+                  <p className="mt-4 text-sm opacity-90">
+                    {post.content.length > 260 ? `${post.content.slice(0, 260)}...` : post.content}
+                  </p>
+                  <Link href={`/blog/${post.slug}`} className="brand-btn-secondary brand-btn-sm mt-4 inline-block rounded-md px-3 py-1">
+                    Lire l article
                   </Link>
-                </h2>
-                <p className="mt-2 text-sm opacity-80">{post.excerpt}</p>
-                <p className="mt-4 text-sm opacity-90">
-                  {post.content.length > 260 ? `${post.content.slice(0, 260)}...` : post.content}
-                </p>
-                <Link href={`/blog/${post.slug}`} className="brand-btn-secondary brand-btn-sm mt-4 inline-block rounded-md px-3 py-1">
-                  Lire l article
-                </Link>
+                </div>
               </article>
             ))
           )}

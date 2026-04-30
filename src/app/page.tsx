@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { sendContactMessage } from "@/app/actions";
 import { ContactFormStartedAt } from "@/components/contact-form-started-at";
@@ -130,26 +129,30 @@ export default async function Home({ searchParams }: Props) {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <article className="brand-card rounded-xl p-4">
-              <Image
-                src="https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                alt="Seance de yoga bien-etre pour femme"
-                className="h-48 w-full rounded-lg object-cover"
-                width={600}
-                height={400}
-              />
+              {landing.heroImage1Url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={landing.heroImage1Url}
+                  alt="Seance de yoga bien-etre pour femme"
+                  className="h-48 w-full rounded-lg object-cover"
+                  loading="lazy"
+                />
+              )}
               <p className="mt-3 text-sm opacity-80">
                 Cours prives et petits groupes pour se recentrer, respirer et
                 retrouver un dos plus souple.
               </p>
             </article>
             <article className="brand-card rounded-xl p-4">
-              <Image
-                src="https://images.pexels.com/photos/4056529/pexels-photo-4056529.jpeg?auto=compress&cs=tinysrgb&w=1200"
-                alt="Yoga sur chaise en entreprise"
-                className="h-48 w-full rounded-lg object-cover"
-                width={600}
-                height={400}
-              />
+              {landing.heroImage2Url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={landing.heroImage2Url}
+                  alt="Yoga sur chaise en entreprise"
+                  className="h-48 w-full rounded-lg object-cover"
+                  loading="lazy"
+                />
+              )}
               <p className="mt-3 text-sm opacity-80">
                 Interventions en entreprise: yoga sur chaise pour detendre nuque,
                 epaules et lombaires au bureau.

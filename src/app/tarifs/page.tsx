@@ -94,7 +94,7 @@ export default async function TarifsPage() {
                     type="submit"
                     className="brand-btn brand-btn-sm rounded-lg px-4 py-2"
                   >
-                    Acheter via Stripe test
+                    Acheter via Stripe
                   </button>
                 </form>
               </article>

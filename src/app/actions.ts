@@ -590,6 +590,8 @@ export async function updateLandingContent(formData: FormData) {
   await updateLandingContentInDb({
     heroTitle: toText(formData.get("heroTitle"), defaultLandingContent.heroTitle),
     heroIntro: toText(formData.get("heroIntro"), defaultLandingContent.heroIntro),
+    heroImage1Url: toText(formData.get("heroImage1Url"), defaultLandingContent.heroImage1Url),
+    heroImage2Url: toText(formData.get("heroImage2Url"), defaultLandingContent.heroImage2Url),
     specializationMessage: toText(
       formData.get("specializationMessage"),
       defaultLandingContent.specializationMessage,
@@ -667,11 +669,11 @@ export async function sendContactMessage(formData: FormData) {
     redirect("/?contact=error#contact-form");
   }
 
-  await sendContactEmail({
-    fullName,
-    email,
-    message,
-  });
+  try {
+    await sendContactEmail({ fullName, email, message });
+  } catch {
+    redirect("/?contact=error#contact-form");
+  }
 
   redirect("/?contact=ok#contact-form");
 }
@@ -681,10 +683,11 @@ export async function createBlogPost(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
+  const coverImage = String(formData.get("coverImage") ?? "").trim();
   const isPublished = String(formData.get("isPublished") ?? "1") === "1";
   if (!title || !excerpt || !content) return;
 
-  await createBlogPostInDb({ title, excerpt, content, isPublished });
+  await createBlogPostInDb({ title, excerpt, content, coverImage, isPublished });
   revalidatePublicAndAdmin();
 }
 
@@ -694,10 +697,11 @@ export async function updateBlogPost(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
+  const coverImage = String(formData.get("coverImage") ?? "").trim();
   const isPublished = String(formData.get("isPublished") ?? "1") === "1";
   if (!id || !title || !excerpt || !content) return;
 
-  await updateBlogPostInDb({ id, title, excerpt, content, isPublished });
+  await updateBlogPostInDb({ id, title, excerpt, content, coverImage, isPublished });
   revalidatePublicAndAdmin();
 }
 

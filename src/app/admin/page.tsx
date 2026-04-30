@@ -93,6 +93,7 @@ export default async function AdminPage() {
             <input name="title" required placeholder="Titre article" className={fieldMd} />
             <input name="excerpt" required placeholder="Resume court" className={fieldMd} />
             <textarea name="content" required rows={5} placeholder="Contenu" className={fieldMd} />
+            <input name="coverImage" placeholder="URL image de couverture (optionnel)" className={fieldMd} />
             <select name="isPublished" className={fieldMd}>
               <option value="1">Publie</option>
               <option value="0">Brouillon</option>
@@ -113,6 +114,12 @@ export default async function AdminPage() {
                     name="content"
                     defaultValue={post.content}
                     rows={4}
+                    className={fieldSm}
+                  />
+                  <input
+                    name="coverImage"
+                    defaultValue={post.coverImage}
+                    placeholder="URL image de couverture (optionnel)"
                     className={fieldSm}
                   />
                   <select
@@ -159,6 +166,10 @@ export default async function AdminPage() {
               rows={3}
               className={fieldMd}
             />
+            <label className="text-sm font-medium opacity-70">Image hero 1 (URL)</label>
+            <input name="heroImage1Url" defaultValue={landing.heroImage1Url} placeholder="https://..." className={fieldMd} />
+            <label className="text-sm font-medium opacity-70">Image hero 2 (URL)</label>
+            <input name="heroImage2Url" defaultValue={landing.heroImage2Url} placeholder="https://..." className={fieldMd} />
             <textarea
               name="specializationMessage"
               defaultValue={landing.specializationMessage}

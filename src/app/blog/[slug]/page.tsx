@@ -68,6 +68,15 @@ export default async function BlogPostPage({ params }: Props) {
           Retour au blog
         </Link>
         <article className="brand-card mt-4 rounded-xl p-6">
+          {post.coverImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              className="mb-6 h-64 w-full rounded-lg object-cover"
+              loading="lazy"
+            />
+          )}
           <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>
             {post.title}
           </h1>

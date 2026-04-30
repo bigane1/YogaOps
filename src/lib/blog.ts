@@ -6,6 +6,7 @@ export type BlogPost = {
   slug: string;
   excerpt: string;
   content: string;
+  coverImage: string;
   isPublished: boolean;
   createdAt: string;
   updatedAt: string;
@@ -31,11 +32,22 @@ export async function ensureBlogTable() {
       slug TEXT NOT NULL UNIQUE,
       excerpt TEXT NOT NULL,
       content TEXT NOT NULL,
+      coverImage TEXT NOT NULL DEFAULT '',
       isPublished INTEGER NOT NULL DEFAULT 1,
       createdAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updatedAt TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  const columns = (await prisma.$queryRawUnsafe<{ name: string }[]>(
+    "PRAGMA table_info(BlogPost)",
+  )) as { name: string }[];
+  const existingColumns = new Set(columns.map((c) => c.name));
+  if (!existingColumns.has("coverImage")) {
+    await prisma.$executeRawUnsafe(
+      "ALTER TABLE BlogPost ADD COLUMN coverImage TEXT NOT NULL DEFAULT ''",
+    );
+  }
 }
 
 export async function seedBlogIfMissing() {
@@ -47,8 +59,8 @@ export async function seedBlogIfMissing() {
 
   const title = "Yoga sur chaise au travail: 5 minutes anti-stress";
   await prisma.$executeRawUnsafe(
-    `INSERT INTO BlogPost (title, slug, excerpt, content, isPublished, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    `INSERT INTO BlogPost (title, slug, excerpt, content, coverImage, isPublished, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, '', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     title,
     toSlug(title),
     "Une routine simple pour relacher les tensions du dos et respirer mieux au bureau.",
@@ -59,7 +71,7 @@ export async function seedBlogIfMissing() {
 export async function listPublishedBlogPosts(): Promise<BlogPost[]> {
   await seedBlogIfMissing();
   return (await prisma.$queryRawUnsafe<BlogPost[]>(
-    `SELECT id, title, slug, excerpt, content, isPublished, createdAt, updatedAt
+    `SELECT id, title, slug, excerpt, content, coverImage, isPublished, createdAt, updatedAt
      FROM BlogPost
      WHERE isPublished = 1
      ORDER BY datetime(createdAt) DESC`,
@@ -69,7 +81,7 @@ export async function listPublishedBlogPosts(): Promise<BlogPost[]> {
 export async function getPublishedBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   await seedBlogIfMissing();
   const rows = (await prisma.$queryRawUnsafe<BlogPost[]>(
-    `SELECT id, title, slug, excerpt, content, isPublished, createdAt, updatedAt
+    `SELECT id, title, slug, excerpt, content, coverImage, isPublished, createdAt, updatedAt
      FROM BlogPost
      WHERE slug = ? AND isPublished = 1
      LIMIT 1`,
@@ -81,7 +93,7 @@ export async function getPublishedBlogPostBySlug(slug: string): Promise<BlogPost
 export async function listAdminBlogPosts(): Promise<BlogPost[]> {
   await seedBlogIfMissing();
   return (await prisma.$queryRawUnsafe<BlogPost[]>(
-    `SELECT id, title, slug, excerpt, content, isPublished, createdAt, updatedAt
+    `SELECT id, title, slug, excerpt, content, coverImage, isPublished, createdAt, updatedAt
      FROM BlogPost
      ORDER BY datetime(createdAt) DESC`,
   )) as BlogPost[];
@@ -91,6 +103,7 @@ export async function createBlogPostInDb(input: {
   title: string;
   excerpt: string;
   content: string;
+  coverImage: string;
   isPublished: boolean;
 }) {
   await seedBlogIfMissing();
@@ -110,12 +123,13 @@ export async function createBlogPostInDb(input: {
   }
 
   await prisma.$executeRawUnsafe(
-    `INSERT INTO BlogPost (title, slug, excerpt, content, isPublished, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+    `INSERT INTO BlogPost (title, slug, excerpt, content, coverImage, isPublished, createdAt, updatedAt)
+     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
     input.title,
     uniqueSlug,
     input.excerpt,
     input.content,
+    input.coverImage,
     input.isPublished ? 1 : 0,
   );
 }
@@ -125,6 +139,7 @@ export async function updateBlogPostInDb(input: {
   title: string;
   excerpt: string;
   content: string;
+  coverImage: string;
   isPublished: boolean;
 }) {
   await seedBlogIfMissing();
@@ -133,12 +148,14 @@ export async function updateBlogPostInDb(input: {
      SET title = ?,
          excerpt = ?,
          content = ?,
+         coverImage = ?,
          isPublished = ?,
          updatedAt = CURRENT_TIMESTAMP
      WHERE id = ?`,
     input.title,
     input.excerpt,
     input.content,
+    input.coverImage,
     input.isPublished ? 1 : 0,
     input.id,
   );

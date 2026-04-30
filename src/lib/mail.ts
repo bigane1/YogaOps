@@ -74,7 +74,9 @@ export async function sendBookingConfirmationEmail(
 
 export async function sendContactEmail(input: ContactMailInput): Promise<void> {
   const transporter = getTransporter();
-  if (!transporter) return;
+  if (!transporter) {
+    throw new Error("SMTP non configuré sur ce serveur.");
+  }
 
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
   const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;

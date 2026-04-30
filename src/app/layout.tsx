@@ -25,6 +25,21 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: "/",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+    description:
+      "Seances de yoga pour femmes: bien-etre, mal de dos, stress au travail et interventions en entreprise.",
+    images: ["/opengraph-image"],
   },
 };
 
