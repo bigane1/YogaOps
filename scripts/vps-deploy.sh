@@ -27,6 +27,18 @@ fi
 
 export NODE_ENV=production
 
+# Charger le .env local si présent (pour DATABASE_URL, etc.)
+if [ -f .env ]; then
+  set -o allexport
+  # shellcheck source=/dev/null
+  source .env
+  set +o allexport
+fi
+
+if [ -z "${DATABASE_URL:-}" ]; then
+  echo "⚠ DATABASE_URL absent du .env — Prisma utilisera le fallback file:./dev.db"
+fi
+
 echo "=== YogaOps deploy : $(pwd) — Node $(node -v) ==="
 
 npm ci
