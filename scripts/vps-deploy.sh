@@ -1,9 +1,29 @@
 #!/usr/bin/env bash
-# Exécuté sur le VPS après `git pull`. Pré-requis : Node.js LTS, `.env` avec DATABASE_URL, secrets app.
+# Exécuté sur le VPS après `git pull`.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+# Installer Node.js LTS via nvm si node absent
+if ! command -v node >/dev/null 2>&1; then
+  echo "=== Node.js absent, installation via nvm ==="
+  export NVM_DIR="$HOME/.nvm"
+  if [ ! -d "$NVM_DIR" ]; then
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  fi
+  # shellcheck source=/dev/null
+  source "$NVM_DIR/nvm.sh"
+  nvm install --lts
+  nvm use --lts
+  nvm alias default node
+fi
+
+# Charger nvm si node est géré par nvm mais pas encore dans PATH
+export NVM_DIR="$HOME/.nvm"
+if [ -s "$NVM_DIR/nvm.sh" ] && ! command -v node >/dev/null 2>&1; then
+  source "$NVM_DIR/nvm.sh"
+fi
 
 export NODE_ENV=production
 
