@@ -25,8 +25,6 @@ if ! command -v node >/dev/null 2>&1; then
   set -u
 fi
 
-export NODE_ENV=production
-
 # Charger le .env local si présent (pour DATABASE_URL, etc.)
 if [ -f .env ]; then
   set -o allexport
@@ -41,10 +39,14 @@ fi
 
 echo "=== YogaOps deploy : $(pwd) — Node $(node -v) ==="
 
-npm ci
+# Installer toutes les dépendances (y compris dev) pour le build
+npm ci --include=dev
 npx prisma migrate deploy
 npx prisma generate
 npm run build
+
+# Passer en mode production uniquement pour le démarrage de l'app
+export NODE_ENV=production
 
 PM2_APP_NAME="${PM2_APP_NAME:-yogaops}"
 
