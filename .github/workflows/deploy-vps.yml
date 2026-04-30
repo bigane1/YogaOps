@@ -87,7 +87,11 @@ jobs:
           command_timeout: 45m
           script: |
             set -euo pipefail
-            cd "${{ vars.VPS_APP_DIR || '/home/ubuntu/YogaOps' }}"
+            APP_DIR="${{ vars.VPS_APP_DIR || '/home/ubuntu/YogaOps' }}"
+            if [ ! -d "$APP_DIR/.git" ]; then
+              git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
+            fi
+            cd "$APP_DIR"
             git fetch origin main
             git checkout main
             git reset --hard origin/main
