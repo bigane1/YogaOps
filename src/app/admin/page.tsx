@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";

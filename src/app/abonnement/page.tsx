@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { SiteNav } from "@/components/site-nav";
 import { buySubscriptionStripe } from "@/app/actions";
 import { startOfWeekMonday } from "@/lib/db";
