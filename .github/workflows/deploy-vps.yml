@@ -87,7 +87,15 @@ jobs:
           command_timeout: 45m
           script: |
             set -euo pipefail
-            APP_DIR="${{ vars.VPS_APP_DIR || '/home/ubuntu/YogaOps' }}"
+            APP_DIR="${{ vars.VPS_APP_DIR }}"
+            if [ -z "$APP_DIR" ]; then
+              FOUND=$(find /var /home -maxdepth 6 -name ".git" -type d 2>/dev/null \
+                      | xargs -I{} dirname {} \
+                      | xargs -I{} sh -c 'git -C {} remote get-url origin 2>/dev/null | grep -q "YogaOps" && echo {}' \
+                      | head -1)
+              APP_DIR="${FOUND:-/home/ubuntu/YogaOps}"
+            fi
+            echo "=== Dossier app : $APP_DIR ==="
             if [ ! -d "$APP_DIR/.git" ]; then
               git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
             fi
