@@ -5,24 +5,24 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-# Installer Node.js LTS via nvm si node absent
-if ! command -v node >/dev/null 2>&1; then
-  echo "=== Node.js absent, installation via nvm ==="
-  export NVM_DIR="$HOME/.nvm"
-  if [ ! -d "$NVM_DIR" ]; then
-    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-  fi
-  # shellcheck source=/dev/null
-  source "$NVM_DIR/nvm.sh"
-  nvm install --lts
-  nvm use --lts
-  nvm alias default node
-fi
-
-# Charger nvm si node est géré par nvm mais pas encore dans PATH
+# Charger nvm (désactive set -u temporairement car nvm.sh utilise des variables non liées)
 export NVM_DIR="$HOME/.nvm"
-if [ -s "$NVM_DIR/nvm.sh" ] && ! command -v node >/dev/null 2>&1; then
-  source "$NVM_DIR/nvm.sh"
+if [ ! -d "$NVM_DIR" ]; then
+  echo "=== Installation de nvm ==="
+  curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+fi
+set +u
+# shellcheck source=/dev/null
+source "$NVM_DIR/nvm.sh"
+set -u
+
+# Installer Node.js LTS si absent
+if ! command -v node >/dev/null 2>&1; then
+  echo "=== Installation de Node.js LTS ==="
+  set +u
+  nvm install --lts
+  nvm alias default node
+  set -u
 fi
 
 export NODE_ENV=production
