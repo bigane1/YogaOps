@@ -1,6 +1,12 @@
 export const dynamic = "force-dynamic";
 
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Confirmation de réservation - YogaOps",
+  robots: { index: false, follow: false },
+};
 import { SiteNav } from "@/components/site-nav";
 import { formatDateFR } from "@/lib/db";
 import { prisma } from "@/lib/prisma";

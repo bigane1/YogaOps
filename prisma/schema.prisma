@@ -41,18 +41,22 @@ enum SubscriptionStatus {
 }
 
 model Course {
-  id          String       @id @default(cuid())
-  title       String
-  description String
-  type        CourseType
-  location    LocationType
-  durationMin Int
-  priceEur    Int
-  capacity    Int
-  isActive    Boolean      @default(true)
-  slots       TimeSlot[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String        @id @default(cuid())
+  title        String
+  description  String
+  benefits     String        @default("")
+  coverImage   String        @default("")
+  type         CourseType
+  location     LocationType
+  durationMin  Int
+  priceEur     Int
+  capacity     Int
+  isActive     Boolean       @default(true)
+  isWorkshop   Boolean       @default(false)
+  slots        TimeSlot[]
+  packagePlans PackagePlan[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model TimeSlot {
@@ -85,35 +89,50 @@ model Booking {
 }
 
 model PackagePlan {
-  id           String   @id @default(cuid())
-  name         String
-  description  String
-  priceEur     Int
-  sessionCount Int
-  allowedCourseType CourseType?
-  validityDays Int
-  isActive     Boolean  @default(true)
-  subscriptions Subscription[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    String   @id @default(cuid())
+  name                  String
+  description           String
+  priceEur              Int
+  sessionCount          Int
+  allowedCourseType     CourseType?
+  validityDays          Int
+  isActive              Boolean  @default(true)
+  // Stripe Billing recurring fields (null = paiement unique)
+  billingIntervalMonths Int?
+  stripePriceId         String?
+  // Cours fixe : tous les slots de ce cours sont auto-réservés à l'activation
+  fixedCourseId         String?
+  fixedCourse           Course?     @relation(fields: [fixedCourseId], references: [id])
+  subscriptions         Subscription[]
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }
 
 model Subscription {
-  id            String              @id @default(cuid())
-  customerEmail String
-  status        SubscriptionStatus  @default(pending)
-  paymentMethod PaymentMethod      @default(subscription)
+  id                   String              @id @default(cuid())
+  customerEmail        String
+  customerName         String              @default("")
+  status               SubscriptionStatus  @default(pending)
+  paymentMethod        PaymentMethod       @default(subscription)
 
-  packageId     String
-  package       PackagePlan         @relation(fields: [packageId], references: [id])
+  packageId            String
+  package              PackagePlan         @relation(fields: [packageId], references: [id])
 
-  startsAt      DateTime           @default(now())
-  endsAt        DateTime
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  startsAt             DateTime            @default(now())
+  endsAt               DateTime
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
 
-  weeks         SubscriptionWeek[]
-  bookings      Booking[]
+  // Stripe Billing recurring fields
+  stripeSubscriptionId String?             @unique
+  stripeCustomerId     String?
+  cancelAtPeriodEnd    Boolean             @default(false)
+
+  // Créneau fixe : cours dont les slots sont auto-réservés (copié du plan)
+  fixedCourseId        String?
+
+  weeks                SubscriptionWeek[]
+  bookings             Booking[]
 }
 
 model SubscriptionWeek {

@@ -72,6 +72,63 @@ export async function sendBookingConfirmationEmail(
   });
 }
 
+type SubscriptionActivationMailInput = {
+  customerName: string;
+  customerEmail: string;
+  planName: string;
+  courseTitle: string;
+  endsAt: Date;
+  bookedSlots: { startsAt: Date; zoomLink?: string | null }[];
+};
+
+export async function sendSubscriptionActivationEmail(
+  input: SubscriptionActivationMailInput,
+): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) return;
+
+  const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  const adminEmail = process.env.ADMIN_EMAIL;
+
+  const endsAtLabel = input.endsAt.toLocaleDateString("fr-FR", { dateStyle: "long" });
+
+  const slotLines = input.bookedSlots.map((s) => {
+    const dateLabel = s.startsAt.toLocaleString("fr-FR", {
+      dateStyle: "full",
+      timeStyle: "short",
+    });
+    return s.zoomLink ? `  - ${dateLabel} → ${s.zoomLink}` : `  - ${dateLabel}`;
+  });
+
+  const hasZoom = input.bookedSlots.some((s) => s.zoomLink);
+
+  const text = [
+    `Bonjour ${input.customerName},`,
+    "",
+    `Votre abonnement "${input.planName}" est activé !`,
+    `Cours : ${input.courseTitle}`,
+    `Valable jusqu'au : ${endsAtLabel}`,
+    "",
+    `Vos ${input.bookedSlots.length} séances sont automatiquement réservées :`,
+    ...slotLines,
+    "",
+    hasZoom
+      ? "Les liens Zoom ci-dessus sont valables pour chaque séance."
+      : "Les liens Zoom vous seront envoyés prochainement pour chaque séance.",
+    "",
+    "À bientôt sur le tapis,",
+    "YogaOps",
+  ].join("\n");
+
+  await transporter.sendMail({
+    from,
+    to: input.customerEmail,
+    cc: adminEmail || undefined,
+    subject: `YogaOps - Abonnement activé : ${input.planName}`,
+    text,
+  });
+}
+
 export async function sendContactEmail(input: ContactMailInput): Promise<void> {
   const transporter = getTransporter();
   if (!transporter) {

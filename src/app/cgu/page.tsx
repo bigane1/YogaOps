@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/site-nav";
 import { getLandingContent } from "@/lib/landing-content";
+
+export const metadata: Metadata = {
+  title: "Conditions Générales d'Utilisation - YogaOps",
+  description: "Conditions générales d'utilisation du site YogaOps.",
+  robots: { index: false },
+};
 
 export default async function CguPage() {
   const landing = await getLandingContent();

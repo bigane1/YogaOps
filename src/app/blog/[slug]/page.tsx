@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr";
   return {
     title: `${post.title} - Blog YogaOps`,
     description: post.excerpt,
@@ -26,7 +27,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${post.title} - Blog YogaOps`,
       description: post.excerpt,
       type: "article",
-      url: `/blog/${post.slug}`,
+      url: `${baseUrl}/blog/${post.slug}`,
+      ...(post.coverImage ? { images: [{ url: post.coverImage, width: 1200, height: 630, alt: post.title }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${post.title} - Blog YogaOps`,
+      description: post.excerpt,
+      ...(post.coverImage ? { images: [post.coverImage] } : {}),
     },
   };
 }

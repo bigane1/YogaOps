@@ -133,8 +133,12 @@ export type LandingContent = {
   firstSessionOffer: string;
   socialProofTitle: string;
   socialProofItems: string[];
+  chairYogaTitle: string;
+  chairYogaText: string;
+  chairYogaItems: string[];
   teacherBioTitle: string;
   teacherBioText: string;
+  teacherPhotoUrl: string;
   practicalInfoTitle: string;
   practicalInfoItems: string[];
   finalCtaTitle: string;
@@ -176,6 +180,17 @@ export const defaultLandingContent: LandingContent = {
     "Mes douleurs de dos ont vraiment diminue en quelques semaines.",
     "Les cours en groupe sont bienveillants et motivants, je me sens comprise.",
   ],
+  chairYogaTitle: "Yoga sur chaise en entreprise",
+  chairYogaText:
+    "Des seances courtes et accessibles sans tenue specifique, directement sur le lieu de travail. Ideal pour reduire les tensions accumulees au bureau, ameliorer la concentration et prevenir les douleurs posturales.",
+  chairYogaItems: [
+    "Aucun equipement requis — se pratique en tenue de travail",
+    "Reduction des tensions cervicales, epaules et lombaires",
+    "Exercices de respiration pour baisser le stress",
+    "Format 30 a 60 min, adaptable au planning de l equipe",
+    "Intervention sur site ou en visioconference",
+  ],
+  teacherPhotoUrl: "",
   teacherBioTitle: "Votre professeure",
   teacherBioText:
     "Professeure de yoga specialisee dans l accompagnement des femmes actives, j anime des seances en ligne, sur place et en entreprise. Mon approche est progressive, accessible et centree sur le bien-etre global.",
@@ -266,6 +281,10 @@ export async function ensureLandingContentTable() {
     "legalNoticeContent",
     "heroImage1Url",
     "heroImage2Url",
+    "teacherPhotoUrl",
+    "chairYogaTitle",
+    "chairYogaText",
+    "chairYogaItems",
   ];
 
   for (const column of requiredColumns) {
@@ -371,8 +390,12 @@ type LandingRow = {
   firstSessionOffer: string;
   socialProofTitle: string;
   socialProofItems: string;
+  chairYogaTitle: string;
+  chairYogaText: string;
+  chairYogaItems: string;
   teacherBioTitle: string;
   teacherBioText: string;
+  teacherPhotoUrl: string;
   practicalInfoTitle: string;
   practicalInfoItems: string;
   finalCtaTitle: string;
@@ -412,8 +435,12 @@ export async function getLandingContent(): Promise<LandingContent> {
     firstSessionOffer: row.firstSessionOffer || defaultLandingContent.firstSessionOffer,
     socialProofTitle: row.socialProofTitle || defaultLandingContent.socialProofTitle,
     socialProofItems: parseItems(row.socialProofItems, defaultLandingContent.socialProofItems),
+    chairYogaTitle: row.chairYogaTitle || defaultLandingContent.chairYogaTitle,
+    chairYogaText: row.chairYogaText || defaultLandingContent.chairYogaText,
+    chairYogaItems: parseItems(row.chairYogaItems, defaultLandingContent.chairYogaItems),
     teacherBioTitle: row.teacherBioTitle || defaultLandingContent.teacherBioTitle,
     teacherBioText: row.teacherBioText || defaultLandingContent.teacherBioText,
+    teacherPhotoUrl: row.teacherPhotoUrl || "",
     practicalInfoTitle: row.practicalInfoTitle || defaultLandingContent.practicalInfoTitle,
     practicalInfoItems: parseItems(row.practicalInfoItems, defaultLandingContent.practicalInfoItems),
     finalCtaTitle: row.finalCtaTitle || defaultLandingContent.finalCtaTitle,
@@ -447,8 +474,12 @@ export async function updateLandingContentInDb(content: LandingContent) {
          firstSessionOffer = ?,
          socialProofTitle = ?,
          socialProofItems = ?,
+         chairYogaTitle = ?,
+         chairYogaText = ?,
+         chairYogaItems = ?,
          teacherBioTitle = ?,
          teacherBioText = ?,
+         teacherPhotoUrl = ?,
          practicalInfoTitle = ?,
          practicalInfoItems = ?,
          finalCtaTitle = ?,
@@ -477,8 +508,12 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.firstSessionOffer,
     content.socialProofTitle,
     content.socialProofItems.join("\n"),
+    content.chairYogaTitle,
+    content.chairYogaText,
+    content.chairYogaItems.join("\n"),
     content.teacherBioTitle,
     content.teacherBioText,
+    content.teacherPhotoUrl,
     content.practicalInfoTitle,
     content.practicalInfoItems.join("\n"),
     content.finalCtaTitle,

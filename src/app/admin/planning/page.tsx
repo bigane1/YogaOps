@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink } from "@/app/actions";
+import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink, updateSlot } from "@/app/actions";
 import { addDays, ensureSeedData, formatTimeFR, startOfDay } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
@@ -151,6 +151,24 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
                           </div>
                           <div className="text-xs rounded-full px-2 py-0.5 brand-badge-muted">reste {slot.available}</div>
                         </div>
+
+                        {/* Zoom du créneau — se propage à toutes les réservations confirmées */}
+                        <form action={updateSlot} className="mt-2 flex gap-1">
+                          <input type="hidden" name="id" value={slot.id} />
+                          <input type="hidden" name="startsAt" value={slot.startsAt.toISOString()} />
+                          <input type="hidden" name="available" value={slot.available} />
+                          <input type="hidden" name="booked" value={slot.booked} />
+                          <input
+                            name="zoomLink"
+                            type="url"
+                            placeholder="Zoom du créneau (propagé à tous)"
+                            defaultValue={slot.zoomLink ?? ""}
+                            className={`${fieldSm} flex-1 text-xs`}
+                          />
+                          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded px-2 py-1 text-[11px] whitespace-nowrap">
+                            Définir Zoom
+                          </button>
+                        </form>
 
                         <div className="mt-2 space-y-2">
                           {visibleBookings.map((booking) => (

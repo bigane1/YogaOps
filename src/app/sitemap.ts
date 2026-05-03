@@ -5,6 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr";
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
+    { url: `${baseUrl}/cours`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${baseUrl}/reserver`, changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/tarifs`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${baseUrl}/entreprises`, changeFrequency: "weekly", priority: 0.9 },
@@ -14,6 +15,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    { url: `${baseUrl}/ateliers`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/abonnement`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/cgv`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/cgu`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/mentions-legales`, changeFrequency: "yearly", priority: 0.3 },

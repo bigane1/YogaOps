@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
+import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
 import { adminLogin, adminLogout, createCourse, createSlot, deleteCourse, deleteSlot, updateCourse, updateSlot } from "@/app/actions";
 import { ensureSeedData, formatDateFR } from "@/lib/db";
@@ -44,16 +45,36 @@ export default async function AdminCoursPage() {
         </form>
 
         <section className="brand-card mt-6 rounded-xl p-6">
-          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Ajouter un cours</h2>
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Ajouter un cours ou atelier</h2>
           <form action={createCourse} className="mt-3 grid gap-2 sm:grid-cols-2">
-            <input name="title" required placeholder="Titre" className={fieldMd} />
-            <input name="description" required placeholder="Description du cours" className={fieldMd} />
-            <select name="type" className={fieldMd}><option value="individuel">Individuel</option><option value="collectif">Collectif</option></select>
-            <select name="location" className={fieldMd}><option value="en_ligne">En ligne (Zoom)</option><option value="presentiel">Presentiel</option></select>
-            <input name="durationMin" type="number" defaultValue={60} placeholder="Duree en minutes" className={fieldMd} />
-            <input name="priceEur" type="number" defaultValue={15} placeholder="Prix en EUR" className={fieldMd} />
-            <input name="capacity" type="number" defaultValue={10} placeholder="Capacite max" className={fieldMd} />
-            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">Creer le cours</button>
+            <input name="title" required placeholder="Titre (ex: Yoga dos & stress — Mercredi)" className={fieldMd} />
+            <input name="description" required placeholder="Description courte (accroche)" className={fieldMd} />
+            <textarea
+              name="benefits"
+              placeholder={"Bienfaits (1 par ligne)\nEx: Soulage les tensions cervicales\nEx: Améliore la qualité du sommeil"}
+              rows={4}
+              className="col-span-2 brand-field rounded-md px-3 py-2 text-sm"
+            />
+            <ImageUpload name="coverImage" label="Image de couverture (optionnel)" className="col-span-2" />
+            <select name="type" className={fieldMd}>
+              <option value="collectif">Collectif</option>
+              <option value="individuel">Individuel</option>
+            </select>
+            <select name="location" className={fieldMd}>
+              <option value="en_ligne">En ligne (Zoom)</option>
+              <option value="presentiel">Présentiel</option>
+            </select>
+            <input name="durationMin" type="number" defaultValue={60} placeholder="Durée (min)" className={fieldMd} />
+            <input name="priceEur" type="number" defaultValue={15} placeholder="Prix EUR" className={fieldMd} />
+            <input name="capacity" type="number" defaultValue={10} placeholder="Places max" className={fieldMd} />
+            <label className="flex items-center gap-2 text-sm">
+              <input type="hidden" name="isWorkshop" value="0" />
+              <input type="checkbox" name="isWorkshop" value="1" className="size-4 accent-[var(--brand)]" />
+              C&apos;est un atelier thématique (événement ponctuel)
+            </label>
+            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2 sm:col-span-2">
+              Créer
+            </button>
           </form>
         </section>
 
@@ -62,16 +83,45 @@ export default async function AdminCoursPage() {
           <ul className="mt-3 space-y-3 text-sm">
             {courses.map((course) => (
               <li key={course.id} className="brand-list-item p-3">
+                {course.isWorkshop && (
+                  <span className="mb-2 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+                    Atelier
+                  </span>
+                )}
                 <form action={updateCourse} className="grid gap-2 sm:grid-cols-4">
                   <input type="hidden" name="id" value={course.id} />
-                  <input name="title" defaultValue={course.title} placeholder="Titre du cours" className={fieldSm} />
-                  <input name="description" defaultValue={course.description} placeholder="Description du cours" className={fieldSm} />
-                  <select name="type" defaultValue={course.type} className={fieldSm}><option value="individuel">Individuel</option><option value="collectif">Collectif</option></select>
-                  <select name="location" defaultValue={course.location} className={fieldSm}><option value="en_ligne">En ligne</option><option value="presentiel">Presentiel</option></select>
-                  <input name="durationMin" type="number" defaultValue={course.durationMin} placeholder="Duree (min)" className={fieldSm} />
+                  <input name="title" defaultValue={course.title} placeholder="Titre" className={fieldSm} />
+                  <input name="description" defaultValue={course.description} placeholder="Description" className={`${fieldSm} sm:col-span-3`} />
+                  <textarea
+                    name="benefits"
+                    defaultValue={course.benefits}
+                    placeholder="Bienfaits (1 par ligne)"
+                    rows={3}
+                    className={`${fieldSm} sm:col-span-4`}
+                  />
+                  <ImageUpload
+                    name="coverImage"
+                    label="Image de couverture"
+                    currentUrl={course.coverImage ?? ""}
+                    className={`${fieldSm} sm:col-span-4`}
+                  />
+                  <select name="type" defaultValue={course.type} className={fieldSm}>
+                    <option value="collectif">Collectif</option>
+                    <option value="individuel">Individuel</option>
+                  </select>
+                  <select name="location" defaultValue={course.location} className={fieldSm}>
+                    <option value="en_ligne">En ligne</option>
+                    <option value="presentiel">Présentiel</option>
+                  </select>
+                  <input name="durationMin" type="number" defaultValue={course.durationMin} placeholder="Durée (min)" className={fieldSm} />
                   <input name="priceEur" type="number" defaultValue={course.priceEur} placeholder="Prix EUR" className={fieldSm} />
-                  <input name="capacity" type="number" defaultValue={course.capacity} placeholder="Capacite" className={fieldSm} />
-                  <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">Modifier</button>
+                  <input name="capacity" type="number" defaultValue={course.capacity} placeholder="Places" className={fieldSm} />
+                  <label className="flex items-center gap-1 text-xs">
+                    <input type="hidden" name="isWorkshop" value="0" />
+                    <input type="checkbox" name="isWorkshop" value="1" defaultChecked={course.isWorkshop} className="size-3 accent-[var(--brand)]" />
+                    Atelier
+                  </label>
+                  <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 sm:col-span-2">Modifier</button>
                 </form>
                 <form action={deleteCourse} className="mt-2">
                   <input type="hidden" name="id" value={course.id} />

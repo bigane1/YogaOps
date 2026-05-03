@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
+import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
 import {
   adminLogin,
@@ -95,7 +96,7 @@ export default async function AdminPage() {
             <input name="title" required placeholder="Titre article" className={fieldMd} />
             <input name="excerpt" required placeholder="Resume court" className={fieldMd} />
             <textarea name="content" required rows={5} placeholder="Contenu" className={fieldMd} />
-            <input name="coverImage" placeholder="URL image de couverture (optionnel)" className={fieldMd} />
+            <ImageUpload name="coverImage" label="Image de couverture (optionnel)" className={fieldMd} />
             <select name="isPublished" className={fieldMd}>
               <option value="1">Publie</option>
               <option value="0">Brouillon</option>
@@ -118,10 +119,10 @@ export default async function AdminPage() {
                     rows={4}
                     className={fieldSm}
                   />
-                  <input
+                  <ImageUpload
                     name="coverImage"
-                    defaultValue={post.coverImage}
-                    placeholder="URL image de couverture (optionnel)"
+                    label="Image de couverture"
+                    currentUrl={post.coverImage ?? ""}
                     className={fieldSm}
                   />
                   <select
@@ -168,10 +169,18 @@ export default async function AdminPage() {
               rows={3}
               className={fieldMd}
             />
-            <label className="text-sm font-medium opacity-70">Image hero 1 (URL)</label>
-            <input name="heroImage1Url" defaultValue={landing.heroImage1Url} placeholder="https://..." className={fieldMd} />
-            <label className="text-sm font-medium opacity-70">Image hero 2 (URL)</label>
-            <input name="heroImage2Url" defaultValue={landing.heroImage2Url} placeholder="https://..." className={fieldMd} />
+            <ImageUpload
+                name="heroImage1Url"
+                label="Image hero 1"
+                currentUrl={landing.heroImage1Url}
+                className={fieldMd}
+              />
+            <ImageUpload
+                name="heroImage2Url"
+                label="Image hero 2"
+                currentUrl={landing.heroImage2Url}
+                className={fieldMd}
+              />
             <textarea
               name="specializationMessage"
               defaultValue={landing.specializationMessage}
@@ -213,6 +222,39 @@ export default async function AdminPage() {
               rows={4}
               className={fieldMd}
             />
+
+            {/* ── Yoga sur chaise ── */}
+            <p className="col-span-2 border-t border-white/10 pt-4 text-xs font-semibold uppercase tracking-wide opacity-50">Yoga sur chaise (section entreprise)</p>
+            <input
+              name="chairYogaTitle"
+              defaultValue={landing.chairYogaTitle}
+              placeholder="Titre de la section Yoga sur chaise"
+              className={fieldMd}
+            />
+            <textarea
+              name="chairYogaText"
+              defaultValue={landing.chairYogaText}
+              rows={3}
+              placeholder="Description générale (yoga sur chaise)"
+              className={fieldMd}
+            />
+            <textarea
+              name="chairYogaItems"
+              defaultValue={landing.chairYogaItems.join("\n")}
+              rows={5}
+              placeholder={"Bénéfices (1 par ligne)\nEx: Aucun équipement requis\nEx: Format 30 à 60 min"}
+              className="col-span-2 brand-field rounded-md px-3 py-2 text-sm"
+            />
+
+            {/* ── Bio prof ── */}
+            <p className="col-span-2 border-t border-white/10 pt-4 text-xs font-semibold uppercase tracking-wide opacity-50">Bio du professeur</p>
+            <ImageUpload
+                name="teacherPhotoUrl"
+                label="Photo du professeur"
+                currentUrl={landing.teacherPhotoUrl}
+                shape="circle"
+                className="col-span-2"
+              />
 
             <input
               name="teacherBioTitle"

@@ -38,3 +38,11 @@ export function subscriptionStatusLabelFr(value: string): string {
       return value;
   }
 }
+
+export function billingIntervalLabelFr(months: number | null): string {
+  if (!months) return "Paiement unique";
+  if (months === 3) return "3 mois";
+  if (months === 6) return "6 mois";
+  if (months === 12) return "12 mois";
+  return `${months} mois`;
+}

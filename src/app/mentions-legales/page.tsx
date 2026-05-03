@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { SiteNav } from "@/components/site-nav";
 import { getLandingContent } from "@/lib/landing-content";
+
+export const metadata: Metadata = {
+  title: "Mentions Légales - YogaOps",
+  description: "Mentions légales du site YogaOps.",
+  robots: { index: false },
+};
 
 export default async function MentionsLegalesPage() {
   const landing = await getLandingContent();

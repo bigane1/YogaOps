@@ -2,6 +2,22 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  Brain,
+  PersonStanding,
+  MonitorSmartphone,
+  Laptop,
+  Trees,
+  MapPin,
+  BookOpen,
+  CalendarDays,
+  Clock,
+  Info,
+  Quote,
+  Armchair,
+  CheckCircle2,
+  Building2,
+} from "lucide-react";
 import { sendContactMessage } from "@/app/actions";
 import { ContactFormStartedAt } from "@/components/contact-form-started-at";
 import { SiteNav } from "@/components/site-nav";
@@ -165,6 +181,9 @@ export default async function Home({ searchParams }: Props) {
 
         <section className="grid gap-4 md:grid-cols-3">
           <article className="brand-card rounded-xl p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <Brain className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">Mieux gerer le stress</h2>
             <p className="mt-2 text-sm opacity-85">
               Respiration guidee, relachement musculaire et mouvements adaptes pour
@@ -172,6 +191,9 @@ export default async function Home({ searchParams }: Props) {
             </p>
           </article>
           <article className="brand-card rounded-xl p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <PersonStanding className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">Soulager le mal de dos</h2>
             <p className="mt-2 text-sm opacity-85">
               Seances ciblees pour delier le dos, renforcer en douceur et reduire
@@ -179,6 +201,9 @@ export default async function Home({ searchParams }: Props) {
             </p>
           </article>
           <article className="brand-card rounded-xl p-5">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <MonitorSmartphone className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">En ligne, sur place, entreprise</h2>
             <p className="mt-2 text-sm opacity-85">
               Choisissez le format qui vous convient: visio, presentiel ou atelier
@@ -186,6 +211,9 @@ export default async function Home({ searchParams }: Props) {
             </p>
           </article>
           <article className="brand-card rounded-xl p-5 md:col-span-3">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <Laptop className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">Specialisation stress IT (sans exclure les autres profils)</h2>
             <p className="mt-2 text-sm opacity-85">
               Grace a mon experience en recrutement IT, je comprends la pression de ce secteur,
@@ -195,6 +223,9 @@ export default async function Home({ searchParams }: Props) {
             </p>
           </article>
           <article className="brand-card rounded-xl p-5 md:col-span-3">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <Trees className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">Seances en plein air en groupe</h2>
             <p className="mt-2 text-sm opacity-85">
               Rejoignez des sessions conviviales en exterieur pour prendre plaisir
@@ -203,6 +234,9 @@ export default async function Home({ searchParams }: Props) {
             </p>
           </article>
           <article className="brand-card rounded-xl p-5 md:col-span-3">
+            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <MapPin className="h-5 w-5" style={{ color: "var(--brand)" }} />
+            </div>
             <h2 className="text-lg font-semibold">Zone desservie</h2>
             <p className="mt-2 text-sm opacity-85">
               Vous etes a Carrieres-sous-Poissy (78955) ? Decouvrez la page locale dediee pour les
@@ -217,12 +251,43 @@ export default async function Home({ searchParams }: Props) {
           </article>
         </section>
 
+        {/* ── Yoga sur chaise ────────────────────────────────────────────── */}
+        <section className="brand-card rounded-2xl p-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
+              <Armchair className="h-6 w-6" style={{ color: "var(--brand)" }} />
+            </div>
+            <h2 className="text-2xl font-semibold">{landing.chairYogaTitle}</h2>
+          </div>
+          <div className="mt-4 grid gap-6 md:grid-cols-2">
+            <div>
+              <p className="text-sm leading-relaxed opacity-90">{landing.chairYogaText}</p>
+              <Link
+                href="/entreprises"
+                className="brand-btn-secondary brand-btn-sm mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2"
+              >
+                <Building2 className="h-4 w-4" />
+                En savoir plus — interventions entreprise
+              </Link>
+            </div>
+            <ul className="space-y-3">
+              {landing.chairYogaItems.map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "var(--brand)" }} />
+                  <span className="opacity-90">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         <section className="brand-card rounded-xl p-6">
           <h2 className="text-xl font-semibold">{landing.socialProofTitle}</h2>
           <ul className="mt-3 grid gap-3 md:grid-cols-3">
             {landing.socialProofItems.map((item) => (
               <li key={item} className="brand-list-item rounded-lg p-4 text-sm opacity-90">
-                « {item} »
+                <Quote className="mb-2 h-4 w-4 opacity-40" style={{ color: "var(--brand)" }} />
+                {item}
               </li>
             ))}
           </ul>
@@ -230,14 +295,33 @@ export default async function Home({ searchParams }: Props) {
 
         <section className="grid gap-4 md:grid-cols-2">
           <article className="brand-card rounded-xl p-6">
-            <h2 className="text-xl font-semibold">{landing.teacherBioTitle}</h2>
-            <p className="mt-3 text-sm opacity-90">{landing.teacherBioText}</p>
+            {landing.teacherPhotoUrl ? (
+              <div className="mb-4 flex items-center gap-4">
+                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-[var(--brand)]">
+                  <img
+                    src={landing.teacherPhotoUrl}
+                    alt={landing.teacherBioTitle}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <h2 className="text-xl font-semibold">{landing.teacherBioTitle}</h2>
+              </div>
+            ) : (
+              <h2 className="text-xl font-semibold">{landing.teacherBioTitle}</h2>
+            )}
+            <p className="mt-1 text-sm opacity-90">{landing.teacherBioText}</p>
           </article>
           <article className="brand-card rounded-xl p-6">
-            <h2 className="text-xl font-semibold">{landing.practicalInfoTitle}</h2>
-            <ul className="mt-3 space-y-2 text-sm opacity-90">
+            <div className="mb-3 flex items-center gap-2">
+              <Info className="h-5 w-5" style={{ color: "var(--brand)" }} />
+              <h2 className="text-xl font-semibold">{landing.practicalInfoTitle}</h2>
+            </div>
+            <ul className="mt-1 space-y-2 text-sm opacity-90">
               {landing.practicalInfoItems.map((item) => (
-                <li key={item}>- {item}</li>
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-0.5 shrink-0" style={{ color: "var(--brand)" }}>•</span>
+                  {item}
+                </li>
               ))}
             </ul>
           </article>
@@ -313,16 +397,31 @@ export default async function Home({ searchParams }: Props) {
 
         <section className="grid gap-4 sm:grid-cols-3">
           <article className="brand-card rounded-xl p-5">
-            <p className="text-sm opacity-75">Types de cours</p>
-            <p className="mt-1 text-2xl font-semibold">{coursesCount}</p>
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
+              <div>
+                <p className="text-sm opacity-75">Types de cours</p>
+                <p className="text-2xl font-semibold">{coursesCount}</p>
+              </div>
+            </div>
           </article>
           <article className="brand-card rounded-xl p-5">
-            <p className="text-sm opacity-75">Abonnements</p>
-            <p className="mt-1 text-2xl font-semibold">{packageCount}</p>
+            <div className="flex items-center gap-3">
+              <CalendarDays className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
+              <div>
+                <p className="text-sm opacity-75">Abonnements</p>
+                <p className="text-2xl font-semibold">{packageCount}</p>
+              </div>
+            </div>
           </article>
           <article className="brand-card rounded-xl p-5">
-            <p className="text-sm opacity-75">Creneaux reservables</p>
-            <p className="mt-1 text-2xl font-semibold">{availableSlots}</p>
+            <div className="flex items-center gap-3">
+              <Clock className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
+              <div>
+                <p className="text-sm opacity-75">Creneaux reservables</p>
+                <p className="text-2xl font-semibold">{availableSlots}</p>
+              </div>
+            </div>
           </article>
         </section>
       </main>
