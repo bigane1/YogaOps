@@ -25,17 +25,19 @@ if ! command -v node >/dev/null 2>&1; then
   set -u
 fi
 
-# Charger le .env local si présent (pour DATABASE_URL, etc.)
+# Convertir les fins de ligne Windows (CRLF → LF) si nécessaire
 if [ -f .env ]; then
-  # Convertir les fins de ligne Windows (CRLF → LF) si nécessaire
   sed -i 's/\r//' .env
-  set -o allexport
-  # shellcheck source=/dev/null
-  source .env
-  set +o allexport
 fi
 
-if [ -z "${DATABASE_URL:-}" ]; then
+# Next.js et Prisma lisent .env automatiquement — pas besoin de le sourcer.
+# On extrait uniquement DATABASE_URL pour le message de diagnostic, de façon sûre.
+if [ -f .env ]; then
+  _DB_URL=$(grep -E '^DATABASE_URL=' .env | head -1 | cut -d= -f2- | tr -d '\r"' || true)
+else
+  _DB_URL=""
+fi
+if [ -z "${_DB_URL:-}" ]; then
   echo "⚠ DATABASE_URL absent du .env — Prisma utilisera le fallback file:./dev.db"
 fi
 
