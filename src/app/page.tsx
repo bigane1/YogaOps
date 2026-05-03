@@ -298,6 +298,7 @@ export default async function Home({ searchParams }: Props) {
             {landing.teacherPhotoUrl ? (
               <div className="mb-4 flex items-center gap-4">
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-[var(--brand)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={landing.teacherPhotoUrl}
                     alt={landing.teacherBioTitle}

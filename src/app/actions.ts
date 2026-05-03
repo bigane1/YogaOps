@@ -560,7 +560,7 @@ export async function createPackage(formData: FormData) {
     const now = new Date();
     const slotDates: Date[] = [];
 
-    let cursor = new Date(now);
+    const cursor = new Date(now);
     cursor.setHours(hh, mm, 0, 0);
     while (cursor.getDay() !== scheduleDayRaw) {
       cursor.setDate(cursor.getDate() + 1);
