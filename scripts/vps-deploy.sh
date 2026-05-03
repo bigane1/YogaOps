@@ -27,6 +27,8 @@ fi
 
 # Charger le .env local si présent (pour DATABASE_URL, etc.)
 if [ -f .env ]; then
+  # Convertir les fins de ligne Windows (CRLF → LF) si nécessaire
+  sed -i 's/\r//' .env
   set -o allexport
   # shellcheck source=/dev/null
   source .env
