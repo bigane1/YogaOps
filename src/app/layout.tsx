@@ -1,27 +1,30 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Fraunces } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
+import { SmoothScrollProvider } from "@/components/smooth-scroll-provider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fraunces = Fraunces({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr"),
-  title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+  title: "YogaOps - Yoga doux pour femmes actives du digital",
   description:
-    "Yoga pour femmes: gestion du stress, soulagement du dos, seances en ligne, sur place et yoga sur chaise en entreprise.",
+    "Cours de yoga simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer.",
   openGraph: {
-    title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+    title: "YogaOps - Yoga doux pour femmes actives du digital",
     description:
-      "Seances de yoga pour femmes: bien-etre, mal de dos, stress au travail et interventions en entreprise.",
+      "Des seances douces et realistes pour les femmes du digital et de la tech.",
     type: "website",
     locale: "fr_FR",
     url: "/",
@@ -30,15 +33,15 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+        alt: "YogaOps - Yoga doux pour femmes actives du digital",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "YogaOps - Yoga femmes, en ligne, sur place et entreprise",
+    title: "YogaOps - Yoga doux pour femmes actives du digital",
     description:
-      "Seances de yoga pour femmes: bien-etre, mal de dos, stress au travail et interventions en entreprise.",
+      "Des seances douces et realistes pour les femmes du digital et de la tech.",
     images: ["/opengraph-image"],
   },
 };
@@ -46,7 +49,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f5f1f6",
+  themeColor: "#faf8f5",
 };
 
 export default function RootLayout({
@@ -57,11 +60,13 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <div className="flex-1">{children}</div>
-        <SiteFooter />
+        <SmoothScrollProvider>
+          <div className="flex-1">{children}</div>
+          <SiteFooter />
+        </SmoothScrollProvider>
       </body>
     </html>
   );

@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/site-nav";
 import { listPublishedBlogPosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
-  title: "Blog yoga: stress, dos, bien-etre femme | YogaOps",
+  title: "Blog yoga: stress, charge mentale | YogaOps",
   description:
-    "Articles pratiques sur le yoga pour femmes, la gestion du stress, le mal de dos et le yoga sur chaise en entreprise.",
+    "Conseils pratiques pour ralentir, respirer et prendre soin de soi au quotidien.",
 };
 
 export default async function BlogPage() {
@@ -15,22 +15,20 @@ export default async function BlogPage() {
   return (
     <div className="page-shell">
       <SiteNav />
-      <main className="mx-auto w-full max-w-4xl px-6 py-10">
-        <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>
-          Blog YogaOps
-        </h1>
-        <p className="mt-2 max-w-2xl opacity-90">
-          Conseils bien-etre, gestion du stress, yoga sur chaise et routines pour soulager le dos.
+      <main className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-14">
+        <h1 className="section-title">Blog YogaOps</h1>
+        <p className="section-subtitle mt-3">
+          Mini articles simples et utiles pour le quotidien des femmes actives.
         </p>
 
-        <section className="mt-8 grid gap-4">
+        <section className="mt-10 grid gap-5">
           {posts.length === 0 ? (
-            <article className="brand-card rounded-xl p-6 text-sm opacity-80">
+            <article className="offer-card text-[var(--muted)]">
               Aucun article publie pour le moment.
             </article>
           ) : (
             posts.map((post) => (
-              <article key={post.id} className="brand-card rounded-xl overflow-hidden">
+              <article key={post.id} className="offer-card overflow-hidden p-0">
                 {post.coverImage && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -41,16 +39,16 @@ export default async function BlogPage() {
                   />
                 )}
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold">
+                  <h2 className="font-display text-xl font-medium">
                     <Link href={`/blog/${post.slug}`} className="hover:underline">
                       {post.title}
                     </Link>
                   </h2>
-                  <p className="mt-2 text-sm opacity-80">{post.excerpt}</p>
-                  <p className="mt-4 text-sm opacity-90">
-                    {post.content.length > 260 ? `${post.content.slice(0, 260)}...` : post.content}
-                  </p>
-                  <Link href={`/blog/${post.slug}`} className="brand-btn-secondary brand-btn-sm mt-4 inline-block rounded-md px-3 py-1">
+                  <p className="mt-2 text-sm text-[var(--muted)]">{post.excerpt}</p>
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="brand-btn-secondary brand-btn-sm mt-4 inline-flex rounded-lg px-3 py-1.5"
+                  >
                     Lire l article
                   </Link>
                 </div>

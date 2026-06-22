@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/site-nav";
+import { OfferCard } from "@/components/site-ui";
+import { ReserverQueryLink } from "@/components/reserver-query-link";
 import { ReserverSubscriptionUnlock } from "@/components/reserver-subscription-unlock";
 import { reserveSlot } from "@/app/actions";
 import { SubscriptionStatus } from "@/generated/prisma/enums";
@@ -14,6 +16,7 @@ import {
   startOfWeekMonday,
 } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
+import { getLandingContent } from "@/lib/landing-content";
 
 type Props = {
   searchParams: Promise<{
@@ -33,6 +36,7 @@ export const metadata: Metadata = {
 
 export default async function ReserverPage({ searchParams }: Props) {
   await ensureSeedData();
+  const landing = await getLandingContent();
   const params = await searchParams;
   const today = startOfDay(new Date());
   const selectedDate = params.date ? startOfDay(new Date(params.date)) : today;
@@ -142,21 +146,24 @@ export default async function ReserverPage({ searchParams }: Props) {
   return (
     <div className="page-shell">
       <SiteNav />
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-10">
-        <h1 className="text-2xl font-semibold tracking-tight md:text-3xl" style={{ color: "var(--brand)" }}>
-          Reserver un cours
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm opacity-90 md:text-base">
-          Comme sur Calendly : choisissez une date, puis un horaire disponible.
+      <main className="mx-auto w-full max-w-5xl px-5 py-8 md:px-8 md:py-12">
+        <h1 className="section-title">Reserver un cours</h1>
+        <p className="section-subtitle mt-3">
+          Choisissez une date puis un horaire disponible. Premiere seance offerte pour les cours collectifs.
         </p>
+
         {errorParam === "stripe_checkout" ? (
-          <p className="brand-alert mt-4 rounded-lg p-3 text-sm">
+          <p className="brand-alert mt-6 rounded-lg p-3 text-sm">
             Le paiement en ligne n&apos;a pas pu etre initialise. Verifiez la configuration Stripe
             puis reessayez, ou choisissez &quot;Paiement sur place&quot;.
           </p>
         ) : null}
 
-        <section className="mt-6 md:mt-8">
+        <section id="choisir-creneau" className="booking-panel mt-8">
+          <h2 className="font-display text-lg font-medium">Choisir un creneau</h2>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Selectionnez une date puis un horaire disponible.
+          </p>
           <div className="flex flex-col gap-3">
             <p className="text-xs font-medium uppercase tracking-wide opacity-70 md:text-sm md:normal-case md:tracking-normal">
               Choisir une date
@@ -167,7 +174,7 @@ export default async function ReserverPage({ searchParams }: Props) {
                   const iso = d.toISOString().slice(0, 10);
                   const isActive = iso === selectedDate.toISOString().slice(0, 10);
                   return (
-                    <a
+                    <ReserverQueryLink
                       key={iso}
                       href={`/reserver?date=${iso}${emailQuery}${subscriptionQuery}`}
                       className={`shrink-0 snap-start rounded-xl px-4 py-3 text-center text-sm shadow-sm md:rounded-lg md:px-3 md:py-2 md:shadow-none ${
@@ -182,7 +189,7 @@ export default async function ReserverPage({ searchParams }: Props) {
                       <span className="block whitespace-nowrap text-xs opacity-90 md:text-sm">
                         {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
                       </span>
-                    </a>
+                    </ReserverQueryLink>
                   );
                 })}
               </div>
@@ -276,14 +283,14 @@ export default async function ReserverPage({ searchParams }: Props) {
                   ) : null}
 
                   <div className="mt-4">
-                    <a
+                    <ReserverQueryLink
                       href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&slotId=${slot.id}${emailQuery}${subscriptionQuery}`}
                       className={`brand-btn-sm inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium md:w-auto md:py-2 ${
                         isSelected ? "brand-btn" : "brand-btn-secondary"
                       }`}
                     >
                       {isSelected ? "Creneau selectionne — continuer" : "Choisir ce creneau"}
-                    </a>
+                    </ReserverQueryLink>
                   </div>
                 </article>
               );
@@ -446,15 +453,69 @@ export default async function ReserverPage({ searchParams }: Props) {
               </form>
                 );
               })()}
-              <a
+              <ReserverQueryLink
                 href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}`}
                 className="mt-3 inline-block text-sm opacity-80 underline"
               >
                 Annuler
-              </a>
+              </ReserverQueryLink>
             </section>
           ) : null}
         </section>
+
+        <section className="mt-12 grid gap-6 md:grid-cols-2">
+          <OfferCard
+            label="Cours collectifs"
+            title="Yoga collectif en ligne"
+            description="40 minutes en petit groupe. Premiere seance offerte."
+            imageUrl={landing.collectiveOfferImageUrl}
+            imageAlt="Cours de yoga collectif en ligne depuis chez soi"
+            meta={["40 min", "Mardi & vendredi midi", "En ligne", "5 pers. max", "Presentiel Poissy"]}
+            href="#choisir-creneau"
+            cta="Choisir un creneau"
+            variant="primary"
+          />
+          <OfferCard
+            label="Yoga individuel"
+            title="Accompagnement individuel"
+            description="Un espace personnalise en visio, adapte a votre rythme."
+            imageUrl={landing.individualOfferImageUrl}
+            imageAlt="Cours de yoga individuel en ligne avec la professeure"
+            meta={["1h", "En ligne", "Presentiel Poissy"]}
+            href="#choisir-creneau"
+            cta="Choisir un creneau"
+          />
+        </section>
+
+        <div className="mt-4 grid gap-3 text-sm text-[var(--muted)] md:grid-cols-2">
+          <p>
+            <strong className="text-[var(--foreground)]">Collectif :</strong> 12 EUR/seance, abonnement 39 EUR/mois. Premiere seance offerte.
+          </p>
+          <p>
+            <strong className="text-[var(--foreground)]">Individuel :</strong> decouverte 15 EUR, seance 35 EUR, abonnement 129 EUR/mois.
+          </p>
+        </div>
+
+        {landing.presentielOfferImageUrl ? (
+          <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-[var(--beige)] md:grid md:grid-cols-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={landing.presentielOfferImageUrl}
+              alt="Cours de yoga en presentiel a Poissy"
+              className="h-56 w-full object-cover md:h-full"
+              loading="lazy"
+            />
+            <div className="flex flex-col justify-center gap-3 p-6">
+              <p className="text-xs font-medium uppercase tracking-wider text-[var(--terracotta)]">
+                Presentiel
+              </p>
+              <h2 className="font-display text-xl font-medium">Cours a Poissy et alentours</h2>
+              <p className="text-sm text-[var(--muted)]">
+                Seances en petit groupe ou en individuel sur place, en complement des cours en ligne.
+              </p>
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

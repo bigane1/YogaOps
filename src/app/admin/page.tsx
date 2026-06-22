@@ -181,6 +181,27 @@ export default async function AdminPage() {
                 currentUrl={landing.heroImage2Url}
                 className={fieldMd}
               />
+            <p className="col-span-2 border-t border-white/10 pt-4 text-xs font-semibold uppercase tracking-wide opacity-50">
+              Images offres yoga
+            </p>
+            <ImageUpload
+              name="collectiveOfferImageUrl"
+              label="Image cours collectif (en ligne)"
+              currentUrl={landing.collectiveOfferImageUrl}
+              className={fieldMd}
+            />
+            <ImageUpload
+              name="individualOfferImageUrl"
+              label="Image cours individuel (visio / telephone)"
+              currentUrl={landing.individualOfferImageUrl}
+              className={fieldMd}
+            />
+            <ImageUpload
+              name="presentielOfferImageUrl"
+              label="Image cours presentiel (Poissy)"
+              currentUrl={landing.presentielOfferImageUrl}
+              className={fieldMd}
+            />
             <textarea
               name="specializationMessage"
               defaultValue={landing.specializationMessage}

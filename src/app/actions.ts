@@ -922,6 +922,18 @@ export async function updateLandingContent(formData: FormData) {
     heroIntro: toText(formData.get("heroIntro"), defaultLandingContent.heroIntro),
     heroImage1Url: toText(formData.get("heroImage1Url"), defaultLandingContent.heroImage1Url),
     heroImage2Url: toText(formData.get("heroImage2Url"), defaultLandingContent.heroImage2Url),
+    collectiveOfferImageUrl: toText(
+      formData.get("collectiveOfferImageUrl"),
+      defaultLandingContent.collectiveOfferImageUrl,
+    ),
+    individualOfferImageUrl: toText(
+      formData.get("individualOfferImageUrl"),
+      defaultLandingContent.individualOfferImageUrl,
+    ),
+    presentielOfferImageUrl: toText(
+      formData.get("presentielOfferImageUrl"),
+      defaultLandingContent.presentielOfferImageUrl,
+    ),
     specializationMessage: toText(
       formData.get("specializationMessage"),
       defaultLandingContent.specializationMessage,

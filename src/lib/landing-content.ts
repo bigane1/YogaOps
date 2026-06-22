@@ -126,6 +126,9 @@ export type LandingContent = {
   heroIntro: string;
   heroImage1Url: string;
   heroImage2Url: string;
+  collectiveOfferImageUrl: string;
+  individualOfferImageUrl: string;
+  presentielOfferImageUrl: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -157,54 +160,59 @@ export type LandingContent = {
 };
 
 export const defaultLandingContent: LandingContent = {
-  heroTitle:
-    "Yoga pour femmes: soulager le stress, le dos et retrouver de l energie",
+  heroTitle: "Yoga doux pour femmes actives du digital et de la tech",
   heroImage1Url:
-    "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/4050315/pexels-photo-4050315.jpeg?auto=compress&cs=tinysrgb&w=1200",
   heroImage2Url:
+    "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  collectiveOfferImageUrl:
     "https://images.pexels.com/photos/4056529/pexels-photo-4056529.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  individualOfferImageUrl:
+    "https://images.pexels.com/photos/7978244/pexels-photo-7978244.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  presentielOfferImageUrl:
+    "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
   heroIntro:
-    "Je propose des seances de yoga pour femmes, en ligne et sur place, avec une approche douce et efficace pour reduire le stress du quotidien, apaiser les tensions du dos et reprendre confiance dans son corps.",
+    "Des cours simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer dans des quotidiens souvent trop remplis.",
   specializationMessage:
-    "J ai aussi une experience de recruteuse IT, ce qui me permet de bien comprendre le stress de ce metier pour les femmes. Je propose des seances ciblees pour respirer, prendre du recul et mieux affronter les difficultes professionnelles. Cette specialisation complete mon accompagnement general sans limiter les autres profils.",
+    "sortir du mode automatique",
   fatigueMessage:
-    "Entre les transports, le travail, la pression quotidienne et l equilibre entre vie professionnelle et vie de famille, la fatigue peut vite s accumuler. Ces seances offrent un vrai moment de bien-etre pour prendre soin de son esprit, ralentir et se reconnecter a soi.",
+    "bouger en douceur",
   enterpriseMessage:
-    "Accompagnement aussi en entreprise avec yoga sur chaise pour baisser la pression au travail et prevenir les douleurs liees a la posture.",
+    "deconnecter des ecrans",
   outdoorMessage:
-    "Participez aussi a des seances de yoga en plein air en groupe pour prendre du plaisir, bouger ensemble et faire de belles rencontres.",
-  firstSessionOffer: "Premiere seance gratuite, en individuel ou en groupe.",
-  socialProofTitle: "Elles en parlent mieux que moi",
+    "retrouver du calme et de la clarte mentale",
+  firstSessionOffer: "Premiere seance offerte.",
+  socialProofTitle: "Elles en parlent",
   socialProofItems: [
-    "J ai retrouve de l energie et je dors beaucoup mieux apres mes seances.",
-    "Mes douleurs de dos ont vraiment diminue en quelques semaines.",
-    "Les cours en groupe sont bienveillants et motivants, je me sens comprise.",
+    "Enfin un yoga accessible et sans pression.",
+    "Les seances m aident vraiment a ralentir dans mes journees de travail.",
+    "Une vraie pause mentale dans la semaine.",
   ],
-  chairYogaTitle: "Yoga sur chaise en entreprise",
+  chairYogaTitle: "Yoga en entreprise",
   chairYogaText:
-    "Des seances courtes et accessibles sans tenue specifique, directement sur le lieu de travail. Ideal pour reduire les tensions accumulees au bureau, ameliorer la concentration et prevenir les douleurs posturales.",
+    "Des seances adaptees aux equipes tech et digitales pour reduire la charge mentale et ramener du calme dans des environnements de travail exigeants.",
   chairYogaItems: [
-    "Aucun equipement requis — se pratique en tenue de travail",
-    "Reduction des tensions cervicales, epaules et lombaires",
-    "Exercices de respiration pour baisser le stress",
-    "Format 30 a 60 min, adaptable au planning de l equipe",
-    "Intervention sur site ou en visioconference",
+    "Reduire le stress et la charge mentale",
+    "Retrouver du focus et de la clarte mentale",
+    "Ameliorer la concentration au quotidien",
+    "Format flexible : en ligne ou sur site",
   ],
-  teacherPhotoUrl: "",
-  teacherBioTitle: "Votre professeure",
+  teacherPhotoUrl:
+    "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=800",
+  teacherBioTitle: "Pourquoi YogaOps ?",
   teacherBioText:
-    "Professeure de yoga specialisee dans l accompagnement des femmes actives, j anime des seances en ligne, sur place et en entreprise. Mon approche est progressive, accessible et centree sur le bien-etre global.",
+    "Je suis Basma. Pendant plusieurs annees, j ai travaille dans le recrutement tech, au rythme des journees chargees, des ecrans et d un quotidien souvent tres intense. Comme beaucoup de femmes actives, j ai connu la surcharge mentale, la difficulte a ralentir et cette sensation d etre constamment en mode automatique. Le yoga est progressivement devenu pour moi un espace pour respirer, relacher les tensions et me reconnecter a mon corps, notamment apres une periode de surmenage puis la maternite. J ai cree YogaOps avec l envie de proposer une approche du yoga plus simple, moderne et accessible, pensee pour les femmes du digital et de la tech qui ont besoin de souffler sans pression ni performance. Aujourd hui, je propose des seances douces et realistes, adaptees aux quotidiens charges, pour aider a retrouver du calme, de la clarte mentale et un peu plus d espace dans la journee.",
   practicalInfoTitle: "Infos pratiques",
   practicalInfoItems: [
-    "Formats: individuel, groupe, entreprise, yoga sur chaise.",
-    "Lieux: en ligne, en presentiel et en plein air selon la saison.",
-    "Duree: de 30 a 60 minutes selon vos besoins.",
-    "Niveaux: debutantes et intermediaires bienvenues.",
+    "Cours collectifs en ligne : mardi et vendredi midi, 40 min.",
+    "Accompagnement individuel : 1h en ligne, sur rendez-vous.",
+    "Premiere seance offerte pour les cours collectifs.",
+    "Petit groupe (5 personnes max) pour un cadre bienveillant.",
   ],
-  finalCtaTitle: "Prete a prendre soin de vous ?",
+  finalCtaTitle: "Pretes a souffler ?",
   finalCtaText:
-    "Commencez sereinement avec une premiere seance gratuite. Ensemble, nous construisons une pratique adaptee a votre rythme.",
-  finalCtaButtonLabel: "Reserver ma premiere seance",
+    "Commencez par une seance decouverte, sans pression ni performance.",
+  finalCtaButtonLabel: "Reserver une seance decouverte",
   footerAddress: "Adresse: 12 rue du Bien-Etre, 75000 Paris",
   footerPhone: "Telephone: +33 6 00 00 00 00",
   footerEmail: "Email: contact@yogaops.fr",
@@ -281,6 +289,9 @@ export async function ensureLandingContentTable() {
     "legalNoticeContent",
     "heroImage1Url",
     "heroImage2Url",
+    "collectiveOfferImageUrl",
+    "individualOfferImageUrl",
+    "presentielOfferImageUrl",
     "teacherPhotoUrl",
     "chairYogaTitle",
     "chairYogaText",
@@ -383,6 +394,9 @@ type LandingRow = {
   heroIntro: string;
   heroImage1Url: string;
   heroImage2Url: string;
+  collectiveOfferImageUrl: string;
+  individualOfferImageUrl: string;
+  presentielOfferImageUrl: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -413,9 +427,49 @@ type LandingRow = {
   legalNoticeContent: string;
 };
 
+export async function upgradeOfferImagesIfEmpty() {
+  await ensureLandingContentTable();
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET collectiveOfferImageUrl = ?
+     WHERE id = 1 AND (collectiveOfferImageUrl IS NULL OR collectiveOfferImageUrl = '')`,
+    defaultLandingContent.collectiveOfferImageUrl,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET individualOfferImageUrl = ?
+     WHERE id = 1 AND (individualOfferImageUrl IS NULL OR individualOfferImageUrl = '')`,
+    defaultLandingContent.individualOfferImageUrl,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET presentielOfferImageUrl = ?
+     WHERE id = 1 AND (presentielOfferImageUrl IS NULL OR presentielOfferImageUrl = '')`,
+    defaultLandingContent.presentielOfferImageUrl,
+  );
+}
+
+export async function upgradeCollectiveOfferImageIfLegacy() {
+  await ensureLandingContentTable();
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET collectiveOfferImageUrl = ?
+     WHERE id = 1
+       AND (
+         collectiveOfferImageUrl LIKE '%5474295%'
+         OR collectiveOfferImageUrl LIKE '%5474292%'
+       )`,
+    defaultLandingContent.collectiveOfferImageUrl,
+  );
+}
+
 export async function getLandingContent(): Promise<LandingContent> {
   await seedLandingContentIfMissing();
   await upgradeLegalTemplatesIfNeeded();
+  await upgradeOfferImagesIfEmpty();
+  await upgradeCollectiveOfferImageIfLegacy();
   const rows = (await prisma.$queryRawUnsafe<LandingRow[]>(
     "SELECT * FROM LandingContent WHERE id = 1 LIMIT 1",
   )) as LandingRow[];
@@ -427,6 +481,12 @@ export async function getLandingContent(): Promise<LandingContent> {
     heroIntro: row.heroIntro || defaultLandingContent.heroIntro,
     heroImage1Url: row.heroImage1Url || defaultLandingContent.heroImage1Url,
     heroImage2Url: row.heroImage2Url || defaultLandingContent.heroImage2Url,
+    collectiveOfferImageUrl:
+      row.collectiveOfferImageUrl || defaultLandingContent.collectiveOfferImageUrl,
+    individualOfferImageUrl:
+      row.individualOfferImageUrl || defaultLandingContent.individualOfferImageUrl,
+    presentielOfferImageUrl:
+      row.presentielOfferImageUrl || defaultLandingContent.presentielOfferImageUrl,
     specializationMessage:
       row.specializationMessage || defaultLandingContent.specializationMessage,
     fatigueMessage: row.fatigueMessage || defaultLandingContent.fatigueMessage,
@@ -467,6 +527,9 @@ export async function updateLandingContentInDb(content: LandingContent) {
          heroIntro = ?,
          heroImage1Url = ?,
          heroImage2Url = ?,
+         collectiveOfferImageUrl = ?,
+         individualOfferImageUrl = ?,
+         presentielOfferImageUrl = ?,
          specializationMessage = ?,
          fatigueMessage = ?,
          enterpriseMessage = ?,
@@ -501,6 +564,9 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.heroIntro,
     content.heroImage1Url,
     content.heroImage2Url,
+    content.collectiveOfferImageUrl,
+    content.individualOfferImageUrl,
+    content.presentielOfferImageUrl,
     content.specializationMessage,
     content.fatigueMessage,
     content.enterpriseMessage,

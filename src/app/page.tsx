@@ -2,428 +2,295 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Brain,
-  PersonStanding,
-  MonitorSmartphone,
-  Laptop,
-  Trees,
-  MapPin,
-  BookOpen,
-  CalendarDays,
-  Clock,
-  Info,
-  Quote,
-  Armchair,
-  CheckCircle2,
-  Building2,
-} from "lucide-react";
 import { sendContactMessage } from "@/app/actions";
 import { ContactFormStartedAt } from "@/components/contact-form-started-at";
 import { SiteNav } from "@/components/site-nav";
+import {
+  OfferCard,
+  SectionLabel,
+  excerptParagraphs,
+} from "@/components/site-ui";
+import { ScrollReveal } from "@/components/scroll-reveal";
+import { ScrollStagger } from "@/components/scroll-stagger";
 import { ensureSeedData } from "@/lib/db";
 import { getLandingContent } from "@/lib/landing-content";
-import { prisma } from "@/lib/prisma";
 
 type Props = {
   searchParams: Promise<{ contact?: string }>;
 };
 
 export const metadata: Metadata = {
-  title: "Yoga pour femmes - Stress, dos et bien-etre | YogaOps",
+  title: "Yoga doux pour femmes actives du digital | YogaOps",
   description:
-    "Cours de yoga pour femmes en ligne et sur place, yoga sur chaise en entreprise, reduction du stress et soulagement du dos. Premiere seance gratuite.",
+    "Des cours simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer.",
 };
+
+const heroBullets = [
+  { key: "fatigueMessage", label: "sortir du mode automatique" },
+  { key: "specializationMessage", label: "bouger en douceur" },
+  { key: "enterpriseMessage", label: "deconnecter des ecrans" },
+  { key: "outdoorMessage", label: "retrouver du calme et de la clarte mentale" },
+] as const;
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
   const contactStatus = params.contact;
   await ensureSeedData();
-  const [coursesCount, packageCount, availableSlots, landing] = await Promise.all([
-    prisma.course.count({ where: { isActive: true } }),
-    prisma.packagePlan.count({ where: { isActive: true } }),
-    prisma.timeSlot.count({ where: { available: { gt: 0 } } }),
-    getLandingContent(),
-  ]);
+  const landing = await getLandingContent();
+
   const localBusinessSchema = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: "YogaOps",
     url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr",
-    image: [
-      "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    ],
+    image: [landing.heroImage1Url],
     telephone: landing.footerPhone,
     email: landing.footerEmail.replace(/^Email:\s*/i, ""),
     address: landing.footerAddress.replace(/^Adresse:\s*/i, ""),
     description: landing.heroIntro,
-    sameAs: [
-      landing.facebookUrl,
-      landing.instagramUrl,
-      landing.tiktokUrl,
-      landing.linkedinUrl,
-    ],
+    sameAs: [landing.facebookUrl, landing.instagramUrl, landing.linkedinUrl],
   };
-  const faqSchema = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: [
-      {
-        "@type": "Question",
-        name: "Proposez-vous des seances de yoga pour femmes fatiguees par le travail ?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: landing.fatigueMessage,
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Faites-vous du yoga sur chaise en entreprise ?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: landing.enterpriseMessage,
-        },
-      },
-      {
-        "@type": "Question",
-        name: "Y a-t-il une premiere seance gratuite ?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: landing.firstSessionOffer,
-        },
-      },
-    ],
-  };
+
+  const bulletLabels = heroBullets.map((item) => landing[item.key] || item.label);
+  const bioExcerpt = excerptParagraphs(landing.teacherBioText, 3);
+  const [featuredQuote, ...otherQuotes] = landing.socialProofItems;
+  const contactEmail = landing.footerEmail.replace(/^Email:\s*/i, "");
 
   return (
     <div className="page-shell">
       <SiteNav />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
+      <main>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
         />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
-        <section className="brand-card grid gap-8 rounded-2xl p-8 lg:grid-cols-2">
-          <div>
-            <h1
-              className="text-3xl font-semibold tracking-tight md:text-4xl"
-              style={{ color: "var(--brand)" }}
-            >
-              {landing.heroTitle}
-            </h1>
-            <p className="mt-3 max-w-2xl opacity-90">
-              {landing.heroIntro}
-            </p>
-            <p className="mt-2 max-w-2xl text-sm opacity-80">
-              {landing.fatigueMessage}
-            </p>
-            <p className="mt-2 max-w-2xl text-sm opacity-80">
-              {landing.specializationMessage}
-            </p>
-            <p className="mt-2 max-w-2xl text-sm opacity-80">
-              {landing.enterpriseMessage}
-            </p>
-            <p className="mt-2 max-w-2xl text-sm opacity-80">
-              {landing.outdoorMessage}
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/reserver" className="brand-btn rounded-lg px-4 py-2">
-                Prendre rendez-vous
-              </Link>
-              <Link
-                href="/tarifs"
-                className="brand-btn-secondary rounded-lg px-4 py-2"
-              >
-                Voir les formules
-              </Link>
-            </div>
-            <p className="mt-3 text-sm font-medium" style={{ color: "var(--brand)" }}>
-              {landing.firstSessionOffer}
-            </p>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <article className="brand-card rounded-xl p-4">
-              {landing.heroImage1Url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={landing.heroImage1Url}
-                  alt="Seance de yoga bien-etre pour femme"
-                  className="h-48 w-full rounded-lg object-cover"
-                  loading="lazy"
-                />
-              )}
-              <p className="mt-3 text-sm opacity-80">
-                Cours prives et petits groupes pour se recentrer, respirer et
-                retrouver un dos plus souple.
-              </p>
-            </article>
-            <article className="brand-card rounded-xl p-4">
-              {landing.heroImage2Url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={landing.heroImage2Url}
-                  alt="Yoga sur chaise en entreprise"
-                  className="h-48 w-full rounded-lg object-cover"
-                  loading="lazy"
-                />
-              )}
-              <p className="mt-3 text-sm opacity-80">
-                Interventions en entreprise: yoga sur chaise pour detendre nuque,
-                epaules et lombaires au bureau.
-              </p>
-            </article>
-          </div>
-        </section>
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <article className="brand-card rounded-xl p-5">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <Brain className="h-5 w-5" style={{ color: "var(--brand)" }} />
+        {/* HERO */}
+        <section id="accueil" className="section-block min-h-[85vh] flex items-center">
+          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+            <div className="grid w-full items-center gap-10 md:grid-cols-2">
+            <div className="order-2 md:order-1">
+              <SectionLabel>YogaOps</SectionLabel>
+              <h1 className="section-title mt-3">{landing.heroTitle}</h1>
+              <p className="section-subtitle mt-4">{landing.heroIntro}</p>
+              <ul className="bullet-list mt-6 space-y-2 pl-5 text-sm text-[var(--muted)]">
+                {bulletLabels.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link href="/reserver" className="brand-btn inline-flex rounded-lg px-5 py-2.5">
+                  Reserver une seance decouverte
+                </Link>
+                {landing.firstSessionOffer ? (
+                  <span className="text-sm text-[var(--muted)]">{landing.firstSessionOffer}</span>
+                ) : null}
+              </div>
             </div>
-            <h2 className="text-lg font-semibold">Mieux gerer le stress</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Respiration guidee, relachement musculaire et mouvements adaptes pour
-              calmer le mental et repartir plus legere.
-            </p>
-          </article>
-          <article className="brand-card rounded-xl p-5">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <PersonStanding className="h-5 w-5" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-lg font-semibold">Soulager le mal de dos</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Seances ciblees pour delier le dos, renforcer en douceur et reduire
-              les douleurs liees a la sedentarite.
-            </p>
-          </article>
-          <article className="brand-card rounded-xl p-5">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <MonitorSmartphone className="h-5 w-5" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-lg font-semibold">En ligne, sur place, entreprise</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Choisissez le format qui vous convient: visio, presentiel ou atelier
-              yoga sur chaise pour vos equipes.
-            </p>
-          </article>
-          <article className="brand-card rounded-xl p-5 md:col-span-3">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <Laptop className="h-5 w-5" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-lg font-semibold">Specialisation stress IT (sans exclure les autres profils)</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Grace a mon experience en recrutement IT, je comprends la pression de ce secteur,
-              en particulier pour les femmes. Je propose un accompagnement cible pour aider a
-              respirer, sortir de la surcharge mentale et retrouver de la clarte, tout en restant
-              ouvert a toutes les femmes et a tout type de metier.
-            </p>
-          </article>
-          <article className="brand-card rounded-xl p-5 md:col-span-3">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <Trees className="h-5 w-5" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-lg font-semibold">Seances en plein air en groupe</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Rejoignez des sessions conviviales en exterieur pour prendre plaisir
-              a pratiquer, respirer au grand air et faire connaissance avec
-              d autres femmes bienveillantes.
-            </p>
-          </article>
-          <article className="brand-card rounded-xl p-5 md:col-span-3">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <MapPin className="h-5 w-5" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-lg font-semibold">Zone desservie</h2>
-            <p className="mt-2 text-sm opacity-85">
-              Vous etes a Carrieres-sous-Poissy (78955) ? Decouvrez la page locale dediee pour les
-              seances yoga femmes, en ligne, sur place et en entreprise.
-            </p>
-            <Link
-              href="/yoga-femme-carrieres-sous-poissy"
-              className="brand-btn-secondary brand-btn-sm mt-3 inline-block rounded-lg px-3 py-1"
-            >
-              Voir la page locale Carrieres-sous-Poissy
-            </Link>
-          </article>
-        </section>
-
-        {/* ── Yoga sur chaise ────────────────────────────────────────────── */}
-        <section className="brand-card rounded-2xl p-8">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: "var(--brand-muted, #f3e8ff)" }}>
-              <Armchair className="h-6 w-6" style={{ color: "var(--brand)" }} />
-            </div>
-            <h2 className="text-2xl font-semibold">{landing.chairYogaTitle}</h2>
-          </div>
-          <div className="mt-4 grid gap-6 md:grid-cols-2">
-            <div>
-              <p className="text-sm leading-relaxed opacity-90">{landing.chairYogaText}</p>
-              <Link
-                href="/entreprises"
-                className="brand-btn-secondary brand-btn-sm mt-5 inline-flex items-center gap-2 rounded-lg px-4 py-2"
-              >
-                <Building2 className="h-4 w-4" />
-                En savoir plus — interventions entreprise
-              </Link>
-            </div>
-            <ul className="space-y-3">
-              {landing.chairYogaItems.map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" style={{ color: "var(--brand)" }} />
-                  <span className="opacity-90">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        <section className="brand-card rounded-xl p-6">
-          <h2 className="text-xl font-semibold">{landing.socialProofTitle}</h2>
-          <ul className="mt-3 grid gap-3 md:grid-cols-3">
-            {landing.socialProofItems.map((item) => (
-              <li key={item} className="brand-list-item rounded-lg p-4 text-sm opacity-90">
-                <Quote className="mb-2 h-4 w-4 opacity-40" style={{ color: "var(--brand)" }} />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2">
-          <article className="brand-card rounded-xl p-6">
-            {landing.teacherPhotoUrl ? (
-              <div className="mb-4 flex items-center gap-4">
-                <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-[var(--brand)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
+            <div className="order-1 md:order-2">
+              <div className="hero-banner aspect-[4/5] md:aspect-[3/4]">
+                {landing.heroImage1Url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={landing.teacherPhotoUrl}
-                    alt={landing.teacherBioTitle}
+                    src={landing.heroImage1Url}
+                    alt="Femme active en posture de yoga douce"
                     className="h-full w-full object-cover"
+                    loading="eager"
                   />
-                </div>
-                <h2 className="text-xl font-semibold">{landing.teacherBioTitle}</h2>
+                ) : null}
               </div>
-            ) : (
-              <h2 className="text-xl font-semibold">{landing.teacherBioTitle}</h2>
-            )}
-            <p className="mt-1 text-sm opacity-90">{landing.teacherBioText}</p>
-          </article>
-          <article className="brand-card rounded-xl p-6">
-            <div className="mb-3 flex items-center gap-2">
-              <Info className="h-5 w-5" style={{ color: "var(--brand)" }} />
-              <h2 className="text-xl font-semibold">{landing.practicalInfoTitle}</h2>
             </div>
-            <ul className="mt-1 space-y-2 text-sm opacity-90">
-              {landing.practicalInfoItems.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="mt-0.5 shrink-0" style={{ color: "var(--brand)" }}>•</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </article>
+            </div>
+          </ScrollReveal>
         </section>
 
-        <section className="brand-card rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-semibold" style={{ color: "var(--brand)" }}>
-            {landing.finalCtaTitle}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm opacity-90">{landing.finalCtaText}</p>
-          <div className="mt-5">
-            <Link href="/reserver" className="brand-btn rounded-lg px-5 py-2.5">
-              {landing.finalCtaButtonLabel}
-            </Link>
-          </div>
+        {/* POURQUOI */}
+        <section id="pourquoi" className="section-block bg-[var(--beige)]">
+          <ScrollReveal className="mx-auto grid w-full max-w-5xl items-center gap-10 px-5 md:grid-cols-2 md:px-8">
+            <div className="hero-banner aspect-square max-h-[28rem]">
+              {(landing.teacherPhotoUrl || landing.heroImage2Url) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={landing.teacherPhotoUrl || landing.heroImage2Url}
+                  alt="Basma, fondatrice de YogaOps"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : null}
+            </div>
+            <div>
+              <SectionLabel>Mon histoire</SectionLabel>
+              <h2 className="section-title mt-3">{landing.teacherBioTitle}</h2>
+              <div className="mt-5 space-y-4 text-[var(--muted)] leading-relaxed">
+                {bioExcerpt.map((paragraph) => (
+                  <p key={paragraph.slice(0, 48)}>{paragraph}</p>
+                ))}
+              </div>
+              <Link
+                href="/#contact-form"
+                className="brand-btn-secondary brand-btn-sm mt-6 inline-flex rounded-lg px-4 py-2"
+              >
+                Me contacter
+              </Link>
+            </div>
+          </ScrollReveal>
         </section>
 
-        <section id="contact-form" className="brand-card rounded-xl p-6">
-          <h2 className="text-2xl font-semibold" style={{ color: "var(--brand)" }}>
-            Une question ? Contactez-moi
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm opacity-90">
-            Envoyez votre message pour demander des informations sur les seances, les tarifs ou les
-            interventions en entreprise.
-          </p>
-          {contactStatus === "ok" ? (
-            <p className="brand-alert mt-4 rounded-lg p-3 text-sm">
-              Merci, votre message a bien ete envoye. Je vous reponds rapidement.
-            </p>
-          ) : null}
-          {contactStatus === "error" ? (
-            <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              Merci de remplir tous les champs du formulaire.
-            </p>
-          ) : null}
-          <form action={sendContactMessage} className="mt-4 grid max-w-2xl gap-3">
-            <ContactFormStartedAt />
-            <div className="hidden" aria-hidden="true">
-              <label htmlFor="website">Website</label>
-              <input
-                id="website"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                className="brand-field rounded-md px-3 py-2 text-sm"
+        {/* OFFRES */}
+        <section id="offres" className="section-block">
+          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+            <div className="text-center">
+              <SectionLabel>Accompagnements</SectionLabel>
+              <h2 className="section-title mt-3">Les offres YogaOps</h2>
+              <p className="section-subtitle mx-auto mt-3">
+                Chaque seance est pensee pour s adapter a votre rythme, sans pression ni performance.
+              </p>
+            </div>
+            <ScrollStagger className="mt-10 grid gap-6 md:grid-cols-2" staggerMs={120}>
+              <OfferCard
+                wide
+                label="Cours collectifs"
+                title="Yoga collectif en ligne"
+                description="40 minutes pour respirer, bouger en douceur et relacher les tensions du quotidien."
+                imageUrl={landing.collectiveOfferImageUrl}
+                imageAlt="Eleve en cours de yoga collectif en ligne via son ordinateur"
+                meta={["40 min", "Mardi & vendredi midi", "En ligne", "5 pers. max", "Presentiel Poissy", "1ere seance offerte"]}
+                href="/reserver"
+                cta="Reserver"
+                variant="primary"
               />
-            </div>
-            <input
-              name="fullName"
-              required
-              placeholder="Votre nom"
-              className="brand-field rounded-md px-3 py-2 text-sm"
-            />
-            <input
-              name="email"
-              type="email"
-              required
-              placeholder="Votre email"
-              className="brand-field rounded-md px-3 py-2 text-sm"
-            />
-            <textarea
-              name="message"
-              required
-              rows={5}
-              placeholder="Votre message"
-              className="brand-field rounded-md px-3 py-2 text-sm"
-            />
-            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
-              Envoyer le message
-            </button>
-          </form>
+              <OfferCard
+                label="Individuel"
+                title="Yoga individuel"
+                description="Un espace personnalise pour ralentir et retrouver de la clarte mentale."
+                imageUrl={landing.individualOfferImageUrl}
+                imageAlt="Professeure de yoga accompagnant une eleve en visio sur son telephone"
+                meta={["1h", "En ligne", "Sur rendez-vous"]}
+                href="/reserver"
+                cta="Decouvrir"
+              />
+              <OfferCard
+                label="Entreprises"
+                title="Yoga en entreprise"
+                description={landing.chairYogaText}
+                meta={["Equipes tech", "En ligne ou sur site"]}
+                href="/entreprises"
+                cta="En savoir plus"
+              />
+              <OfferCard
+                wide
+                label="Ateliers"
+                title="Ateliers YogaOps"
+                description="Stress, charge mentale et transitions professionnelles."
+                meta={["Thematiques", "Inscription en ligne"]}
+                href="/ateliers"
+                cta="Voir les ateliers"
+              />
+            </ScrollStagger>
+          </ScrollReveal>
         </section>
 
-        <section className="grid gap-4 sm:grid-cols-3">
-          <article className="brand-card rounded-xl p-5">
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
-              <div>
-                <p className="text-sm opacity-75">Types de cours</p>
-                <p className="text-2xl font-semibold">{coursesCount}</p>
+        {/* TEMOIGNAGES */}
+        <section id="temoignages" className="section-block bg-[var(--beige)]">
+          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+            <div className="text-center">
+              <SectionLabel>Confiance</SectionLabel>
+              <h2 className="section-title mt-3">{landing.socialProofTitle}</h2>
+            </div>
+            {featuredQuote ? (
+              <blockquote className="quote-featured mt-10">
+                &ldquo;{featuredQuote}&rdquo;
+              </blockquote>
+            ) : null}
+            {otherQuotes.length > 0 ? (
+              <ScrollStagger className="mt-8 grid gap-5 md:grid-cols-2" staggerMs={100}>
+                {otherQuotes.map((item) => (
+                  <blockquote key={item} className="quote-block text-sm">
+                    &ldquo;{item}&rdquo;
+                  </blockquote>
+                ))}
+              </ScrollStagger>
+            ) : null}
+          </ScrollReveal>
+        </section>
+
+        {/* RESEAUX + CONTACT */}
+        <section id="contact" className="section-block">
+          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+            <div className="text-center">
+              <SectionLabel>Communaute</SectionLabel>
+              <h2 className="section-title mt-3">Suivre YogaOps</h2>
+            </div>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <a
+                href={landing.instagramUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="brand-btn-secondary rounded-lg px-5 py-2.5"
+              >
+                Instagram
+              </a>
+              <a
+                href={landing.linkedinUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="brand-btn-secondary rounded-lg px-5 py-2.5"
+              >
+                LinkedIn
+              </a>
+              <a
+                href={landing.facebookUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="brand-btn-secondary rounded-lg px-5 py-2.5"
+              >
+                Facebook
+              </a>
+            </div>
+
+            <div
+              id="contact-form"
+              className="mt-16 grid gap-8 md:grid-cols-2 md:items-start"
+            >
+              <div className="space-y-4">
+                <h3 className="font-display text-lg font-medium">Contact</h3>
+                <p className="text-sm text-[var(--muted)]">{landing.footerAddress}</p>
+                <p className="text-sm text-[var(--muted)]">{landing.footerPhone}</p>
+                <p className="text-sm">
+                  <a href={`mailto:${contactEmail}`} className="underline decoration-[var(--brand)]">
+                    {contactEmail}
+                  </a>
+                </p>
+                <p className="text-sm text-[var(--muted)]">Sur rendez-vous</p>
+              </div>
+
+              <div className="brand-card rounded-2xl p-6">
+                <h3 className="font-display text-lg font-medium">Une question ?</h3>
+                {contactStatus === "ok" ? (
+                  <p className="brand-alert mt-4 rounded-lg p-3 text-sm">
+                    Merci, votre message a bien ete envoye.
+                  </p>
+                ) : null}
+                {contactStatus === "error" ? (
+                  <p className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    Merci de remplir tous les champs.
+                  </p>
+                ) : null}
+                <form action={sendContactMessage} className="mt-4 grid gap-3">
+                  <ContactFormStartedAt />
+                  <div className="hidden" aria-hidden="true">
+                    <input id="website" name="website" tabIndex={-1} autoComplete="off" className="brand-field px-3 py-2 text-sm" />
+                  </div>
+                  <input name="fullName" required placeholder="Votre nom" className="brand-field px-3 py-2 text-sm" />
+                  <input name="email" type="email" required placeholder="Votre email" className="brand-field px-3 py-2 text-sm" />
+                  <textarea name="message" required rows={4} placeholder="Votre message" className="brand-field px-3 py-2 text-sm" />
+                  <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
+                    Envoyer
+                  </button>
+                </form>
               </div>
             </div>
-          </article>
-          <article className="brand-card rounded-xl p-5">
-            <div className="flex items-center gap-3">
-              <CalendarDays className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
-              <div>
-                <p className="text-sm opacity-75">Abonnements</p>
-                <p className="text-2xl font-semibold">{packageCount}</p>
-              </div>
-            </div>
-          </article>
-          <article className="brand-card rounded-xl p-5">
-            <div className="flex items-center gap-3">
-              <Clock className="h-6 w-6 shrink-0" style={{ color: "var(--brand)" }} />
-              <div>
-                <p className="text-sm opacity-75">Creneaux reservables</p>
-                <p className="text-2xl font-semibold">{availableSlots}</p>
-              </div>
-            </div>
-          </article>
+          </ScrollReveal>
         </section>
       </main>
     </div>
