@@ -16,12 +16,6 @@ export function ScrollReveal({ children, delay = 0, className = "" }: ScrollReve
     const el = ref.current;
     if (!el) return;
 
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) {
-      setVisible(true);
-      return;
-    }
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
