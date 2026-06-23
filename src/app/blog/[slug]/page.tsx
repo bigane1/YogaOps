@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteNav } from "@/components/site-nav";
+import { BlogContent } from "@/components/blog-content";
 import { getPublishedBlogPostBySlug } from "@/lib/blog";
+import { withImageCacheBust } from "@/lib/landing-content";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -43,6 +45,9 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const post = await getPublishedBlogPostBySlug(slug);
   if (!post) notFound();
+  const coverSrc = post.coverImage
+    ? withImageCacheBust(post.coverImage, post.updatedAt)
+    : "";
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -76,20 +81,22 @@ export default async function BlogPostPage({ params }: Props) {
           Retour au blog
         </Link>
         <article className="brand-card mt-4 rounded-xl p-6">
-          {post.coverImage && (
+          {coverSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={post.coverImage}
+              src={coverSrc}
               alt={post.title}
               className="mb-6 h-64 w-full rounded-lg object-cover"
               loading="lazy"
             />
-          )}
+          ) : null}
           <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>
             {post.title}
           </h1>
           <p className="mt-2 text-sm opacity-75">{post.excerpt}</p>
-          <p className="mt-5 whitespace-pre-line text-sm opacity-90">{post.content}</p>
+          <div className="mt-5">
+            <BlogContent content={post.content} />
+          </div>
         </article>
       </main>
     </div>

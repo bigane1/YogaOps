@@ -1142,38 +1142,79 @@ export async function sendContactMessage(formData: FormData) {
   redirect("/?contact=ok#contact-form");
 }
 
-export async function createBlogPost(formData: FormData) {
-  if (!(await isAdmin())) return;
+export type BlogPostResult = { ok: true } | { ok: false; error: string };
+
+function revalidateBlogSlug(slug: string | null | undefined) {
+  if (!slug) return;
+  revalidatePath(`/blog/${slug}`);
+}
+
+export async function createBlogPost(formData: FormData): Promise<BlogPostResult> {
+  if (!(await isAdmin())) {
+    return { ok: false, error: "Session expiree. Reconnectez-vous au backoffice." };
+  }
   const title = String(formData.get("title") ?? "").trim();
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
   const coverImage = String(formData.get("coverImage") ?? "").trim();
   const isPublished = String(formData.get("isPublished") ?? "1") === "1";
-  if (!title || !excerpt || !content) return;
+  if (!title || !excerpt || !content) {
+    return { ok: false, error: "Titre, resume et contenu sont obligatoires." };
+  }
 
-  await createBlogPostInDb({ title, excerpt, content, coverImage, isPublished });
-  revalidatePublicAndAdmin();
+  try {
+    const slug = await createBlogPostInDb({ title, excerpt, content, coverImage, isPublished });
+    revalidatePublicAndAdmin();
+    revalidateBlogSlug(slug);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Impossible de creer l article. Reessayez." };
+  }
 }
 
-export async function updateBlogPost(formData: FormData) {
-  if (!(await isAdmin())) return;
+export async function updateBlogPost(formData: FormData): Promise<BlogPostResult> {
+  if (!(await isAdmin())) {
+    return { ok: false, error: "Session expiree. Reconnectez-vous au backoffice." };
+  }
   const id = Number(formData.get("id") ?? 0);
   const title = String(formData.get("title") ?? "").trim();
   const excerpt = String(formData.get("excerpt") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
   const coverImage = String(formData.get("coverImage") ?? "").trim();
   const isPublished = String(formData.get("isPublished") ?? "1") === "1";
-  if (!id || !title || !excerpt || !content) return;
+  if (!id || !title || !excerpt || !content) {
+    return { ok: false, error: "Titre, resume et contenu sont obligatoires." };
+  }
 
-  await updateBlogPostInDb({ id, title, excerpt, content, coverImage, isPublished });
-  revalidatePublicAndAdmin();
+  try {
+    const slug = await updateBlogPostInDb({ id, title, excerpt, content, coverImage, isPublished });
+    revalidatePublicAndAdmin();
+    revalidateBlogSlug(slug);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Impossible de mettre a jour l article. Reessayez." };
+  }
 }
 
-export async function deleteBlogPost(formData: FormData) {
-  if (!(await isAdmin())) return;
-  const id = Number(formData.get("id") ?? 0);
-  if (!id) return;
+export async function deleteBlogPost(id: number): Promise<BlogPostResult> {
+  if (!(await isAdmin())) {
+    return { ok: false, error: "Session expiree. Reconnectez-vous au backoffice." };
+  }
+  if (!id) {
+    return { ok: false, error: "Article introuvable." };
+  }
 
-  await deleteBlogPostInDb(id);
-  revalidatePublicAndAdmin();
+  try {
+    const rows = (await prisma.$queryRawUnsafe<{ slug: string }[]>(
+      "SELECT slug FROM BlogPost WHERE id = ? LIMIT 1",
+      id,
+    )) as { slug: string }[];
+    const slug = rows?.[0]?.slug;
+    await deleteBlogPostInDb(id);
+    revalidatePublicAndAdmin();
+    revalidateBlogSlug(slug);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Impossible de supprimer l article." };
+  }
 }

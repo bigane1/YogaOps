@@ -105,7 +105,7 @@ export async function createBlogPostInDb(input: {
   content: string;
   coverImage: string;
   isPublished: boolean;
-}) {
+}): Promise<string> {
   await seedBlogIfMissing();
   const slug = toSlug(input.title);
   const baseSlug = slug;
@@ -132,6 +132,7 @@ export async function createBlogPostInDb(input: {
     input.coverImage,
     input.isPublished ? 1 : 0,
   );
+  return uniqueSlug;
 }
 
 export async function updateBlogPostInDb(input: {
@@ -141,8 +142,14 @@ export async function updateBlogPostInDb(input: {
   content: string;
   coverImage: string;
   isPublished: boolean;
-}) {
+}): Promise<string | null> {
   await seedBlogIfMissing();
+  const rows = (await prisma.$queryRawUnsafe<{ slug: string }[]>(
+    "SELECT slug FROM BlogPost WHERE id = ? LIMIT 1",
+    input.id,
+  )) as { slug: string }[];
+  const slug = rows?.[0]?.slug ?? null;
+
   await prisma.$executeRawUnsafe(
     `UPDATE BlogPost
      SET title = ?,
@@ -159,6 +166,7 @@ export async function updateBlogPostInDb(input: {
     input.isPublished ? 1 : 0,
     input.id,
   );
+  return slug;
 }
 
 export async function deleteBlogPostInDb(id: number) {

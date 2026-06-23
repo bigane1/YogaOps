@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { listPublishedBlogPosts } from "@/lib/blog";
+import { withImageCacheBust } from "@/lib/landing-content";
 
 export const metadata: Metadata = {
   title: "Blog yoga: stress, charge mentale | YogaOps",
@@ -27,17 +28,21 @@ export default async function BlogPage() {
               Aucun article publie pour le moment.
             </article>
           ) : (
-            posts.map((post) => (
+            posts.map((post) => {
+              const coverSrc = post.coverImage
+                ? withImageCacheBust(post.coverImage, post.updatedAt)
+                : "";
+              return (
               <article key={post.id} className="offer-card overflow-hidden p-0">
-                {post.coverImage && (
+                {coverSrc ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={post.coverImage}
+                    src={coverSrc}
                     alt={post.title}
                     className="h-48 w-full object-cover"
                     loading="lazy"
                   />
-                )}
+                ) : null}
                 <div className="p-6">
                   <h2 className="font-display text-xl font-medium">
                     <Link href={`/blog/${post.slug}`} className="hover:underline">
@@ -53,7 +58,8 @@ export default async function BlogPage() {
                   </Link>
                 </div>
               </article>
-            ))
+              );
+            })
           )}
         </section>
       </main>

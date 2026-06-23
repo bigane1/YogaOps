@@ -2,23 +2,16 @@ export const dynamic = "force-dynamic";
 
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
-import { ImageUpload } from "@/components/image-upload";
+import { BlogPostForm } from "@/components/blog-post-form";
 import { LandingContentEditor } from "@/components/landing-content-editor";
 import { cookies } from "next/headers";
-import {
-  adminLogin,
-  adminLogout,
-  createBlogPost,
-  deleteBlogPost,
-  updateBlogPost,
-} from "@/app/actions";
+import { adminLogin, adminLogout } from "@/app/actions";
 import { listAdminBlogPosts } from "@/lib/blog";
 import { ensureSeedData, addDays, startOfDay } from "@/lib/db";
 import { getLandingContent } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
-const fieldSm = "brand-field rounded px-2 py-1 text-sm";
 
 export default async function AdminPage() {
   await ensureSeedData();
@@ -93,66 +86,17 @@ export default async function AdminPage() {
             Blog (articles — pas la page d accueil)
           </h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Les images ici ne modifient que les articles du blog. Pour la page d accueil, utilisez la
-            section « Landing page » plus bas.
+            Ajoutez ou modifiez les images de couverture et des illustrations dans le texte. Pour la
+            page d accueil, utilisez « Landing page » plus bas.
           </p>
-          <form action={createBlogPost} className="mt-4 grid gap-2">
-            <input name="title" required placeholder="Titre article" className={fieldMd} />
-            <input name="excerpt" required placeholder="Resume court" className={fieldMd} />
-            <textarea name="content" required rows={5} placeholder="Contenu" className={fieldMd} />
-            <ImageUpload name="coverImage" label="Image de couverture (optionnel)" className={fieldMd} />
-            <select name="isPublished" className={fieldMd}>
-              <option value="1">Publie</option>
-              <option value="0">Brouillon</option>
-            </select>
-            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
-              Ajouter article
-            </button>
-          </form>
+          <div className="mt-4">
+            <BlogPostForm mode="create" />
+          </div>
 
-          <ul className="mt-4 space-y-3 text-sm">
+          <ul className="mt-6 space-y-4 text-sm">
             {blogPosts.map((post) => (
               <li key={post.id} className="brand-list-item p-3">
-                <form action={updateBlogPost} className="grid gap-2">
-                  <input type="hidden" name="id" value={post.id} />
-                  <input name="title" defaultValue={post.title} className={fieldSm} />
-                  <input name="excerpt" defaultValue={post.excerpt} className={fieldSm} />
-                  <textarea
-                    name="content"
-                    defaultValue={post.content}
-                    rows={4}
-                    className={fieldSm}
-                  />
-                  <ImageUpload
-                    name="coverImage"
-                    label="Image de couverture"
-                    currentUrl={post.coverImage ?? ""}
-                    className={fieldSm}
-                  />
-                  <select
-                    name="isPublished"
-                    defaultValue={post.isPublished ? "1" : "0"}
-                    className={fieldSm}
-                  >
-                    <option value="1">Publie</option>
-                    <option value="0">Brouillon</option>
-                  </select>
-                  <button
-                    type="submit"
-                    className="brand-btn brand-btn-sm w-fit rounded px-3 py-1 text-white"
-                  >
-                    Modifier
-                  </button>
-                </form>
-                <form action={deleteBlogPost} className="mt-2">
-                  <input type="hidden" name="id" value={post.id} />
-                  <button
-                    type="submit"
-                    className="rounded border border-red-300 bg-red-50 px-3 py-1 text-sm text-red-800 hover:bg-red-100"
-                  >
-                    Supprimer
-                  </button>
-                </form>
+                <BlogPostForm mode="edit" post={post} />
               </li>
             ))}
           </ul>

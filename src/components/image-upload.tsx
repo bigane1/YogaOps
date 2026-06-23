@@ -10,6 +10,7 @@ interface Props {
   shape?: "circle" | "rect";
   className?: string;
   homepageHint?: string;
+  onUploaded?: (url: string) => void;
 }
 
 export function ImageUpload({
@@ -19,6 +20,7 @@ export function ImageUpload({
   shape = "rect",
   className,
   homepageHint,
+  onUploaded,
 }: Props) {
   const notifyGuard = useImageUploadGuard();
   const [overrideUrl, setOverrideUrl] = useState<string | null>(null);
@@ -96,6 +98,7 @@ export function ImageUpload({
       clearLocalPreview();
       setOverrideUrl(json.url);
       syncHiddenValue(json.url);
+      onUploaded?.(json.url);
       setUploaded(true);
     } catch {
       setError("Connexion interrompue pendant l upload. Verifiez le reseau et reessayez.");
