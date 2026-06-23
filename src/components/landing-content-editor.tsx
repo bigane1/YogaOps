@@ -61,7 +61,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`hero-2-${landing.heroImage2Url}`}
           name="heroImage2Url"
           label="Photo secondaire hero"
-          homepageHint="Page d accueil : utilisee seulement si la photo « A propos » est vide"
+          homepageHint="Bandeau d accueil : affichee si la photo principale est encore l image par defaut. Sinon section A propos."
           currentUrl={landing.heroImage2Url}
           className={fieldMd}
         />

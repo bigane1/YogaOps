@@ -14,7 +14,11 @@ import {
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { ScrollStagger } from "@/components/scroll-stagger";
 import { ensureSeedData } from "@/lib/db";
-import { getLandingContent } from "@/lib/landing-content";
+import {
+  getLandingContent,
+  resolveHeroBannerImageUrl,
+  withImageCacheBust,
+} from "@/lib/landing-content";
 
 type Props = {
   searchParams: Promise<{ contact?: string }>;
@@ -47,6 +51,11 @@ export default async function Home({ searchParams }: Props) {
 
   const bioExcerpt = excerptParagraphs(landing.teacherBioText, 4);
   const contactEmail = landing.footerEmail.replace(/^Email:\s*/i, "");
+  const heroBannerImageUrl = resolveHeroBannerImageUrl(
+    landing.heroImage1Url,
+    landing.heroImage2Url,
+  );
+  const heroBannerSrc = withImageCacheBust(heroBannerImageUrl, landing.updatedAt ?? "");
 
   return (
     <div className="page-shell">
@@ -81,10 +90,11 @@ export default async function Home({ searchParams }: Props) {
               </div>
               <div className="order-1 md:order-2">
                 <div className="hero-banner aspect-[4/5] md:aspect-[3/4]">
-                  {landing.heroImage1Url ? (
+                  {heroBannerSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={landing.heroImage1Url}
+                      key={heroBannerSrc}
+                      src={heroBannerSrc}
                       alt="Femme active en posture de yoga douce"
                       className="h-full w-full object-cover"
                       loading="eager"

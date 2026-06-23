@@ -163,7 +163,34 @@ export type LandingContent = {
   cgvContent: string;
   cguContent: string;
   legalNoticeContent: string;
+  updatedAt?: string;
 };
+
+export function isCustomUploadedImage(url: string): boolean {
+  const value = url.trim();
+  return value.startsWith("/media/") || value.startsWith("/uploads/");
+}
+
+export function isStockPlaceholderImage(url: string): boolean {
+  const value = url.trim();
+  if (!value) return true;
+  return value.includes("pexels.com") || value.includes("images.pexels");
+}
+
+/** Grande photo du bandeau : principale, ou secondaire si c'est la seule photo uploadee. */
+export function resolveHeroBannerImageUrl(heroImage1Url: string, heroImage2Url: string): string {
+  const primary = heroImage1Url.trim();
+  const secondary = heroImage2Url.trim();
+  if (isCustomUploadedImage(primary)) return primary;
+  if (isCustomUploadedImage(secondary) && isStockPlaceholderImage(primary)) return secondary;
+  return primary || secondary;
+}
+
+export function withImageCacheBust(url: string, version: string): string {
+  if (!url.trim() || !version.trim()) return url;
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${encodeURIComponent(version)}`;
+}
 
 export const defaultLandingContent: LandingContent = {
   heroTitle: "Yoga doux pour les femmes actives",
@@ -248,6 +275,7 @@ export const defaultLandingContent: LandingContent = {
     CGU_TEMPLATE,
   legalNoticeContent:
     LEGAL_NOTICE_TEMPLATE,
+  updatedAt: "",
 };
 
 function parseItems(raw: string | null | undefined, fallback: string[]): string[] {
@@ -459,6 +487,7 @@ type LandingRow = {
   cgvContent: string;
   cguContent: string;
   legalNoticeContent: string;
+  updatedAt?: string;
 };
 
 export async function upgradeOfferImagesIfEmpty() {
@@ -585,6 +614,7 @@ export async function getLandingContent(): Promise<LandingContent> {
     cgvContent: row.cgvContent || defaultLandingContent.cgvContent,
     cguContent: row.cguContent || defaultLandingContent.cguContent,
     legalNoticeContent: row.legalNoticeContent || defaultLandingContent.legalNoticeContent,
+    updatedAt: row.updatedAt || "",
   };
 }
 

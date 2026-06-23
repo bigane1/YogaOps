@@ -155,11 +155,12 @@ async function isAdmin(): Promise<boolean> {
 }
 
 function revalidatePublicAndAdmin() {
-  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
+  revalidatePath("/", "layout");
   revalidatePath("/reserver");
   revalidatePath("/tarifs");
-  revalidatePath("/");
   revalidatePath("/blog");
+  revalidatePath("/entreprises");
   revalidatePath("/cgv");
   revalidatePath("/cgu");
   revalidatePath("/mentions-legales");
