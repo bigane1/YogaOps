@@ -60,7 +60,9 @@ mkdir -p "$DATA_UPLOAD_DIR"
 chmod 755 "$DATA_UPLOAD_DIR"
 mkdir -p public/uploads
 chmod 755 public/uploads
-if compgen -G "public/uploads/*" > /dev/null; then
+shopt -s nullglob
+_upload_files=(public/uploads/*)
+if ((${#_upload_files[@]})); then
   cp -n public/uploads/* "$DATA_UPLOAD_DIR/" 2>/dev/null || true
 fi
 
@@ -101,8 +103,15 @@ if [[ -n "${DEPLOY_RESTART_CMD:-}" ]]; then
   bash -c "$DEPLOY_RESTART_CMD"
 else
   if run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    run_pm2 delete "$PM2_APP_NAME"
+    run_pm2 delete "$PM2_APP_NAME" || true
   fi
-  run_pm2 start npm --name "$PM2_APP_NAME" --cwd "$ROOT" -- start
+  run_pm2 start "$ROOT/ecosystem.config.cjs"
+  sleep 3
+  if ! run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+    echo "::error::PM2 n a pas demarre l app yogaops"
+    exit 1
+  fi
   run_pm2 save
+  echo "=== PM2 status ==="
+  run_pm2 status "$PM2_APP_NAME"
 fi
