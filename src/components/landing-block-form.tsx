@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { updateLandingBlock } from "@/app/actions";
 import { AdminDialog } from "@/components/admin-dialog";
 
@@ -19,6 +20,7 @@ type LandingBlockFormProps = {
 };
 
 export function LandingBlockForm({ blockId, title, children, className }: LandingBlockFormProps) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [dialog, setDialog] = useState<DialogMode>(null);
   const [loading, setLoading] = useState(false);
@@ -26,15 +28,24 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
   async function confirmSave() {
     if (!formRef.current) return;
     setLoading(true);
+
     const formData = new FormData(formRef.current);
     formData.set("blockId", blockId);
+
+    // Garantit que les URLs d'images (champs hidden) sont bien transmises au serveur.
+    for (const input of formRef.current.querySelectorAll<HTMLInputElement>(
+      "input[type='hidden'][name]",
+    )) {
+      formData.set(input.name, input.value);
+    }
 
     try {
       const result = await updateLandingBlock(formData);
       if (result.ok) {
+        router.refresh();
         setDialog({
           type: "success",
-          message: `Le bloc « ${title} » a été enregistré avec succès.`,
+          message: `Le bloc « ${title} » a été enregistré. La page d'accueil est mise à jour.`,
         });
       } else {
         setDialog({ type: "error", message: result.error });
@@ -51,7 +62,11 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
 
   return (
     <>
-      <form ref={formRef} className={className ?? "mt-4 grid gap-3"} onSubmit={(e) => e.preventDefault()}>
+      <form
+        ref={formRef}
+        className={className ?? "mt-4 grid gap-3"}
+        onSubmit={(e) => e.preventDefault()}
+      >
         {children}
         <button
           type="button"

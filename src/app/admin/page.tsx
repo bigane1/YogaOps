@@ -90,8 +90,12 @@ export default async function AdminPage() {
 
         <section className="brand-card mt-8 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
-            Blog (editable)
+            Blog (articles — pas la page d accueil)
           </h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Les images ici ne modifient que les articles du blog. Pour la page d accueil, utilisez la
+            section « Landing page » plus bas.
+          </p>
           <form action={createBlogPost} className="mt-4 grid gap-2">
             <input name="title" required placeholder="Titre article" className={fieldMd} />
             <input name="excerpt" required placeholder="Resume court" className={fieldMd} />

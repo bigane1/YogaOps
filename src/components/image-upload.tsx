@@ -8,15 +8,30 @@ interface Props {
   currentUrl?: string;
   shape?: "circle" | "rect";
   className?: string;
+  homepageHint?: string;
 }
 
-export function ImageUpload({ name, label, currentUrl = "", shape = "rect", className }: Props) {
+export function ImageUpload({
+  name,
+  label,
+  currentUrl = "",
+  shape = "rect",
+  className,
+  homepageHint,
+}: Props) {
   const [overrideUrl, setOverrideUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const hiddenRef = useRef<HTMLInputElement>(null);
   const preview = overrideUrl ?? currentUrl;
+
+  function syncHiddenValue(url: string) {
+    if (hiddenRef.current) {
+      hiddenRef.current.value = url;
+    }
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -40,6 +55,7 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
     }
 
     setOverrideUrl(json.url);
+    syncHiddenValue(json.url);
     setUploaded(true);
   }
 
@@ -47,7 +63,10 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
 
   return (
     <div className={className}>
-      <p className="mb-2 text-xs font-medium opacity-70">{label}</p>
+      <p className="mb-1 text-xs font-medium opacity-70">{label}</p>
+      {homepageHint ? (
+        <p className="mb-2 text-xs text-[var(--terracotta)]">{homepageHint}</p>
+      ) : null}
 
       <div className="flex items-start gap-4">
         {preview ? (
@@ -76,7 +95,7 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
         <div className="flex flex-col gap-2">
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className="brand-btn brand-btn-sm w-fit rounded-lg px-3 py-1.5 text-sm"
           >
@@ -94,6 +113,7 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
               type="button"
               onClick={() => {
                 setOverrideUrl("");
+                syncHiddenValue("");
                 setUploaded(false);
               }}
               className="text-left text-xs opacity-40 hover:opacity-70"
@@ -105,14 +125,19 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
       </div>
 
       <input
-        ref={inputRef}
+        ref={fileInputRef}
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         onChange={handleFileChange}
       />
 
-      <input type="hidden" name={name} value={preview} />
+      <input
+        ref={hiddenRef}
+        type="hidden"
+        name={name}
+        defaultValue={currentUrl}
+      />
     </div>
   );
 }

@@ -23,11 +23,19 @@ type LandingContentEditorProps = {
 export function LandingContentEditor({ landing }: LandingContentEditorProps) {
   return (
     <div>
+      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+        <p className="font-medium">Important : pas la section Blog</p>
+        <p className="mt-2">
+          Les images de la <strong>page d accueil</strong> sont modifiees ici, dans « Landing page ».
+          La section <strong>Blog</strong> en haut de page ne change que les articles du blog, pas
+          l accueil.
+        </p>
+      </div>
       <div className="mt-4 rounded-lg border border-[var(--border-soft)] bg-[var(--beige)]/50 p-4 text-sm text-[var(--muted)]">
         <p className="font-medium text-[var(--foreground)]">Chaque section a son bouton d enregistrement</p>
         <p className="mt-2">
-          Modifiez un bloc, cliquez « Enregistrer ce bloc », confirmez dans la popup. Les photos JPEG,
-          PNG ou WebP (max 5 Mo) doivent etre enregistrees avec le bloc correspondant.
+          1. Choisissez la photo et attendez la miniature. 2. Cliquez « Enregistrer ce bloc » dans la
+          meme section (Hero, Images offres, Bio prof, etc.).
         </p>
       </div>
 
@@ -42,14 +50,18 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         <FieldLabel>Phrase sous le bouton (ex. Premiere seance offerte)</FieldLabel>
         <input name="firstSessionOffer" defaultValue={landing.firstSessionOffer} className={fieldMd} />
         <ImageUpload
+          key={`hero-1-${landing.heroImage1Url}`}
           name="heroImage1Url"
           label="Photo principale (grande image hero)"
+          homepageHint="Page d accueil : grande photo a droite du titre principal"
           currentUrl={landing.heroImage1Url}
           className={fieldMd}
         />
         <ImageUpload
+          key={`hero-2-${landing.heroImage2Url}`}
           name="heroImage2Url"
-          label="Photo secondaire (section entreprise / fallback)"
+          label="Photo secondaire hero"
+          homepageHint="Page d accueil : utilisee seulement si la photo « A propos » est vide"
           currentUrl={landing.heroImage2Url}
           className={fieldMd}
         />
@@ -58,20 +70,26 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
       <LandingBlockForm blockId="offerImages" title="Images offres yoga" className="mt-8 grid gap-3">
         <BlockHeading>Images offres yoga</BlockHeading>
         <ImageUpload
+          key={`collective-${landing.collectiveOfferImageUrl}`}
           name="collectiveOfferImageUrl"
           label="Image cours collectif (en ligne)"
+          homepageHint="Page d accueil : carte « Cours collectifs en ligne »"
           currentUrl={landing.collectiveOfferImageUrl}
           className={fieldMd}
         />
         <ImageUpload
+          key={`individual-${landing.individualOfferImageUrl}`}
           name="individualOfferImageUrl"
           label="Image cours individuel (visio / telephone)"
+          homepageHint="Page d accueil : carte « Cours individuel »"
           currentUrl={landing.individualOfferImageUrl}
           className={fieldMd}
         />
         <ImageUpload
+          key={`presentiel-${landing.presentielOfferImageUrl}`}
           name="presentielOfferImageUrl"
           label="Image cours presentiel (Poissy)"
+          homepageHint="Page d accueil : carte « Cours presentiel »"
           currentUrl={landing.presentielOfferImageUrl}
           className={fieldMd}
         />
@@ -149,8 +167,10 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
       <LandingBlockForm blockId="teacherBio" title="Bio du professeur" className="mt-8 grid gap-3">
         <BlockHeading>Bio du professeur</BlockHeading>
         <ImageUpload
+          key={`teacher-${landing.teacherPhotoUrl}`}
           name="teacherPhotoUrl"
           label="Photo du professeur"
+          homepageHint="Page d accueil : section « A propos » (prioritaire sur la photo secondaire hero)"
           currentUrl={landing.teacherPhotoUrl}
           shape="circle"
         />
