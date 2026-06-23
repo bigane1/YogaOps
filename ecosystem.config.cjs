@@ -1,10 +1,8 @@
-const path = require("path");
-
 module.exports = {
   apps: [
     {
       name: "yogaops",
-      cwd: path.resolve(__dirname),
+      cwd: __dirname,
       script: "node_modules/next/dist/bin/next",
       args: "start -H 0.0.0.0 -p 3000",
       env: {
