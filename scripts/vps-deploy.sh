@@ -102,16 +102,26 @@ run_pm2() {
 if [[ -n "${DEPLOY_RESTART_CMD:-}" ]]; then
   bash -c "$DEPLOY_RESTART_CMD"
 else
+  cd "$ROOT"
   if run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    run_pm2 delete "$PM2_APP_NAME" || true
-  fi
-  run_pm2 start "$ROOT/ecosystem.config.cjs"
-  sleep 3
-  if ! run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    echo "::error::PM2 n a pas demarre l app yogaops"
-    exit 1
+    run_pm2 restart "$PM2_APP_NAME" --update-env
+  else
+    run_pm2 start npm --name "$PM2_APP_NAME" --cwd "$ROOT" -- start
   fi
   run_pm2 save
-  echo "=== PM2 status ==="
-  run_pm2 status "$PM2_APP_NAME"
+
+  echo "=== Verification HTTP locale (port 3000) ==="
+  sleep 5
+  if command -v curl >/dev/null 2>&1; then
+    if ! curl -sf -o /dev/null --max-time 20 http://127.0.0.1:3000/; then
+      echo "::error::L application ne repond pas sur http://127.0.0.1:3000"
+      run_pm2 status "$PM2_APP_NAME" || true
+      run_pm2 logs "$PM2_APP_NAME" --lines 40 --nostream 2>/dev/null || true
+      exit 1
+    fi
+    echo "=== OK : application accessible sur port 3000 ==="
+  else
+    echo "⚠ curl absent — verification HTTP ignoree"
+    run_pm2 status "$PM2_APP_NAME" || true
+  fi
 fi
