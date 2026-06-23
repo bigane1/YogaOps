@@ -85,7 +85,7 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
           <p className="text-xs opacity-50">JPEG, PNG, WebP — max 5 Mo</p>
           {uploaded && (
             <p className="text-xs font-medium text-[var(--brand)]">
-              Photo prete — cliquez « Enregistrer le contenu » en bas du formulaire.
+              Photo prete — cliquez « Enregistrer ce bloc » pour sauvegarder.
             </p>
           )}
           {error && <p className="text-xs text-red-400">{error}</p>}

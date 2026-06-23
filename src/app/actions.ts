@@ -11,7 +11,7 @@ import {
   updateBlogPostInDb,
 } from "@/lib/blog";
 import { sendBookingConfirmationEmail, sendContactEmail, sendSubscriptionActivationEmail } from "@/lib/mail";
-import { defaultLandingContent, updateLandingContentInDb } from "@/lib/landing-content";
+import { defaultLandingContent, getLandingContent, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
@@ -914,6 +914,115 @@ function toItems(value: FormDataEntryValue | null, fallback: string[]): string[]
   return items.length > 0 ? items : fallback;
 }
 
+const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = {
+  hero: [
+    "heroTitle",
+    "heroSubtitle",
+    "heroIntro",
+    "firstSessionOffer",
+    "heroImage1Url",
+    "heroImage2Url",
+  ],
+  offerImages: [
+    "collectiveOfferImageUrl",
+    "individualOfferImageUrl",
+    "presentielOfferImageUrl",
+  ],
+  why: ["whyTitle", "whyParagraphs"],
+  benefits: ["practicalInfoTitle", "practicalInfoItems"],
+  formats: ["formatTitle", "formatText", "formatItems"],
+  testimonials: ["socialProofTitle", "socialProofItems"],
+  chairYoga: ["chairYogaTitle", "chairYogaText", "chairYogaItems"],
+  teacherBio: ["teacherBioTitle", "teacherBioText", "teacherPhotoUrl"],
+  ctaFooter: [
+    "finalCtaTitle",
+    "finalCtaText",
+    "finalCtaButtonLabel",
+    "footerAddress",
+    "footerPhone",
+    "footerEmail",
+    "facebookUrl",
+    "instagramUrl",
+    "tiktokUrl",
+    "linkedinUrl",
+    "cgvContent",
+    "cguContent",
+    "legalNoticeContent",
+  ],
+};
+
+const LANDING_ARRAY_FIELDS = new Set<keyof LandingContent>([
+  "whyParagraphs",
+  "formatItems",
+  "socialProofItems",
+  "chairYogaItems",
+  "practicalInfoItems",
+]);
+
+function textFromForm(
+  formData: FormData,
+  field: keyof LandingContent,
+  current: string,
+): string {
+  if (!formData.has(field)) return current;
+  return String(formData.get(field) ?? "").trim();
+}
+
+function itemsFromForm(
+  formData: FormData,
+  field: keyof LandingContent,
+  current: string[],
+): string[] {
+  if (!formData.has(field)) return current;
+  const text = String(formData.get(field) ?? "");
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function mergeLandingBlock(
+  current: LandingContent,
+  formData: FormData,
+  fields: readonly (keyof LandingContent)[],
+): LandingContent {
+  const next = { ...current };
+  for (const field of fields) {
+    if (LANDING_ARRAY_FIELDS.has(field)) {
+      const value = itemsFromForm(formData, field, current[field] as string[]);
+      (next as Record<string, unknown>)[field] = value;
+    } else {
+      const value = textFromForm(formData, field, current[field] as string);
+      (next as Record<string, unknown>)[field] = value;
+    }
+  }
+  return next;
+}
+
+export type LandingBlockResult = { ok: true } | { ok: false; error: string };
+
+export async function updateLandingBlock(formData: FormData): Promise<LandingBlockResult> {
+  if (!(await isAdmin())) {
+    return { ok: false, error: "Session expiree. Reconnectez-vous au backoffice." };
+  }
+
+  const blockId = String(formData.get("blockId") ?? "").trim();
+  const fields = LANDING_BLOCK_FIELDS[blockId];
+  if (!fields) {
+    return { ok: false, error: "Bloc inconnu. Rechargez la page et reessayez." };
+  }
+
+  try {
+    const current = await getLandingContent();
+    const merged = mergeLandingBlock(current, formData, fields);
+    await updateLandingContentInDb(merged);
+    revalidatePublicAndAdmin();
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "Impossible d enregistrer ce bloc. Verifiez vos donnees et reessayez." };
+  }
+}
+
 export async function updateLandingContent(formData: FormData) {
   if (!(await isAdmin())) {
     redirect("/admin");
@@ -1000,7 +1109,6 @@ export async function updateLandingContent(formData: FormData) {
   });
 
   revalidatePublicAndAdmin();
-  redirect("/admin?saved=landing");
 }
 
 export async function sendContactMessage(formData: FormData) {
