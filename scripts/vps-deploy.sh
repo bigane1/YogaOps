@@ -30,6 +30,18 @@ if [ -f .env ]; then
   sed -i 's/\r//' .env
 fi
 
+# VPS OVH : stockage local des images (pas Vercel Blob)
+if [ -f .env ]; then
+  if ! grep -qE '^UPLOAD_STORAGE=' .env; then
+    echo 'UPLOAD_STORAGE=local' >> .env
+    echo "→ UPLOAD_STORAGE=local ajouté au .env"
+  fi
+  if grep -qE '^BLOB_READ_WRITE_TOKEN=.*xxx' .env; then
+    sed -i '/^BLOB_READ_WRITE_TOKEN=/d' .env
+    echo "→ BLOB_READ_WRITE_TOKEN (placeholder) supprimé du .env"
+  fi
+fi
+
 # Next.js et Prisma lisent .env automatiquement — pas besoin de le sourcer.
 # On extrait uniquement DATABASE_URL pour le message de diagnostic, de façon sûre.
 if [ -f .env ]; then
