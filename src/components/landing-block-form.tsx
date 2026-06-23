@@ -1,10 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateLandingBlock } from "@/app/actions";
 import { AdminDialog } from "@/components/admin-dialog";
+import { ImageUploadGuardContext } from "@/components/image-upload-context";
 
 type DialogMode =
   | { type: "confirm" }
@@ -22,17 +23,40 @@ type LandingBlockFormProps = {
 export function LandingBlockForm({ blockId, title, children, className }: LandingBlockFormProps) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const uploadCountRef = useRef(0);
   const [dialog, setDialog] = useState<DialogMode>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadsPending, setUploadsPending] = useState(false);
+
+  const notifyUploading = useCallback((uploading: boolean) => {
+    if (uploading) {
+      uploadCountRef.current += 1;
+      setUploadsPending(true);
+      return;
+    }
+    uploadCountRef.current = Math.max(0, uploadCountRef.current - 1);
+    setUploadsPending(uploadCountRef.current > 0);
+  }, []);
+
+  function requestSave() {
+    if (uploadsPending) {
+      setDialog({
+        type: "error",
+        message:
+          "L envoi de la photo est encore en cours. Attendez que le bouton affiche « Choisir depuis l ordi » et le message « Photo prete », puis enregistrez le bloc.",
+      });
+      return;
+    }
+    setDialog({ type: "confirm" });
+  }
 
   async function confirmSave() {
-    if (!formRef.current) return;
+    if (!formRef.current || uploadsPending) return;
     setLoading(true);
 
     const formData = new FormData(formRef.current);
     formData.set("blockId", blockId);
 
-    // Garantit que les URLs d'images (champs hidden) sont bien transmises au serveur.
     for (const input of formRef.current.querySelectorAll<HTMLInputElement>(
       "input[type='hidden'][name]",
     )) {
@@ -61,7 +85,7 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
   }
 
   return (
-    <>
+    <ImageUploadGuardContext.Provider value={notifyUploading}>
       <form
         ref={formRef}
         className={className ?? "mt-4 grid gap-3"}
@@ -70,11 +94,11 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
         {children}
         <button
           type="button"
-          disabled={loading}
-          onClick={() => setDialog({ type: "confirm" })}
-          className="brand-btn brand-btn-sm mt-2 w-fit rounded-lg px-4 py-2"
+          disabled={loading || uploadsPending}
+          onClick={requestSave}
+          className="brand-btn brand-btn-sm mt-2 w-fit rounded-lg px-4 py-2 disabled:opacity-50"
         >
-          Enregistrer ce bloc
+          {uploadsPending ? "Envoi photo en cours…" : "Enregistrer ce bloc"}
         </button>
       </form>
 
@@ -103,6 +127,6 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
           <p>{dialog.message}</p>
         </AdminDialog>
       )}
-    </>
+    </ImageUploadGuardContext.Provider>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useImageUploadGuard } from "@/components/image-upload-context";
 
 interface Props {
   name: string;
@@ -19,13 +20,29 @@ export function ImageUpload({
   className,
   homepageHint,
 }: Props) {
+  const notifyGuard = useImageUploadGuard();
   const [overrideUrl, setOverrideUrl] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const hiddenRef = useRef<HTMLInputElement>(null);
-  const preview = overrideUrl ?? currentUrl;
+  const localPreviewRef = useRef<string | null>(null);
+  const preview = overrideUrl ?? localPreview ?? currentUrl;
+
+  useEffect(() => {
+    notifyGuard(uploading);
+    return () => notifyGuard(false);
+  }, [uploading, notifyGuard]);
+
+  function clearLocalPreview() {
+    if (localPreviewRef.current) {
+      URL.revokeObjectURL(localPreviewRef.current);
+      localPreviewRef.current = null;
+    }
+    setLocalPreview(null);
+  }
 
   function syncHiddenValue(url: string) {
     if (hiddenRef.current) {
@@ -37,6 +54,11 @@ export function ImageUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    clearLocalPreview();
+    const blobUrl = URL.createObjectURL(file);
+    localPreviewRef.current = blobUrl;
+    setLocalPreview(blobUrl);
+
     setError(null);
     setUploaded(false);
     setUploading(true);
@@ -44,19 +66,24 @@ export function ImageUpload({
     const fd = new FormData();
     fd.append("file", file);
 
-    const res = await fetch("/api/upload", { method: "POST", body: fd });
-    const json = (await res.json()) as { url?: string; error?: string };
+    try {
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const json = (await res.json()) as { url?: string; error?: string };
 
-    setUploading(false);
+      if (!res.ok || !json.url) {
+        setError(json.error ?? "Erreur lors de l'upload");
+        return;
+      }
 
-    if (!res.ok || !json.url) {
-      setError(json.error ?? "Erreur lors de l'upload");
-      return;
+      clearLocalPreview();
+      setOverrideUrl(json.url);
+      syncHiddenValue(json.url);
+      setUploaded(true);
+    } catch {
+      setError("Erreur lors de l'upload. Verifiez votre connexion et reessayez.");
+    } finally {
+      setUploading(false);
     }
-
-    setOverrideUrl(json.url);
-    syncHiddenValue(json.url);
-    setUploaded(true);
   }
 
   const isCircle = shape === "circle";
@@ -81,6 +108,11 @@ export function ImageUpload({
               alt={label}
               className="h-full w-full object-cover"
             />
+            {uploading ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-xs font-medium text-white">
+                Envoi…
+              </div>
+            ) : null}
           </div>
         ) : (
           <div
@@ -99,19 +131,25 @@ export function ImageUpload({
             disabled={uploading}
             className="brand-btn brand-btn-sm w-fit rounded-lg px-3 py-1.5 text-sm"
           >
-            {uploading ? "Envoi…" : "Choisir depuis l'ordi"}
+            {uploading ? "Envoi en cours…" : "Choisir depuis l'ordi"}
           </button>
           <p className="text-xs opacity-50">JPEG, PNG, WebP — max 5 Mo</p>
-          {uploaded && (
+          {uploading && (
+            <p className="text-xs font-medium text-amber-800">
+              Attendez la fin de l envoi avant « Enregistrer ce bloc ».
+            </p>
+          )}
+          {uploaded && !uploading && (
             <p className="text-xs font-medium text-[var(--brand)]">
               Photo prete — cliquez « Enregistrer ce bloc » pour sauvegarder.
             </p>
           )}
           {error && <p className="text-xs text-red-400">{error}</p>}
-          {preview && (
+          {preview && !uploading && (
             <button
               type="button"
               onClick={() => {
+                clearLocalPreview();
                 setOverrideUrl("");
                 syncHiddenValue("");
                 setUploaded(false);
@@ -132,12 +170,7 @@ export function ImageUpload({
         onChange={handleFileChange}
       />
 
-      <input
-        ref={hiddenRef}
-        type="hidden"
-        name={name}
-        defaultValue={currentUrl}
-      />
+      <input ref={hiddenRef} type="hidden" name={name} defaultValue={currentUrl} />
     </div>
   );
 }
