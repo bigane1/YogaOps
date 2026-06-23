@@ -67,11 +67,29 @@ export function ImageUpload({
     fd.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const json = (await res.json()) as { url?: string; error?: string };
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: fd,
+        credentials: "same-origin",
+      });
+
+      const raw = await res.text();
+      let json: { url?: string; error?: string } = {};
+      try {
+        json = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
+      } catch {
+        setError(
+          res.status === 503
+            ? "Upload non configure sur le serveur (Blob Vercel). Contactez l administrateur."
+            : `Erreur serveur (${res.status}). Reessayez ou utilisez un JPG de moins de 5 Mo.`,
+        );
+        clearLocalPreview();
+        return;
+      }
 
       if (!res.ok || !json.url) {
-        setError(json.error ?? "Erreur lors de l'upload");
+        setError(json.error ?? `Erreur lors de l upload (${res.status})`);
+        clearLocalPreview();
         return;
       }
 
@@ -80,7 +98,8 @@ export function ImageUpload({
       syncHiddenValue(json.url);
       setUploaded(true);
     } catch {
-      setError("Erreur lors de l'upload. Verifiez votre connexion et reessayez.");
+      setError("Connexion interrompue pendant l upload. Verifiez le reseau et reessayez.");
+      clearLocalPreview();
     } finally {
       setUploading(false);
     }
