@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { mkdir, writeFile } from "fs/promises";
+import { access, mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
@@ -93,6 +93,7 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     await mkdir(uploadDir, { recursive: true });
     await writeFile(filePath, buffer);
+    await access(filePath);
 
     return NextResponse.json({ url: getLocalUploadPublicUrl(filename) });
   } catch (error) {

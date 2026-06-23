@@ -32,5 +32,6 @@ export function getLocalUploadPublicUrl(filename: string): string {
   if (base) {
     return `${base.replace(/\/$/, "")}/${filename}`;
   }
-  return `/uploads/${filename}`;
+  // Route App Router (/media) : fiable sur VPS OVH via Next (pas seulement public/static)
+  return `/media/${filename}`;
 }

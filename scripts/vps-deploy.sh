@@ -55,8 +55,25 @@ fi
 
 echo "=== YogaOps deploy : $(pwd) — Node $(node -v) ==="
 
+DATA_UPLOAD_DIR="$ROOT/data/uploads"
+mkdir -p "$DATA_UPLOAD_DIR"
+chmod 755 "$DATA_UPLOAD_DIR"
 mkdir -p public/uploads
 chmod 755 public/uploads
+if compgen -G "public/uploads/*" > /dev/null; then
+  cp -n public/uploads/* "$DATA_UPLOAD_DIR/" 2>/dev/null || true
+fi
+
+if [ -f .env ]; then
+  if ! grep -qE '^UPLOAD_DIR=' .env; then
+    echo "UPLOAD_DIR=$DATA_UPLOAD_DIR" >> .env
+    echo "→ UPLOAD_DIR=$DATA_UPLOAD_DIR ajouté au .env"
+  fi
+  if ! grep -qE '^UPLOAD_PUBLIC_BASE=' .env; then
+    echo 'UPLOAD_PUBLIC_BASE=/media' >> .env
+    echo "→ UPLOAD_PUBLIC_BASE=/media ajouté au .env"
+  fi
+fi
 
 # Installer toutes les dépendances (y compris dev) pour le build
 npm ci --include=dev
@@ -84,9 +101,8 @@ if [[ -n "${DEPLOY_RESTART_CMD:-}" ]]; then
   bash -c "$DEPLOY_RESTART_CMD"
 else
   if run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    run_pm2 restart "$PM2_APP_NAME"
-  else
-    run_pm2 start npm --name "$PM2_APP_NAME" -- start
-    run_pm2 save
+    run_pm2 delete "$PM2_APP_NAME"
   fi
+  run_pm2 start npm --name "$PM2_APP_NAME" --cwd "$ROOT" -- start
+  run_pm2 save
 fi
