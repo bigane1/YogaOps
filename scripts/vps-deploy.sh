@@ -103,25 +103,32 @@ if [[ -n "${DEPLOY_RESTART_CMD:-}" ]]; then
   bash -c "$DEPLOY_RESTART_CMD"
 else
   cd "$ROOT"
-  if run_pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-    run_pm2 restart "$PM2_APP_NAME" --update-env
-  else
-    run_pm2 start npm --name "$PM2_APP_NAME" --cwd "$ROOT" -- start
-  fi
+  # Toujours delete + start : pm2 restart garde l ancienne config (ex. ecosystem.config.cjs)
+  # et peut pointer vers un autre dossier que celui qui vient d etre build.
+  run_pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+  run_pm2 start npm --name "$PM2_APP_NAME" --cwd "$ROOT" -- start
   run_pm2 save
 
+  echo "=== PM2 (cwd attendu: $ROOT) ==="
+  run_pm2 describe "$PM2_APP_NAME" 2>/dev/null | grep -E 'exec cwd|script path|status' || run_pm2 status "$PM2_APP_NAME" || true
+
   echo "=== Verification HTTP locale (port 3000) ==="
-  sleep 5
-  if command -v curl >/dev/null 2>&1; then
-    if ! curl -sf -o /dev/null --max-time 20 http://127.0.0.1:3000/; then
-      echo "::error::L application ne repond pas sur http://127.0.0.1:3000"
-      run_pm2 status "$PM2_APP_NAME" || true
-      run_pm2 logs "$PM2_APP_NAME" --lines 40 --nostream 2>/dev/null || true
-      exit 1
+  _http_ok=false
+  for _attempt in 1 2 3 4 5 6; do
+    sleep 5
+    if command -v curl >/dev/null 2>&1; then
+      if curl -sf -o /dev/null --max-time 20 http://127.0.0.1:3000/; then
+        _http_ok=true
+        break
+      fi
     fi
-    echo "=== OK : application accessible sur port 3000 ==="
-  else
-    echo "⚠ curl absent — verification HTTP ignoree"
+  done
+
+  if [[ "$_http_ok" != true ]]; then
+    echo "::error::L application ne repond pas sur http://127.0.0.1:3000"
     run_pm2 status "$PM2_APP_NAME" || true
+    run_pm2 logs "$PM2_APP_NAME" --lines 40 --nostream 2>/dev/null || true
+    exit 1
   fi
+  echo "=== OK : application accessible sur port 3000 ==="
 fi

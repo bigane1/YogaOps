@@ -108,3 +108,19 @@ jobs:
             git checkout main
             git reset --hard origin/main
             bash scripts/vps-deploy.sh
+
+      - name: Vérifier yogaops.fr (pas seulement localhost VPS)
+        run: |
+          set -euo pipefail
+          echo "=== Verification publique https://yogaops.fr/ ==="
+          for attempt in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 https://yogaops.fr/ || echo "000")
+            echo "tentative $attempt : HTTP $code"
+            if [ "$code" = "200" ] || [ "$code" = "301" ] || [ "$code" = "302" ] || [ "$code" = "307" ] || [ "$code" = "308" ]; then
+              echo "=== OK : site public accessible ==="
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::yogaops.fr ne repond pas correctement (502 ou autre) apres deploy"
+          exit 1
