@@ -3,6 +3,12 @@ import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import {
+  getLocalUploadDir,
+  getLocalUploadPublicUrl,
+  isVercelRuntime,
+  shouldUseVercelBlob,
+} from "@/lib/upload-config";
 
 const ADMIN_COOKIE = "yogaops_admin";
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
@@ -21,10 +27,6 @@ function resolveMimeType(file: File): string | null {
   }
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   return EXT_TO_MIME[ext] ?? null;
-}
-
-function isVercelRuntime(): boolean {
-  return Boolean(process.env.VERCEL);
 }
 
 export async function POST(req: NextRequest) {
@@ -57,11 +59,12 @@ export async function POST(req: NextRequest) {
     }
 
     const ext = file.name.split(".").pop()?.toLowerCase() ?? mimeType.split("/")[1] ?? "jpg";
-    const filename = `yogaops/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
+    if (shouldUseVercelBlob()) {
       try {
-        const blob = await put(filename, file, {
+        const blobKey = `yogaops/${filename}`;
+        const blob = await put(blobKey, file, {
           access: "public",
           contentType: mimeType,
         });
@@ -69,10 +72,7 @@ export async function POST(req: NextRequest) {
       } catch (blobError) {
         console.error("[upload] Vercel Blob error:", blobError);
         return NextResponse.json(
-          {
-            error:
-              "Stockage Blob indisponible. Verifiez BLOB_READ_WRITE_TOKEN dans Vercel (Storage → Blob).",
-          },
+          { error: "Stockage cloud indisponible. Sur un VPS, retirez BLOB_READ_WRITE_TOKEN du .env." },
           { status: 500 },
         );
       }
@@ -82,24 +82,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Upload impossible en production : ajoutez BLOB_READ_WRITE_TOKEN dans Vercel (Storage → Blob → Create Store).",
+            "Configurez un store Blob Vercel (BLOB_READ_WRITE_TOKEN) ou deployez sur un VPS avec stockage local.",
         },
         { status: 503 },
       );
     }
 
-    const localFilename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    const filePath = path.join(uploadDir, localFilename);
+    const uploadDir = getLocalUploadDir();
+    const filePath = path.join(uploadDir, filename);
     const buffer = Buffer.from(await file.arrayBuffer());
     await mkdir(uploadDir, { recursive: true });
     await writeFile(filePath, buffer);
 
-    return NextResponse.json({ url: `/uploads/${localFilename}` });
+    return NextResponse.json({ url: getLocalUploadPublicUrl(filename) });
   } catch (error) {
     console.error("[upload] Unexpected error:", error);
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === "EACCES" || err.code === "EPERM") {
+      return NextResponse.json(
+        {
+          error:
+            "Le serveur ne peut pas ecrire les fichiers. Verifiez les droits sur public/uploads (chmod 755).",
+        },
+        { status: 500 },
+      );
+    }
     return NextResponse.json(
-      { error: "Erreur serveur lors de l'upload. Reessayez avec une image plus legere (JPG, max 5 Mo)." },
+      { error: "Erreur serveur lors de l'upload. Reessayez avec un JPG de moins de 5 Mo." },
       { status: 500 },
     );
   }

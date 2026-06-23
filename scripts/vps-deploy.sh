@@ -43,6 +43,9 @@ fi
 
 echo "=== YogaOps deploy : $(pwd) — Node $(node -v) ==="
 
+mkdir -p public/uploads
+chmod 755 public/uploads
+
 # Installer toutes les dépendances (y compris dev) pour le build
 npm ci --include=dev
 npx prisma migrate deploy

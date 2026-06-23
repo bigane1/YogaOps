@@ -80,7 +80,7 @@ export function ImageUpload({
       } catch {
         setError(
           res.status === 503
-            ? "Upload non configure sur le serveur (Blob Vercel). Contactez l administrateur."
+            ? "Upload non configure sur le serveur. Sur OVH : stockage local (public/uploads), pas Vercel Blob."
             : `Erreur serveur (${res.status}). Reessayez ou utilisez un JPG de moins de 5 Mo.`,
         );
         clearLocalPreview();

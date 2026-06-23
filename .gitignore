@@ -46,3 +46,7 @@ next-env.d.ts
 # base SQLite locale / CI / dev
 prisma/ci.db
 prisma/dev.db
+
+# Images uploadees depuis le backoffice (garder le dossier)
+public/uploads/*
+!public/uploads/.gitkeep
