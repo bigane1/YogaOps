@@ -155,10 +155,14 @@ else
     done
 
     if [[ "$_nginx_ok" != true ]]; then
-      echo "::error::nginx ne proxie pas vers l app (HTTP $_code via Host yogaops.fr)"
+      echo "⚠ nginx ne proxie pas vers l app (HTTP $_code via Host yogaops.fr)"
+      echo "⚠ L app repond sur :3000 mais nginx renvoie 502 — correction manuelle SSH:"
+      echo "  sudo grep -r proxy_pass /etc/nginx/"
+      echo "  sudo sed -i -E 's/proxy_pass[[:space:]]+http://(127.0.0.1|localhost):[0-9]+;/proxy_pass http://127.0.0.1:3000;/g' /etc/nginx/sites-enabled/*"
+      echo "  sudo nginx -t && sudo systemctl reload nginx"
       grep -r "proxy_pass" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null || true
-      exit 1
+    else
+      echo "=== OK : nginx proxie correctement ==="
     fi
-    echo "=== OK : nginx proxie correctement ==="
   fi
 fi

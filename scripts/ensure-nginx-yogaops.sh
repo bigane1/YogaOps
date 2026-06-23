@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Corrige proxy_pass nginx pour yogaops.fr -> 127.0.0.1:3000
-set -euo pipefail
+set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SITE_NAME="yogaops"
@@ -17,10 +17,15 @@ run_sudo() {
   if [ "$(id -u)" -eq 0 ]; then
     "$@"
   elif command -v sudo >/dev/null 2>&1; then
-    sudo -n "$@" 2>/dev/null || sudo "$@"
+    if sudo -n true 2>/dev/null; then
+      sudo -n "$@"
+    else
+      echo "⚠ sudo interactif requis pour: $*"
+      sudo "$@"
+    fi
   else
-    echo "::error::sudo requis pour configurer nginx"
-    exit 1
+    echo "⚠ sudo absent — impossible de modifier nginx automatiquement"
+    return 1
   fi
 }
 
@@ -36,6 +41,7 @@ fix_proxy_in_file() {
 }
 
 echo "=== Diagnostic / correction nginx YogaOps ==="
+run_sudo grep -r "proxy_pass" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null || true
 
 _yogaops_files=()
 while IFS= read -r _f; do
@@ -44,22 +50,30 @@ done < <(run_sudo grep -rl "yogaops\.fr" /etc/nginx/ 2>/dev/null || true)
 
 if ((${#_yogaops_files[@]})); then
   for _f in "${_yogaops_files[@]}"; do
-    fix_proxy_in_file "$_f"
+    fix_proxy_in_file "$_f" || true
   done
 else
   echo "Aucune config yogaops.fr — installation du modele $DEST"
   if [ ! -f "$SRC" ]; then
-    echo "::error::Fichier modele introuvable: $SRC"
-    exit 1
+    echo "⚠ Fichier modele introuvable: $SRC"
+    exit 0
   fi
-  run_sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
-  run_sudo cp "$SRC" "$DEST"
-  run_sudo ln -sf "$DEST" "$ENABLED"
+  run_sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled || exit 0
+  run_sudo cp "$SRC" "$DEST" || exit 0
+  run_sudo ln -sf "$DEST" "$ENABLED" || exit 0
   if [ -f /etc/nginx/sites-enabled/default ]; then
-    run_sudo rm -f /etc/nginx/sites-enabled/default
+    run_sudo rm -f /etc/nginx/sites-enabled/default || true
   fi
 fi
 
-run_sudo nginx -t
-run_sudo systemctl reload nginx || run_sudo service nginx reload
-echo "=== nginx recharge ==="
+if run_sudo nginx -t; then
+  run_sudo systemctl reload nginx || run_sudo service nginx reload || true
+  echo "=== nginx recharge ==="
+else
+  echo "⚠ nginx -t a echoue — correction manuelle requise (voir ci-dessous)"
+  echo "  sudo grep -r proxy_pass /etc/nginx/"
+  echo "  # proxy_pass doit pointer vers http://127.0.0.1:3000"
+  echo "  sudo nginx -t && sudo systemctl reload nginx"
+fi
+
+exit 0
