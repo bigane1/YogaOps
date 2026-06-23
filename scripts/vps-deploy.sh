@@ -131,4 +131,34 @@ else
     exit 1
   fi
   echo "=== OK : application accessible sur port 3000 ==="
+
+  if command -v nginx >/dev/null 2>&1; then
+    bash "$ROOT/scripts/ensure-nginx-yogaops.sh"
+
+    echo "=== Verification nginx (Host: yogaops.fr) ==="
+    _nginx_ok=false
+    for _attempt in 1 2 3 4 5; do
+      sleep 2
+      _code="000"
+      if command -v curl >/dev/null 2>&1; then
+        _code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 -H "Host: yogaops.fr" http://127.0.0.1/ 2>/dev/null || echo "000")
+        if [[ "$_code" =~ ^(200|301|302|307|308)$ ]]; then
+          _nginx_ok=true
+          break
+        fi
+        _code=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 15 -H "Host: yogaops.fr" https://127.0.0.1/ 2>/dev/null || echo "000")
+        if [[ "$_code" =~ ^(200|301|302|307|308)$ ]]; then
+          _nginx_ok=true
+          break
+        fi
+      fi
+    done
+
+    if [[ "$_nginx_ok" != true ]]; then
+      echo "::error::nginx ne proxie pas vers l app (HTTP $_code via Host yogaops.fr)"
+      grep -r "proxy_pass" /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null || true
+      exit 1
+    fi
+    echo "=== OK : nginx proxie correctement ==="
+  fi
 fi
