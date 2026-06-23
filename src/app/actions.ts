@@ -915,10 +915,13 @@ function toItems(value: FormDataEntryValue | null, fallback: string[]): string[]
 }
 
 export async function updateLandingContent(formData: FormData) {
-  if (!(await isAdmin())) return;
+  if (!(await isAdmin())) {
+    redirect("/admin");
+  }
 
   await updateLandingContentInDb({
     heroTitle: toText(formData.get("heroTitle"), defaultLandingContent.heroTitle),
+    heroSubtitle: toText(formData.get("heroSubtitle"), defaultLandingContent.heroSubtitle),
     heroIntro: toText(formData.get("heroIntro"), defaultLandingContent.heroIntro),
     heroImage1Url: toText(formData.get("heroImage1Url"), defaultLandingContent.heroImage1Url),
     heroImage2Url: toText(formData.get("heroImage2Url"), defaultLandingContent.heroImage2Url),
@@ -934,6 +937,11 @@ export async function updateLandingContent(formData: FormData) {
       formData.get("presentielOfferImageUrl"),
       defaultLandingContent.presentielOfferImageUrl,
     ),
+    whyTitle: toText(formData.get("whyTitle"), defaultLandingContent.whyTitle),
+    whyParagraphs: toItems(formData.get("whyParagraphs"), defaultLandingContent.whyParagraphs),
+    formatTitle: toText(formData.get("formatTitle"), defaultLandingContent.formatTitle),
+    formatText: toText(formData.get("formatText"), defaultLandingContent.formatText),
+    formatItems: toItems(formData.get("formatItems"), defaultLandingContent.formatItems),
     specializationMessage: toText(
       formData.get("specializationMessage"),
       defaultLandingContent.specializationMessage,
@@ -992,6 +1000,7 @@ export async function updateLandingContent(formData: FormData) {
   });
 
   revalidatePublicAndAdmin();
+  redirect("/admin?saved=landing");
 }
 
 export async function sendContactMessage(formData: FormData) {

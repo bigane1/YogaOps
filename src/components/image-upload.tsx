@@ -11,16 +11,19 @@ interface Props {
 }
 
 export function ImageUpload({ name, label, currentUrl = "", shape = "rect", className }: Props) {
-  const [preview, setPreview] = useState<string>(currentUrl);
+  const [overrideUrl, setOverrideUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const preview = overrideUrl ?? currentUrl;
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setError(null);
+    setUploaded(false);
     setUploading(true);
 
     const fd = new FormData();
@@ -36,7 +39,8 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
       return;
     }
 
-    setPreview(json.url);
+    setOverrideUrl(json.url);
+    setUploaded(true);
   }
 
   const isCircle = shape === "circle";
@@ -79,11 +83,19 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
             {uploading ? "Envoi…" : "Choisir depuis l'ordi"}
           </button>
           <p className="text-xs opacity-50">JPEG, PNG, WebP — max 5 Mo</p>
+          {uploaded && (
+            <p className="text-xs font-medium text-[var(--brand)]">
+              Photo prete — cliquez « Enregistrer le contenu » en bas du formulaire.
+            </p>
+          )}
           {error && <p className="text-xs text-red-400">{error}</p>}
           {preview && (
             <button
               type="button"
-              onClick={() => setPreview("")}
+              onClick={() => {
+                setOverrideUrl("");
+                setUploaded(false);
+              }}
               className="text-left text-xs opacity-40 hover:opacity-70"
             >
               Supprimer l&apos;image
@@ -100,7 +112,6 @@ export function ImageUpload({ name, label, currentUrl = "", shape = "rect", clas
         onChange={handleFileChange}
       />
 
-      {/* Champ caché transmis au formulaire serveur */}
       <input type="hidden" name={name} value={preview} />
     </div>
   );

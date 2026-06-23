@@ -8,6 +8,7 @@ import { SiteNav } from "@/components/site-nav";
 import {
   OfferCard,
   SectionLabel,
+  MetaPill,
   excerptParagraphs,
 } from "@/components/site-ui";
 import { ScrollReveal } from "@/components/scroll-reveal";
@@ -20,17 +21,10 @@ type Props = {
 };
 
 export const metadata: Metadata = {
-  title: "Yoga doux pour femmes actives du digital | YogaOps",
+  title: "Yoga doux pour les femmes actives | YogaOps",
   description:
-    "Des cours simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer.",
+    "Des seances en ligne pour apaiser le mental, relacher les tensions et retrouver l equilibre entre corps et esprit.",
 };
-
-const heroBullets = [
-  { key: "fatigueMessage", label: "sortir du mode automatique" },
-  { key: "specializationMessage", label: "bouger en douceur" },
-  { key: "enterpriseMessage", label: "deconnecter des ecrans" },
-  { key: "outdoorMessage", label: "retrouver du calme et de la clarte mentale" },
-] as const;
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
@@ -51,9 +45,7 @@ export default async function Home({ searchParams }: Props) {
     sameAs: [landing.facebookUrl, landing.instagramUrl, landing.linkedinUrl],
   };
 
-  const bulletLabels = heroBullets.map((item) => landing[item.key] || item.label);
-  const bioExcerpt = excerptParagraphs(landing.teacherBioText, 3);
-  const [featuredQuote, ...otherQuotes] = landing.socialProofItems;
+  const bioExcerpt = excerptParagraphs(landing.teacherBioText, 4);
   const contactEmail = landing.footerEmail.replace(/^Email:\s*/i, "");
 
   return (
@@ -69,43 +61,102 @@ export default async function Home({ searchParams }: Props) {
         <section id="accueil" className="section-block min-h-[85vh] flex items-center">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="grid w-full items-center gap-10 md:grid-cols-2">
-            <div className="order-2 md:order-1">
-              <SectionLabel>YogaOps</SectionLabel>
-              <h1 className="section-title mt-3">{landing.heroTitle}</h1>
-              <p className="section-subtitle mt-4">{landing.heroIntro}</p>
-              <ul className="bullet-list mt-6 space-y-2 pl-5 text-sm text-[var(--muted)]">
-                {bulletLabels.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <Link href="/reserver" className="brand-btn inline-flex rounded-lg px-5 py-2.5">
-                  Reserver une seance decouverte
-                </Link>
-                {landing.firstSessionOffer ? (
-                  <span className="text-sm text-[var(--muted)]">{landing.firstSessionOffer}</span>
-                ) : null}
+              <div className="order-2 md:order-1">
+                <SectionLabel>YogaOps</SectionLabel>
+                <h1 className="section-title mt-3">{landing.heroTitle}</h1>
+                <p className="font-display mt-4 text-xl font-medium leading-snug text-[var(--foreground)] md:text-2xl">
+                  {landing.heroSubtitle}
+                </p>
+                <p className="section-subtitle mt-4">{landing.heroIntro}</p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Link href="/reserver" className="brand-btn inline-flex rounded-lg px-5 py-2.5">
+                    Reserver une seance decouverte
+                  </Link>
+                  {landing.firstSessionOffer ? (
+                    <span className="text-sm font-medium text-[var(--terracotta)]">
+                      {landing.firstSessionOffer}
+                    </span>
+                  ) : null}
+                </div>
               </div>
-            </div>
-            <div className="order-1 md:order-2">
-              <div className="hero-banner aspect-[4/5] md:aspect-[3/4]">
-                {landing.heroImage1Url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={landing.heroImage1Url}
-                    alt="Femme active en posture de yoga douce"
-                    className="h-full w-full object-cover"
-                    loading="eager"
-                  />
-                ) : null}
+              <div className="order-1 md:order-2">
+                <div className="hero-banner aspect-[4/5] md:aspect-[3/4]">
+                  {landing.heroImage1Url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={landing.heroImage1Url}
+                      alt="Femme active en posture de yoga douce"
+                      className="h-full w-full object-cover"
+                      loading="eager"
+                    />
+                  ) : null}
+                </div>
               </div>
-            </div>
             </div>
           </ScrollReveal>
         </section>
 
-        {/* POURQUOI */}
-        <section id="pourquoi" className="section-block bg-[var(--beige)]">
+        {/* POURQUOI YOGAOPS */}
+        <section id="pourquoi" className="section-block">
+          <ScrollReveal className="mx-auto w-full max-w-3xl px-5 md:px-8">
+            <SectionLabel>Pourquoi YogaOps</SectionLabel>
+            <h2 className="section-title mt-3">{landing.whyTitle}</h2>
+            <div className="mt-6 space-y-4 text-[var(--muted)] leading-relaxed">
+              {landing.whyParagraphs.map((paragraph) => (
+                <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+              ))}
+            </div>
+          </ScrollReveal>
+        </section>
+
+        {/* BENEFICES */}
+        <section id="benefices" className="section-block bg-[var(--beige)]">
+          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+            <SectionLabel>Benefices</SectionLabel>
+            <h2 className="section-title mt-3">{landing.practicalInfoTitle}</h2>
+            <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+              {landing.practicalInfoItems.map((item) => (
+                <li
+                  key={item}
+                  className="flex gap-3 rounded-xl border border-[var(--border-soft)] bg-white/60 px-4 py-3 text-sm text-[var(--foreground)]"
+                >
+                  <span className="mt-0.5 text-[var(--terracotta)]" aria-hidden="true">—</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </ScrollReveal>
+        </section>
+
+        {/* OFFRE / FORMAT */}
+        <section id="formats" className="section-block">
+          <ScrollReveal className="mx-auto w-full max-w-3xl px-5 text-center md:px-8">
+            <SectionLabel>Offre / Format</SectionLabel>
+            <h2 className="section-title mt-3">{landing.formatTitle}</h2>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {landing.formatItems.map((format) => (
+                <MetaPill key={format}>{format}</MetaPill>
+              ))}
+            </div>
+            <p className="section-subtitle mx-auto mt-6">{landing.formatText}</p>
+          </ScrollReveal>
+        </section>
+
+        {/* CTA */}
+        <section className="section-block bg-[var(--sage)]/30">
+          <ScrollReveal className="mx-auto w-full max-w-3xl px-5 text-center md:px-8">
+            <h2 className="font-display text-2xl font-medium md:text-3xl">{landing.finalCtaTitle}</h2>
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <Link href="/reserver" className="brand-btn inline-flex rounded-lg px-6 py-3">
+                {landing.finalCtaButtonLabel}
+              </Link>
+              <p className="text-sm text-[var(--muted)]">{landing.finalCtaText}</p>
+            </div>
+          </ScrollReveal>
+        </section>
+
+        {/* A PROPOS */}
+        <section id="apropos" className="section-block bg-[var(--beige)]">
           <ScrollReveal className="mx-auto grid w-full max-w-5xl items-center gap-10 px-5 md:grid-cols-2 md:px-8">
             <div className="hero-banner aspect-square max-h-[28rem]">
               {(landing.teacherPhotoUrl || landing.heroImage2Url) ? (
@@ -119,19 +170,13 @@ export default async function Home({ searchParams }: Props) {
               ) : null}
             </div>
             <div>
-              <SectionLabel>Mon histoire</SectionLabel>
+              <SectionLabel>A propos</SectionLabel>
               <h2 className="section-title mt-3">{landing.teacherBioTitle}</h2>
               <div className="mt-5 space-y-4 text-[var(--muted)] leading-relaxed">
                 {bioExcerpt.map((paragraph) => (
                   <p key={paragraph.slice(0, 48)}>{paragraph}</p>
                 ))}
               </div>
-              <Link
-                href="/#contact-form"
-                className="brand-btn-secondary brand-btn-sm mt-6 inline-flex rounded-lg px-4 py-2"
-              >
-                Me contacter
-              </Link>
             </div>
           </ScrollReveal>
         </section>
@@ -140,8 +185,8 @@ export default async function Home({ searchParams }: Props) {
         <section id="offres" className="section-block">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="text-center">
-              <SectionLabel>Accompagnements</SectionLabel>
-              <h2 className="section-title mt-3">Les offres YogaOps</h2>
+              <SectionLabel>Offres</SectionLabel>
+              <h2 className="section-title mt-3">Les pratiques YogaOps</h2>
               <p className="section-subtitle mx-auto mt-3">
                 Chaque seance est pensee pour s adapter a votre rythme, sans pression ni performance.
               </p>
@@ -149,39 +194,39 @@ export default async function Home({ searchParams }: Props) {
             <ScrollStagger className="mt-10 grid gap-6 md:grid-cols-2" staggerMs={120}>
               <OfferCard
                 wide
-                label="Cours collectifs"
+                label="Cours collectifs en ligne"
                 title="Yoga collectif en ligne"
                 description="40 minutes pour respirer, bouger en douceur et relacher les tensions du quotidien."
                 imageUrl={landing.collectiveOfferImageUrl}
-                imageAlt="Eleve en cours de yoga collectif en ligne via son ordinateur"
-                meta={["40 min", "Mardi & vendredi midi", "En ligne", "5 pers. max", "Presentiel Poissy", "1ere seance offerte"]}
+                imageAlt="Cours de yoga collectif en ligne depuis chez soi"
+                meta={["40 min", "Mardi & vendredi midi", "En ligne", "5 pers. max", "1ere seance offerte"]}
                 href="/reserver"
                 cta="Reserver"
                 variant="primary"
               />
               <OfferCard
-                label="Individuel"
-                title="Yoga individuel"
-                description="Un espace personnalise pour ralentir et retrouver de la clarte mentale."
+                label="Yoga individuel"
+                title="Accompagnement individuel"
+                description="Un espace personnalise pour ralentir, relacher les tensions et retrouver de la clarte mentale."
                 imageUrl={landing.individualOfferImageUrl}
-                imageAlt="Professeure de yoga accompagnant une eleve en visio sur son telephone"
+                imageAlt="Cours de yoga individuel en ligne avec la professeure"
                 meta={["1h", "En ligne", "Sur rendez-vous"]}
                 href="/reserver"
                 cta="Decouvrir"
               />
               <OfferCard
-                label="Entreprises"
+                label="Yoga en entreprise"
                 title="Yoga en entreprise"
                 description={landing.chairYogaText}
-                meta={["Equipes tech", "En ligne ou sur site"]}
+                meta={["Equipes digital & bureau", "En ligne ou sur site"]}
                 href="/entreprises"
                 cta="En savoir plus"
               />
               <OfferCard
                 wide
-                label="Ateliers"
-                title="Ateliers YogaOps"
-                description="Stress, charge mentale et transitions professionnelles."
+                label="Ateliers YogaOps"
+                title="Ateliers thematiques"
+                description="Des seances autour du stress, de la charge mentale et des transitions professionnelles."
                 meta={["Thematiques", "Inscription en ligne"]}
                 href="/ateliers"
                 cta="Voir les ateliers"
@@ -194,32 +239,28 @@ export default async function Home({ searchParams }: Props) {
         <section id="temoignages" className="section-block bg-[var(--beige)]">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="text-center">
-              <SectionLabel>Confiance</SectionLabel>
+              <SectionLabel>Temoignages</SectionLabel>
               <h2 className="section-title mt-3">{landing.socialProofTitle}</h2>
             </div>
-            {featuredQuote ? (
-              <blockquote className="quote-featured mt-10">
-                &ldquo;{featuredQuote}&rdquo;
-              </blockquote>
-            ) : null}
-            {otherQuotes.length > 0 ? (
-              <ScrollStagger className="mt-8 grid gap-5 md:grid-cols-2" staggerMs={100}>
-                {otherQuotes.map((item) => (
-                  <blockquote key={item} className="quote-block text-sm">
-                    &ldquo;{item}&rdquo;
-                  </blockquote>
-                ))}
-              </ScrollStagger>
-            ) : null}
+            <ScrollStagger className="mt-10 grid gap-5 md:grid-cols-3" staggerMs={100}>
+              {landing.socialProofItems.map((item) => (
+                <blockquote key={item} className="quote-block text-sm leading-relaxed">
+                  &ldquo;{item}&rdquo;
+                </blockquote>
+              ))}
+            </ScrollStagger>
           </ScrollReveal>
         </section>
 
-        {/* RESEAUX + CONTACT */}
+        {/* COMMUNAUTE + CONTACT */}
         <section id="contact" className="section-block">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="text-center">
               <SectionLabel>Communaute</SectionLabel>
-              <h2 className="section-title mt-3">Suivre YogaOps</h2>
+              <h2 className="section-title mt-3">L univers YogaOps</h2>
+              <p className="section-subtitle mx-auto mt-3">
+                Instagram, LinkedIn, Facebook — suivez le quotidien de YogaOps.
+              </p>
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a
@@ -279,11 +320,34 @@ export default async function Home({ searchParams }: Props) {
                 <form action={sendContactMessage} className="mt-4 grid gap-3">
                   <ContactFormStartedAt />
                   <div className="hidden" aria-hidden="true">
-                    <input id="website" name="website" tabIndex={-1} autoComplete="off" className="brand-field px-3 py-2 text-sm" />
+                    <input
+                      id="website"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      className="brand-field px-3 py-2 text-sm"
+                    />
                   </div>
-                  <input name="fullName" required placeholder="Votre nom" className="brand-field px-3 py-2 text-sm" />
-                  <input name="email" type="email" required placeholder="Votre email" className="brand-field px-3 py-2 text-sm" />
-                  <textarea name="message" required rows={4} placeholder="Votre message" className="brand-field px-3 py-2 text-sm" />
+                  <input
+                    name="fullName"
+                    required
+                    placeholder="Votre nom"
+                    className="brand-field px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="Votre email"
+                    className="brand-field px-3 py-2 text-sm"
+                  />
+                  <textarea
+                    name="message"
+                    required
+                    rows={4}
+                    placeholder="Votre message"
+                    className="brand-field px-3 py-2 text-sm"
+                  />
                   <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">
                     Envoyer
                   </button>

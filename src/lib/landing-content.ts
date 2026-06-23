@@ -123,12 +123,18 @@ Pour toute question juridique ou relative a vos donnees, vous pouvez contacter Y
 
 export type LandingContent = {
   heroTitle: string;
+  heroSubtitle: string;
   heroIntro: string;
   heroImage1Url: string;
   heroImage2Url: string;
   collectiveOfferImageUrl: string;
   individualOfferImageUrl: string;
   presentielOfferImageUrl: string;
+  whyTitle: string;
+  whyParagraphs: string[];
+  formatTitle: string;
+  formatText: string;
+  formatItems: string[];
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -160,7 +166,8 @@ export type LandingContent = {
 };
 
 export const defaultLandingContent: LandingContent = {
-  heroTitle: "Yoga doux pour femmes actives du digital et de la tech",
+  heroTitle: "Yoga doux pour les femmes actives",
+  heroSubtitle: "Une parenthese au coeur de vos journees bien remplies",
   heroImage1Url:
     "https://images.pexels.com/photos/4050315/pexels-photo-4050315.jpeg?auto=compress&cs=tinysrgb&w=1200",
   heroImage2Url:
@@ -172,7 +179,22 @@ export const defaultLandingContent: LandingContent = {
   presentielOfferImageUrl:
     "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
   heroIntro:
-    "Des cours simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer dans des quotidiens souvent trop remplis.",
+    "Des seances en ligne pensees pour apaiser le mental, relacher les tensions et restaurer l equilibre entre corps et esprit.",
+  whyTitle: "Un espace pour ralentir",
+  whyParagraphs: [
+    "Entre ecrans, reunions et responsabilites, le rythme du quotidien laisse peu de place pour souffler.",
+    "YogaOps est un espace pour revenir a l essentiel : respirer, relacher, se recentrer.",
+    "Des seances courtes, accessibles et sans performance, concues pour s integrer naturellement dans vos journees.",
+  ],
+  formatTitle: "Une pratique adaptee a votre rythme",
+  formatText:
+    "Des formats simples et flexibles, penses pour s adapter a votre realite.",
+  formatItems: [
+    "Cours en ligne",
+    "Petits groupes",
+    "Accompagnement individuel",
+    "Yoga en entreprise sur demande",
+  ],
   specializationMessage:
     "sortir du mode automatique",
   fatigueMessage:
@@ -181,16 +203,16 @@ export const defaultLandingContent: LandingContent = {
     "deconnecter des ecrans",
   outdoorMessage:
     "retrouver du calme et de la clarte mentale",
-  firstSessionOffer: "Premiere seance offerte.",
-  socialProofTitle: "Elles en parlent",
+  firstSessionOffer: "Premiere seance offerte",
+  socialProofTitle: "Experiences vecues",
   socialProofItems: [
-    "Enfin un yoga accessible et sans pression.",
-    "Les seances m aident vraiment a ralentir dans mes journees de travail.",
-    "Une vraie pause mentale dans la semaine.",
+    "Super cours ! Basma explique tres bien, c est facile a suivre et tres relaxant. Je recommande. – Julia",
+    "Chaque seance est adaptee a mes besoins. Un vrai moment pour moi. – Maha",
+    "Je pratique entre midi et deux depuis plusieurs mois. Une vraie parenthese de calme dans mes journees. – AB",
   ],
   chairYogaTitle: "Yoga en entreprise",
   chairYogaText:
-    "Des seances adaptees aux equipes tech et digitales pour reduire la charge mentale et ramener du calme dans des environnements de travail exigeants.",
+    "Offrez a vos equipes un moment pour souffler, bouger et se recentrer sans quitter leur poste de travail.",
   chairYogaItems: [
     "Reduire le stress et la charge mentale",
     "Retrouver du focus et de la clarte mentale",
@@ -199,19 +221,19 @@ export const defaultLandingContent: LandingContent = {
   ],
   teacherPhotoUrl:
     "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=800",
-  teacherBioTitle: "Pourquoi YogaOps ?",
+  teacherBioTitle: "Une pratique ancree dans la vraie vie",
   teacherBioText:
-    "Je suis Basma. Pendant plusieurs annees, j ai travaille dans le recrutement tech, au rythme des journees chargees, des ecrans et d un quotidien souvent tres intense. Comme beaucoup de femmes actives, j ai connu la surcharge mentale, la difficulte a ralentir et cette sensation d etre constamment en mode automatique. Le yoga est progressivement devenu pour moi un espace pour respirer, relacher les tensions et me reconnecter a mon corps, notamment apres une periode de surmenage puis la maternite. J ai cree YogaOps avec l envie de proposer une approche du yoga plus simple, moderne et accessible, pensee pour les femmes du digital et de la tech qui ont besoin de souffler sans pression ni performance. Aujourd hui, je propose des seances douces et realistes, adaptees aux quotidiens charges, pour aider a retrouver du calme, de la clarte mentale et un peu plus d espace dans la journee.",
-  practicalInfoTitle: "Infos pratiques",
+    "Je suis Basma, ancienne recruteuse IT et aujourd hui professeure de yoga certifiee en Hatha et Vinyasa.\n\nJ ai cree YogaOps apres plusieurs annees dans le digital, a vivre des journees intenses, passees devant les ecrans, entre pression et charge mentale.\n\nLe yoga m a permis de retrouver de l equilibre, de relacher les tensions et de mieux vivre ce rythme.",
+  practicalInfoTitle: "Ce que ces seances vous apportent",
   practicalInfoItems: [
-    "Cours collectifs en ligne : mardi et vendredi midi, 40 min.",
-    "Accompagnement individuel : 1h en ligne, sur rendez-vous.",
-    "Premiere seance offerte pour les cours collectifs.",
-    "Petit groupe (5 personnes max) pour un cadre bienveillant.",
+    "Apaisement du stress et de la charge mentale",
+    "Detente profonde du corps",
+    "Amelioration de la posture au quotidien",
+    "Souplesse et tonicite en douceur",
+    "Clarte mentale et energie renouvelee",
   ],
-  finalCtaTitle: "Pretes a souffler ?",
-  finalCtaText:
-    "Commencez par une seance decouverte, sans pression ni performance.",
+  finalCtaTitle: "Prete a faire une vraie pause ?",
+  finalCtaText: "Premiere seance offerte",
   finalCtaButtonLabel: "Reserver une seance decouverte",
   footerAddress: "Adresse: 12 rue du Bien-Etre, 75000 Paris",
   footerPhone: "Telephone: +33 6 00 00 00 00",
@@ -296,6 +318,12 @@ export async function ensureLandingContentTable() {
     "chairYogaTitle",
     "chairYogaText",
     "chairYogaItems",
+    "heroSubtitle",
+    "whyTitle",
+    "whyParagraphs",
+    "formatTitle",
+    "formatText",
+    "formatItems",
   ];
 
   for (const column of requiredColumns) {
@@ -391,12 +419,18 @@ export async function upgradeLegalTemplatesIfNeeded() {
 
 type LandingRow = {
   heroTitle: string;
+  heroSubtitle: string;
   heroIntro: string;
   heroImage1Url: string;
   heroImage2Url: string;
   collectiveOfferImageUrl: string;
   individualOfferImageUrl: string;
   presentielOfferImageUrl: string;
+  whyTitle: string;
+  whyParagraphs: string;
+  formatTitle: string;
+  formatText: string;
+  formatItems: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -465,11 +499,40 @@ export async function upgradeCollectiveOfferImageIfLegacy() {
   );
 }
 
+export async function upgradeHomeSectionsIfEmpty() {
+  await ensureLandingContentTable();
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET heroSubtitle = ? WHERE id = 1 AND (heroSubtitle IS NULL OR heroSubtitle = '')`,
+    defaultLandingContent.heroSubtitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET whyTitle = ? WHERE id = 1 AND (whyTitle IS NULL OR whyTitle = '')`,
+    defaultLandingContent.whyTitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET whyParagraphs = ? WHERE id = 1 AND (whyParagraphs IS NULL OR whyParagraphs = '')`,
+    defaultLandingContent.whyParagraphs.join("\n"),
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET formatTitle = ? WHERE id = 1 AND (formatTitle IS NULL OR formatTitle = '')`,
+    defaultLandingContent.formatTitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET formatText = ? WHERE id = 1 AND (formatText IS NULL OR formatText = '')`,
+    defaultLandingContent.formatText,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET formatItems = ? WHERE id = 1 AND (formatItems IS NULL OR formatItems = '')`,
+    defaultLandingContent.formatItems.join("\n"),
+  );
+}
+
 export async function getLandingContent(): Promise<LandingContent> {
   await seedLandingContentIfMissing();
   await upgradeLegalTemplatesIfNeeded();
   await upgradeOfferImagesIfEmpty();
   await upgradeCollectiveOfferImageIfLegacy();
+  await upgradeHomeSectionsIfEmpty();
   const rows = (await prisma.$queryRawUnsafe<LandingRow[]>(
     "SELECT * FROM LandingContent WHERE id = 1 LIMIT 1",
   )) as LandingRow[];
@@ -478,7 +541,13 @@ export async function getLandingContent(): Promise<LandingContent> {
 
   return {
     heroTitle: row.heroTitle || defaultLandingContent.heroTitle,
+    heroSubtitle: row.heroSubtitle || defaultLandingContent.heroSubtitle,
     heroIntro: row.heroIntro || defaultLandingContent.heroIntro,
+    whyTitle: row.whyTitle || defaultLandingContent.whyTitle,
+    whyParagraphs: parseItems(row.whyParagraphs, defaultLandingContent.whyParagraphs),
+    formatTitle: row.formatTitle || defaultLandingContent.formatTitle,
+    formatText: row.formatText || defaultLandingContent.formatText,
+    formatItems: parseItems(row.formatItems, defaultLandingContent.formatItems),
     heroImage1Url: row.heroImage1Url || defaultLandingContent.heroImage1Url,
     heroImage2Url: row.heroImage2Url || defaultLandingContent.heroImage2Url,
     collectiveOfferImageUrl:
@@ -524,12 +593,18 @@ export async function updateLandingContentInDb(content: LandingContent) {
   await prisma.$executeRawUnsafe(
     `UPDATE LandingContent
      SET heroTitle = ?,
+         heroSubtitle = ?,
          heroIntro = ?,
          heroImage1Url = ?,
          heroImage2Url = ?,
          collectiveOfferImageUrl = ?,
          individualOfferImageUrl = ?,
          presentielOfferImageUrl = ?,
+         whyTitle = ?,
+         whyParagraphs = ?,
+         formatTitle = ?,
+         formatText = ?,
+         formatItems = ?,
          specializationMessage = ?,
          fatigueMessage = ?,
          enterpriseMessage = ?,
@@ -561,12 +636,18 @@ export async function updateLandingContentInDb(content: LandingContent) {
          updatedAt = CURRENT_TIMESTAMP
      WHERE id = 1`,
     content.heroTitle,
+    content.heroSubtitle,
     content.heroIntro,
     content.heroImage1Url,
     content.heroImage2Url,
     content.collectiveOfferImageUrl,
     content.individualOfferImageUrl,
     content.presentielOfferImageUrl,
+    content.whyTitle,
+    content.whyParagraphs.join("\n"),
+    content.formatTitle,
+    content.formatText,
+    content.formatItems.join("\n"),
     content.specializationMessage,
     content.fatigueMessage,
     content.enterpriseMessage,
