@@ -165,23 +165,28 @@ export function BlogPostForm({ mode, post }: BlogPostFormProps) {
           className={isEdit ? fieldSm : fieldMd}
         />
 
-        <ImageUpload
-          key={isEdit ? `cover-${post.id}-${post.coverImage}` : "cover-new"}
-          name="coverImage"
-          label="Image de couverture (liste et haut d article)"
-          homepageHint="Visible sur la page Blog et en haut de l article"
-          currentUrl={isEdit ? post.coverImage ?? "" : ""}
-          className={isEdit ? fieldSm : fieldMd}
-        />
+        <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--beige)]/40 p-3">
+          <p className="mb-3 text-xs font-medium text-[var(--brand)]">Photos de l article</p>
+          <div className="grid gap-4">
+            <ImageUpload
+              key={isEdit ? `cover-${post.id}-${post.coverImage}` : "cover-new"}
+              name="coverImage"
+              label="Image de couverture"
+              homepageHint="Grande photo en haut de l article et sur la liste du blog"
+              currentUrl={isEdit ? post.coverImage ?? "" : ""}
+              className={isEdit ? fieldSm : fieldMd}
+            />
 
-        <ImageUpload
-          key={isEdit ? `inline-${post.id}` : "inline-new"}
-          name="_contentImageHelper"
-          label="Image dans le texte de l article (optionnel)"
-          homepageHint="Inseree automatiquement dans le contenu apres upload"
-          className={isEdit ? fieldSm : fieldMd}
-          onUploaded={appendImageToContent}
-        />
+            <ImageUpload
+              key={isEdit ? `inline-${post.id}` : "inline-new"}
+              name="_contentImageHelper"
+              label="Image dans le texte (optionnel)"
+              homepageHint="Apres upload, l URL est ajoutee dans le contenu — puis enregistrez l article"
+              className={isEdit ? fieldSm : fieldMd}
+              onUploaded={appendImageToContent}
+            />
+          </div>
+        </div>
 
         <select
           name="isPublished"

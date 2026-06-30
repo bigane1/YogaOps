@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
@@ -61,16 +63,21 @@ export default async function EntreprisesPage() {
               Demander un devis
             </Link>
           </div>
-          <div className="hero-banner aspect-[4/3]">
+          <div className="hero-banner aspect-[4/3] min-h-[16rem] w-full">
             {enterpriseImageSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
+                key={enterpriseImageSrc}
                 src={enterpriseImageSrc}
                 alt="Yoga en entreprise pour equipes tech"
                 className="h-full w-full object-cover"
                 loading="lazy"
               />
-            ) : null}
+            ) : (
+              <div className="flex h-full min-h-[16rem] items-center justify-center px-6 text-center text-sm text-[var(--muted)]">
+                Image modifiable dans le backoffice (bloc « Yoga en entreprise »).
+              </div>
+            )}
           </div>
         </section>
 
