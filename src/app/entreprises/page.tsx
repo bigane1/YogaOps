@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
-import { getLandingContent } from "@/lib/landing-content";
+import { getLandingContent, withImageCacheBust } from "@/lib/landing-content";
 
 export const metadata: Metadata = {
   title: "Yoga en entreprise pour equipes tech | YogaOps",
@@ -27,6 +27,10 @@ const benefits = [
 
 export default async function EntreprisesPage() {
   const landing = await getLandingContent();
+  const enterpriseImageSrc = withImageCacheBust(
+    landing.chairYogaImageUrl,
+    landing.updatedAt ?? "",
+  );
 
   const serviceSchema = {
     "@context": "https://schema.org",
@@ -58,10 +62,10 @@ export default async function EntreprisesPage() {
             </Link>
           </div>
           <div className="hero-banner aspect-[4/3]">
-            {landing.heroImage2Url ? (
+            {enterpriseImageSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={landing.heroImage2Url}
+                src={enterpriseImageSrc}
                 alt="Yoga en entreprise pour equipes tech"
                 className="h-full w-full object-cover"
                 loading="lazy"

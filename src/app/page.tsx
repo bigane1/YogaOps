@@ -56,6 +56,10 @@ export default async function Home({ searchParams }: Props) {
     landing.heroImage2Url,
   );
   const heroBannerSrc = withImageCacheBust(heroBannerImageUrl, landing.updatedAt ?? "");
+  const enterpriseOfferSrc = withImageCacheBust(
+    landing.chairYogaImageUrl,
+    landing.updatedAt ?? "",
+  );
 
   return (
     <div className="page-shell">
@@ -228,6 +232,8 @@ export default async function Home({ searchParams }: Props) {
                 label="Yoga en entreprise"
                 title="Yoga en entreprise"
                 description={landing.chairYogaText}
+                imageUrl={enterpriseOfferSrc}
+                imageAlt="Yoga en entreprise pour equipes au bureau"
                 meta={["Equipes digital & bureau", "En ligne ou sur site"]}
                 href="/entreprises"
                 cta="En savoir plus"

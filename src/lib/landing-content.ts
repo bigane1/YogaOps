@@ -145,6 +145,7 @@ export type LandingContent = {
   chairYogaTitle: string;
   chairYogaText: string;
   chairYogaItems: string[];
+  chairYogaImageUrl: string;
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -246,6 +247,8 @@ export const defaultLandingContent: LandingContent = {
     "Ameliorer la concentration au quotidien",
     "Format flexible : en ligne ou sur site",
   ],
+  chairYogaImageUrl:
+    "https://images.pexels.com/photos/7173032/pexels-photo-7173032.jpeg?auto=compress&cs=tinysrgb&w=1200",
   teacherPhotoUrl:
     "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=800",
   teacherBioTitle: "Une pratique ancree dans la vraie vie",
@@ -346,6 +349,7 @@ export async function ensureLandingContentTable() {
     "chairYogaTitle",
     "chairYogaText",
     "chairYogaItems",
+    "chairYogaImageUrl",
     "heroSubtitle",
     "whyTitle",
     "whyParagraphs",
@@ -469,6 +473,7 @@ type LandingRow = {
   chairYogaTitle: string;
   chairYogaText: string;
   chairYogaItems: string;
+  chairYogaImageUrl: string;
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -510,6 +515,12 @@ export async function upgradeOfferImagesIfEmpty() {
      SET presentielOfferImageUrl = ?
      WHERE id = 1 AND (presentielOfferImageUrl IS NULL OR presentielOfferImageUrl = '')`,
     defaultLandingContent.presentielOfferImageUrl,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET chairYogaImageUrl = ?
+     WHERE id = 1 AND (chairYogaImageUrl IS NULL OR chairYogaImageUrl = '')`,
+    defaultLandingContent.chairYogaImageUrl,
   );
 }
 
@@ -596,6 +607,8 @@ export async function getLandingContent(): Promise<LandingContent> {
     chairYogaTitle: row.chairYogaTitle || defaultLandingContent.chairYogaTitle,
     chairYogaText: row.chairYogaText || defaultLandingContent.chairYogaText,
     chairYogaItems: parseItems(row.chairYogaItems, defaultLandingContent.chairYogaItems),
+    chairYogaImageUrl:
+      row.chairYogaImageUrl?.trim() || defaultLandingContent.chairYogaImageUrl,
     teacherBioTitle: row.teacherBioTitle || defaultLandingContent.teacherBioTitle,
     teacherBioText: row.teacherBioText || defaultLandingContent.teacherBioText,
     teacherPhotoUrl: row.teacherPhotoUrl || "",
@@ -645,6 +658,7 @@ export async function updateLandingContentInDb(content: LandingContent) {
          chairYogaTitle = ?,
          chairYogaText = ?,
          chairYogaItems = ?,
+         chairYogaImageUrl = ?,
          teacherBioTitle = ?,
          teacherBioText = ?,
          teacherPhotoUrl = ?,
@@ -688,6 +702,7 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.chairYogaTitle,
     content.chairYogaText,
     content.chairYogaItems.join("\n"),
+    content.chairYogaImageUrl,
     content.teacherBioTitle,
     content.teacherBioText,
     content.teacherPhotoUrl,

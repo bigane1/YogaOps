@@ -150,11 +150,19 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
       </LandingBlockForm>
 
       <LandingBlockForm blockId="chairYoga" title="Yoga en entreprise" className="mt-8 grid gap-3">
-        <BlockHeading>Yoga sur chaise (section entreprise)</BlockHeading>
+        <BlockHeading>Yoga en entreprise (carte offres + page Entreprises)</BlockHeading>
         <FieldLabel>Titre de la section</FieldLabel>
         <input name="chairYogaTitle" defaultValue={landing.chairYogaTitle} className={fieldMd} />
         <FieldLabel>Description</FieldLabel>
         <textarea name="chairYogaText" defaultValue={landing.chairYogaText} rows={3} className={fieldMd} />
+        <ImageUpload
+          key={`chair-yoga-${landing.chairYogaImageUrl}`}
+          name="chairYogaImageUrl"
+          label="Image Yoga en entreprise"
+          homepageHint="Page d accueil : carte « Yoga en entreprise » + page /entreprises"
+          currentUrl={landing.chairYogaImageUrl}
+          className={fieldMd}
+        />
         <FieldLabel>Benefices (1 ligne = 1 point)</FieldLabel>
         <textarea
           name="chairYogaItems"

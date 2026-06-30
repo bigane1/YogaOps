@@ -933,7 +933,7 @@ const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = 
   benefits: ["practicalInfoTitle", "practicalInfoItems"],
   formats: ["formatTitle", "formatText", "formatItems"],
   testimonials: ["socialProofTitle", "socialProofItems"],
-  chairYoga: ["chairYogaTitle", "chairYogaText", "chairYogaItems"],
+  chairYoga: ["chairYogaTitle", "chairYogaText", "chairYogaItems", "chairYogaImageUrl"],
   teacherBio: ["teacherBioTitle", "teacherBioText", "teacherPhotoUrl"],
   ctaFooter: [
     "finalCtaTitle",
@@ -966,6 +966,7 @@ const LANDING_IMAGE_FIELDS = new Set<keyof LandingContent>([
   "collectiveOfferImageUrl",
   "individualOfferImageUrl",
   "presentielOfferImageUrl",
+  "chairYogaImageUrl",
   "teacherPhotoUrl",
 ]);
 
@@ -1092,6 +1093,10 @@ export async function updateLandingContent(formData: FormData) {
     chairYogaTitle: toText(formData.get("chairYogaTitle"), defaultLandingContent.chairYogaTitle),
     chairYogaText: toText(formData.get("chairYogaText"), defaultLandingContent.chairYogaText),
     chairYogaItems: toItems(formData.get("chairYogaItems"), defaultLandingContent.chairYogaItems),
+    chairYogaImageUrl: toText(
+      formData.get("chairYogaImageUrl"),
+      defaultLandingContent.chairYogaImageUrl,
+    ),
     teacherBioTitle: toText(formData.get("teacherBioTitle"), defaultLandingContent.teacherBioTitle),
     teacherBioText: toText(formData.get("teacherBioText"), defaultLandingContent.teacherBioText),
     teacherPhotoUrl: toText(formData.get("teacherPhotoUrl"), ""),
