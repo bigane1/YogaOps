@@ -60,7 +60,16 @@ export function LandingBlockForm({ blockId, title, children, className }: Landin
     for (const input of formRef.current.querySelectorAll<HTMLInputElement>(
       "input[type='hidden'][name]",
     )) {
+      if (input.name.startsWith("_")) continue;
       formData.set(input.name, input.value);
+    }
+
+    for (const field of formRef.current.querySelectorAll<HTMLElement>("[data-upload-field]")) {
+      const fieldName = field.getAttribute("data-upload-field");
+      const hidden = field.querySelector<HTMLInputElement>("input[type='hidden'][name]");
+      if (fieldName && hidden?.value) {
+        formData.set(fieldName, hidden.value);
+      }
     }
 
     try {

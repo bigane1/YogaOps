@@ -23,15 +23,20 @@ export function ImageUpload({
   onUploaded,
 }: Props) {
   const notifyGuard = useImageUploadGuard();
-  const [overrideUrl, setOverrideUrl] = useState<string | null>(null);
+  const [storedUrl, setStoredUrl] = useState(currentUrl);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const hiddenRef = useRef<HTMLInputElement>(null);
   const localPreviewRef = useRef<string | null>(null);
-  const preview = overrideUrl ?? localPreview ?? currentUrl;
+  const preview = localPreview ?? storedUrl;
+
+  useEffect(() => {
+    setStoredUrl(currentUrl);
+    setUploaded(false);
+    setError(null);
+  }, [currentUrl]);
 
   useEffect(() => {
     notifyGuard(uploading);
@@ -44,12 +49,6 @@ export function ImageUpload({
       localPreviewRef.current = null;
     }
     setLocalPreview(null);
-  }
-
-  function syncHiddenValue(url: string) {
-    if (hiddenRef.current) {
-      hiddenRef.current.value = url;
-    }
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -96,8 +95,7 @@ export function ImageUpload({
       }
 
       clearLocalPreview();
-      setOverrideUrl(json.url);
-      syncHiddenValue(json.url);
+      setStoredUrl(json.url);
       onUploaded?.(json.url);
       setUploaded(true);
     } catch {
@@ -105,13 +103,14 @@ export function ImageUpload({
       clearLocalPreview();
     } finally {
       setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
   const isCircle = shape === "circle";
 
   return (
-    <div className={className}>
+    <div className={className} data-upload-field={name}>
       <p className="mb-1 text-xs font-medium opacity-70">{label}</p>
       {homepageHint ? (
         <p className="mb-2 text-xs text-[var(--terracotta)]">{homepageHint}</p>
@@ -161,19 +160,18 @@ export function ImageUpload({
               Attendez la fin de l envoi avant « Enregistrer ce bloc ».
             </p>
           )}
-          {uploaded && !uploading && (
+          {uploaded && !uploading && storedUrl ? (
             <p className="text-xs font-medium text-[var(--brand)]">
               Photo prete — cliquez « Enregistrer ce bloc » pour sauvegarder.
             </p>
-          )}
+          ) : null}
           {error && <p className="text-xs text-red-400">{error}</p>}
           {preview && !uploading && (
             <button
               type="button"
               onClick={() => {
                 clearLocalPreview();
-                setOverrideUrl("");
-                syncHiddenValue("");
+                setStoredUrl("");
                 setUploaded(false);
               }}
               className="text-left text-xs opacity-40 hover:opacity-70"
@@ -192,7 +190,7 @@ export function ImageUpload({
         onChange={handleFileChange}
       />
 
-      <input ref={hiddenRef} type="hidden" name={name} defaultValue={currentUrl} />
+      <input type="hidden" name={name} value={storedUrl} readOnly />
     </div>
   );
 }

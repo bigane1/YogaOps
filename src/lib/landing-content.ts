@@ -577,8 +577,8 @@ export async function getLandingContent(): Promise<LandingContent> {
     formatTitle: row.formatTitle || defaultLandingContent.formatTitle,
     formatText: row.formatText || defaultLandingContent.formatText,
     formatItems: parseItems(row.formatItems, defaultLandingContent.formatItems),
-    heroImage1Url: row.heroImage1Url || defaultLandingContent.heroImage1Url,
-    heroImage2Url: row.heroImage2Url || defaultLandingContent.heroImage2Url,
+    heroImage1Url: row.heroImage1Url?.trim() || defaultLandingContent.heroImage1Url,
+    heroImage2Url: row.heroImage2Url?.trim() || defaultLandingContent.heroImage2Url,
     collectiveOfferImageUrl:
       row.collectiveOfferImageUrl || defaultLandingContent.collectiveOfferImageUrl,
     individualOfferImageUrl:

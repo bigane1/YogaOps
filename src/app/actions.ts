@@ -11,7 +11,7 @@ import {
   updateBlogPostInDb,
 } from "@/lib/blog";
 import { sendBookingConfirmationEmail, sendContactEmail, sendSubscriptionActivationEmail } from "@/lib/mail";
-import { defaultLandingContent, getLandingContent, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
+import { defaultLandingContent, getLandingContent, isCustomUploadedImage, isStockPlaceholderImage, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
@@ -960,13 +960,28 @@ const LANDING_ARRAY_FIELDS = new Set<keyof LandingContent>([
   "practicalInfoItems",
 ]);
 
+const LANDING_IMAGE_FIELDS = new Set<keyof LandingContent>([
+  "heroImage1Url",
+  "heroImage2Url",
+  "collectiveOfferImageUrl",
+  "individualOfferImageUrl",
+  "presentielOfferImageUrl",
+  "teacherPhotoUrl",
+]);
+
 function textFromForm(
   formData: FormData,
   field: keyof LandingContent,
   current: string,
 ): string {
   if (!formData.has(field)) return current;
-  return String(formData.get(field) ?? "").trim();
+  const value = String(formData.get(field) ?? "").trim();
+  if (LANDING_IMAGE_FIELDS.has(field)) {
+    if (isCustomUploadedImage(value)) return value;
+    if (isCustomUploadedImage(current) && isStockPlaceholderImage(value)) return current;
+    if (!value && isCustomUploadedImage(current)) return current;
+  }
+  return value;
 }
 
 function itemsFromForm(
