@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
   },
+  async redirects() {
+    return [{ source: "/favicon.ico", destination: "/icon", permanent: false }];
+  },
   async headers() {
     return [
       {

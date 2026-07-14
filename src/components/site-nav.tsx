@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { BrandLogo } from "@/components/brand-logo";
 
 const links = [
   { href: "/", label: "Accueil" },
@@ -38,9 +39,10 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          className="font-display text-lg font-medium tracking-tight text-[var(--foreground)] md:text-xl"
+          className="flex items-center gap-2 font-display text-lg font-medium tracking-tight text-[var(--foreground)] md:text-xl"
           onClick={() => setOpen(false)}
         >
+          <BrandLogo size={30} className="shrink-0" />
           YogaOps
         </Link>
 

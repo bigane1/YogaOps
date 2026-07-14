@@ -21,6 +21,14 @@ export const metadata: Metadata = {
   title: "YogaOps - Yoga doux pour femmes actives du digital",
   description:
     "Cours de yoga simples et accessibles pour ralentir, relacher la charge mentale et retrouver un espace pour respirer.",
+  icons: {
+    icon: [
+      { url: "/icon", sizes: "32x32", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    shortcut: "/icon",
+  },
   openGraph: {
     title: "YogaOps - Yoga doux pour femmes actives du digital",
     description:
