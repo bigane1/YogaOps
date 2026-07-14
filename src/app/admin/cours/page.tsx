@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { adminLogin, adminLogout, createCourse, createSlot, deleteCourse, deleteSlot, updateCourse, updateSlot } from "@/app/actions";
 import { ensureSeedData, formatDateFR, toSiteDateTimeLocalInputValue } from "@/lib/db";
 import { getLandingContent } from "@/lib/landing-content";
-import { isOnlineCollectiveSlotCourse } from "@/lib/reserver-config";
+import { formatSlotCourseLabel, isReserverSlotCourse } from "@/lib/reserver-config";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
@@ -37,9 +37,7 @@ export default async function AdminCoursPage() {
     getLandingContent(),
   ]);
 
-  const slotCourses = courses.filter((course) =>
-    isOnlineCollectiveSlotCourse(course, landing.reserverTechWomenMatch),
-  );
+  const slotCourses = courses.filter((course) => isReserverSlotCourse(course));
 
   return (
     <div className="page-shell">
@@ -142,18 +140,18 @@ export default async function AdminCoursPage() {
         <section className="brand-card mt-6 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Creneaux</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver » (onglet
-            « Seances collectives en ligne »). Seuls les cours collectifs en ligne sont proposés
-            ici — pas Femmes Tech, presentiel ni individuel.
+            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver », dans l&apos;onglet
+            correspondant au type de cours (collectif, Femmes Tech ou individuel). Les ateliers
+            thematiques ne sont pas proposés ici.
           </p>
           <form action={createSlot} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
             <select name="courseId" className={fieldMd} required>
               {slotCourses.length === 0 ? (
-                <option value="">Aucun cours collectif en ligne disponible</option>
+                <option value="">Aucun cours disponible</option>
               ) : (
                 slotCourses.map((course) => (
                   <option key={course.id} value={course.id}>
-                    {course.title}
+                    {formatSlotCourseLabel(course, landing.reserverTechWomenMatch)}
                   </option>
                 ))
               )}

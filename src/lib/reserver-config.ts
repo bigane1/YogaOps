@@ -92,15 +92,23 @@ export function matchCourseBookingGroup(
   return "collective";
 }
 
-/** Cours proposés dans le formulaire « Ajouter creneau » (collectif en ligne, hors Femmes Tech). */
-export function isOnlineCollectiveSlotCourse(
-  course: { type: string; title: string; location: string; isWorkshop: boolean },
+/** Cours éligibles aux créneaux de la page Réserver (hors ateliers). */
+export function isReserverSlotCourse(course: { isWorkshop: boolean }): boolean {
+  return !course.isWorkshop;
+}
+
+export function formatSlotCourseLabel(
+  course: { title: string; type: string; location: string },
   techWomenMatch: string,
-): boolean {
-  if (course.isWorkshop) return false;
-  if (course.type !== "collectif") return false;
-  if (course.location !== "en_ligne") return false;
-  return matchCourseBookingGroup(course, techWomenMatch) === "collective";
+): string {
+  const group = matchCourseBookingGroup(course, techWomenMatch);
+  const locationLabel = course.location === "presentiel" ? "presentiel" : "en ligne";
+  const groupLabels: Record<ReserverBookingGroup, string> = {
+    collective: "Collectif",
+    techWomen: "Femmes Tech",
+    individual: "Individuel",
+  };
+  return `${course.title} — ${groupLabels[group]} · ${locationLabel}`;
 }
 
 export function getReserverWeekdaysForGroup(
