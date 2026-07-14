@@ -5,7 +5,7 @@ import { AdminSubnav } from "@/components/admin-subnav";
 import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
 import { adminLogin, adminLogout, createCourse, createSlot, deleteCourse, deleteSlot, updateCourse, updateSlot } from "@/app/actions";
-import { ensureSeedData, formatDateFR } from "@/lib/db";
+import { ensureSeedData, formatDateFR, toSiteDateTimeLocalInputValue } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
@@ -151,7 +151,7 @@ export default async function AdminCoursPage() {
                 <p className="mb-2 opacity-90">{slot.course.title} - {formatDateFR(slot.startsAt)} - {slot.course.location === "en_ligne" ? "En ligne" : "Presentiel"}</p>
                 <form action={updateSlot} className="grid gap-2 sm:grid-cols-4">
                   <input type="hidden" name="id" value={slot.id} />
-                  <input name="startsAt" type="datetime-local" defaultValue={new Date(slot.startsAt).toISOString().slice(0, 16)} className={fieldSm} />
+                  <input name="startsAt" type="datetime-local" defaultValue={toSiteDateTimeLocalInputValue(slot.startsAt)} className={fieldSm} />
                   <input name="booked" type="number" defaultValue={slot.booked} placeholder="Nb reserves" className={fieldSm} />
                   <input name="available" type="number" defaultValue={slot.available} placeholder="Nb disponibles" className={fieldSm} />
                   <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">Modifier</button>

@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";
 import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink, updateSlot } from "@/app/actions";
-import { addDays, ensureSeedData, formatTimeFR, startOfDay } from "@/lib/db";
+import { addDays, ensureSeedData, formatSiteDate, formatTimeFR, startOfDay, toSiteDateKey } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
 
@@ -113,12 +113,12 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
 
         <div className="mt-4 flex gap-4 overflow-x-auto pb-2">
           {weekDays.map((d) => {
-            const iso = d.toISOString().slice(0, 10);
-            const daySlots = weekSlots.filter((s) => s.startsAt.toISOString().slice(0, 10) === iso);
+            const iso = toSiteDateKey(d);
+            const daySlots = weekSlots.filter((s) => toSiteDateKey(s.startsAt) === iso);
             return (
               <div key={iso} className="w-[330px] shrink-0 rounded-lg border border-[var(--border-soft)] bg-white/80 p-3">
                 <div className="text-sm font-semibold" style={{ color: "var(--brand)" }}>
-                  {d.toLocaleDateString("fr-FR", { weekday: "short" })} {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                  {formatSiteDate(d, { weekday: "short", day: "2-digit", month: "2-digit" })}
                 </div>
                 <div className="mt-3 space-y-3">
                   {daySlots.map((slot) => {

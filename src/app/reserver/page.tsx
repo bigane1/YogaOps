@@ -11,7 +11,7 @@ import { SubscriptionStatus } from "@/generated/prisma/enums";
 import {
   addDays,
   ensureSeedData,
-  formatDateFR,
+  formatSiteDate,
   formatTimeFR,
   siteDayEndUtc,
   siteDayStartUtc,
@@ -297,10 +297,10 @@ export default async function ReserverPage({ searchParams }: Props) {
                       }`}
                     >
                       <span className="block whitespace-nowrap capitalize">
-                        {d.toLocaleDateString("fr-FR", { weekday: "short" })}
+                        {formatSiteDate(d, { weekday: "short" })}
                       </span>
                       <span className="block whitespace-nowrap text-xs opacity-90 md:text-sm">
-                        {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                        {formatSiteDate(d, { day: "2-digit", month: "short" })}
                       </span>
                     </ReserverQueryLink>
                   );
@@ -309,12 +309,11 @@ export default async function ReserverPage({ searchParams }: Props) {
             </div>
             <div className="text-sm opacity-80 md:text-base">
               <span className="font-medium" style={{ color: "var(--brand)" }}>
-                {selectedDate.toLocaleDateString("fr-FR", {
+                {formatSiteDate(selectedDate, {
                   weekday: "long",
                   day: "numeric",
                   month: "long",
                   year: "numeric",
-                  timeZone: "Europe/Paris",
                 })}
               </span>
             </div>

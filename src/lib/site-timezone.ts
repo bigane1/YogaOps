@@ -56,3 +56,25 @@ export function siteDayEndUtc(dateKey: string, timeZone = SITE_TIMEZONE): Date {
 export function startOfSiteDay(date = new Date(), timeZone = SITE_TIMEZONE): Date {
   return siteDayStartUtc(toSiteDateKey(date, timeZone), timeZone);
 }
+
+export function formatSiteDate(
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+  timeZone = SITE_TIMEZONE,
+): string {
+  return date.toLocaleDateString("fr-FR", { ...options, timeZone });
+}
+
+/** Valeur pour input HTML datetime-local (heure Paris). */
+export function toSiteDateTimeLocalInputValue(date: Date, timeZone = SITE_TIMEZONE): string {
+  const dateKey = toSiteDateKey(date, timeZone);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  return `${dateKey}T${hour}:${minute}`;
+}
