@@ -31,20 +31,32 @@ const WEEKDAY_MAP: Record<string, number> = {
 };
 
 export const DEFAULT_RESERVER_WEEKDAYS: Record<ReserverBookingGroup, string[]> = {
-  collective: ["mardi", "jeudi"],
-  techWomen: ["vendredi"],
-  individual: ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
+  collective: [],
+  techWomen: [],
+  individual: [],
 };
 
-export function parseReserverWeekdays(
-  raw: string[] | null | undefined,
-  fallback: string[],
-): number[] {
-  const source = raw && raw.length > 0 ? raw : fallback;
+const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
+
+export function normalizeLegacyReserverWeekdays(raw: string[] | null | undefined): string[] {
+  if (!raw || raw.length === 0) return [];
+  const normalized = raw.map((line) => line.trim().toLowerCase()).filter(Boolean);
+  const key = [...new Set(normalized)].sort().join(",");
+  if (key === "jeudi,mardi" || key === "mardi" || key === "jeudi") return [];
+  if (key === "vendredi") return [];
+  if (normalized.length >= 7) return [];
+  return raw.map((line) => line.trim()).filter(Boolean);
+}
+export function parseReserverWeekdays(raw: string[] | null | undefined): number[] {
+  const cleaned = normalizeLegacyReserverWeekdays(raw);
+  if (cleaned.length === 0) return ALL_WEEKDAYS;
   const days = new Set<number>();
-  for (const line of source) {
+  for (const line of cleaned) {
     const key = line.trim().toLowerCase();
     if (!key) continue;
+    if (key === "tous" || key === "all" || key === "*") {
+      return ALL_WEEKDAYS;
+    }
     const asNumber = Number(key);
     if (Number.isInteger(asNumber) && asNumber >= 0 && asNumber <= 6) {
       days.add(asNumber);
@@ -53,7 +65,7 @@ export function parseReserverWeekdays(
     const mapped = WEEKDAY_MAP[key];
     if (mapped !== undefined) days.add(mapped);
   }
-  return days.size > 0 ? [...days].sort((a, b) => a - b) : parseReserverWeekdays(fallback, fallback);
+  return days.size > 0 ? [...days].sort((a, b) => a - b) : ALL_WEEKDAYS;
 }
 
 export function isDateOnEnabledWeekday(date: Date, enabledWeekdays: number[]): boolean {
@@ -89,19 +101,33 @@ export function getReserverWeekdaysForGroup(
   },
 ): number[] {
   if (group === "techWomen") {
-    return parseReserverWeekdays(
-      config.reserverTechWomenWeekdays,
-      DEFAULT_RESERVER_WEEKDAYS.techWomen,
-    );
+    return parseReserverWeekdays(config.reserverTechWomenWeekdays);
   }
   if (group === "individual") {
-    return parseReserverWeekdays(
-      config.reserverIndividualWeekdays,
-      DEFAULT_RESERVER_WEEKDAYS.individual,
-    );
+    return parseReserverWeekdays(config.reserverIndividualWeekdays);
   }
-  return parseReserverWeekdays(
-    config.reserverCollectiveWeekdays,
-    DEFAULT_RESERVER_WEEKDAYS.collective,
-  );
+  return parseReserverWeekdays(config.reserverCollectiveWeekdays);
+}
+
+export function getVisibleReserverDays(
+  allDays: Date[],
+  enabledWeekdays: number[],
+  slotDayKeys: ReadonlySet<string>,
+  toDateKey: (date: Date) => string,
+): Date[] {
+  const restrictsWeekdays =
+    enabledWeekdays.length > 0 && enabledWeekdays.length < ALL_WEEKDAYS.length;
+
+  if (!restrictsWeekdays) {
+    if (slotDayKeys.size > 0) {
+      return allDays.filter((day) => slotDayKeys.has(toDateKey(day)));
+    }
+    return allDays;
+  }
+
+  return allDays.filter((day) => {
+    const key = toDateKey(day);
+    if (slotDayKeys.has(key)) return true;
+    return isDateOnEnabledWeekday(day, enabledWeekdays);
+  });
 }

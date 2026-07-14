@@ -4,7 +4,7 @@ import {
   resolveHomepageSectionOrder,
   type HomepageSectionId,
 } from "@/lib/homepage-sections-config";
-import { DEFAULT_RESERVER_WEEKDAYS } from "@/lib/reserver-config";
+import { DEFAULT_RESERVER_WEEKDAYS, normalizeLegacyReserverWeekdays } from "@/lib/reserver-config";
 
 export type { HomepageSectionId } from "@/lib/homepage-sections-config";
 export {
@@ -803,6 +803,57 @@ async function upgradeColumnIfEmpty(column: string, value: string) {
   );
 }
 
+async function cleanupLegacyReserverWeekdaysInDb() {
+  const rows = (await prisma.$queryRawUnsafe<
+    Array<{
+      reserverCollectiveWeekdays: string;
+      reserverTechWomenWeekdays: string;
+      reserverIndividualWeekdays: string;
+    }>
+  >(
+    "SELECT reserverCollectiveWeekdays, reserverTechWomenWeekdays, reserverIndividualWeekdays FROM LandingContent WHERE id = 1 LIMIT 1",
+  )) as Array<{
+    reserverCollectiveWeekdays: string;
+    reserverTechWomenWeekdays: string;
+    reserverIndividualWeekdays: string;
+  }>;
+  const row = rows?.[0];
+  if (!row) return;
+
+  const collective = normalizeLegacyReserverWeekdays(
+    parseItems(row.reserverCollectiveWeekdays, []),
+  );
+  const techWomen = normalizeLegacyReserverWeekdays(
+    parseItems(row.reserverTechWomenWeekdays, []),
+  );
+  const individual = normalizeLegacyReserverWeekdays(
+    parseItems(row.reserverIndividualWeekdays, []),
+  );
+
+  const storedCollective = row.reserverCollectiveWeekdays?.trim() ?? "";
+  const storedTechWomen = row.reserverTechWomenWeekdays?.trim() ?? "";
+  const storedIndividual = row.reserverIndividualWeekdays?.trim() ?? "";
+
+  if (
+    storedCollective === collective.join("\n") &&
+    storedTechWomen === techWomen.join("\n") &&
+    storedIndividual === individual.join("\n")
+  ) {
+    return;
+  }
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET reserverCollectiveWeekdays = ?,
+         reserverTechWomenWeekdays = ?,
+         reserverIndividualWeekdays = ?
+     WHERE id = 1`,
+    collective.join("\n"),
+    techWomen.join("\n"),
+    individual.join("\n"),
+  );
+}
+
 export async function upgradeExpandedSectionsIfEmpty() {
   await ensureLandingContentTable();
 
@@ -833,9 +884,6 @@ export async function upgradeExpandedSectionsIfEmpty() {
     ["ateliersBlogTitle", defaultLandingContent.ateliersBlogTitle],
     ["ateliersBlogIntro", defaultLandingContent.ateliersBlogIntro],
     ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder.join("\n")],
-    ["reserverCollectiveWeekdays", defaultLandingContent.reserverCollectiveWeekdays.join("\n")],
-    ["reserverTechWomenWeekdays", defaultLandingContent.reserverTechWomenWeekdays.join("\n")],
-    ["reserverIndividualWeekdays", defaultLandingContent.reserverIndividualWeekdays.join("\n")],
     ["reserverTechWomenMatch", defaultLandingContent.reserverTechWomenMatch],
     ["techWomenOfferImageUrl", defaultLandingContent.techWomenOfferImageUrl],
   ];
@@ -852,14 +900,30 @@ export async function upgradeExpandedSectionsIfEmpty() {
     ["entreprisesWhyItems", defaultLandingContent.entreprisesWhyItems],
     ["entreprisesHowItems", defaultLandingContent.entreprisesHowItems],
     ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder],
-    ["reserverCollectiveWeekdays", defaultLandingContent.reserverCollectiveWeekdays],
-    ["reserverTechWomenWeekdays", defaultLandingContent.reserverTechWomenWeekdays],
-    ["reserverIndividualWeekdays", defaultLandingContent.reserverIndividualWeekdays],
   ];
 
   for (const [column, value] of arrayColumns) {
     await upgradeColumnIfEmpty(column, value.join("\n"));
   }
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET reserverCollectiveWeekdays = ''
+     WHERE id = 1 AND reserverCollectiveWeekdays IN ('mardi\njeudi', 'mardi', 'jeudi')`,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET reserverTechWomenWeekdays = ''
+     WHERE id = 1 AND reserverTechWomenWeekdays = 'vendredi'`,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET reserverIndividualWeekdays = ''
+     WHERE id = 1 AND reserverIndividualWeekdays LIKE '%lundi%'
+       AND reserverIndividualWeekdays LIKE '%dimanche%'`,
+  );
+
+  await cleanupLegacyReserverWeekdaysInDb();
 
   await prisma.$executeRawUnsafe(
     `UPDATE LandingContent
@@ -982,17 +1046,14 @@ export async function getLandingContent(): Promise<LandingContent> {
     homepageSectionOrder: resolveHomepageSectionOrder(
       parseItems(row.homepageSectionOrder, defaultLandingContent.homepageSectionOrder),
     ),
-    reserverCollectiveWeekdays: parseItems(
-      row.reserverCollectiveWeekdays,
-      defaultLandingContent.reserverCollectiveWeekdays,
+    reserverCollectiveWeekdays: normalizeLegacyReserverWeekdays(
+      parseItems(row.reserverCollectiveWeekdays, []),
     ),
-    reserverTechWomenWeekdays: parseItems(
-      row.reserverTechWomenWeekdays,
-      defaultLandingContent.reserverTechWomenWeekdays,
+    reserverTechWomenWeekdays: normalizeLegacyReserverWeekdays(
+      parseItems(row.reserverTechWomenWeekdays, []),
     ),
-    reserverIndividualWeekdays: parseItems(
-      row.reserverIndividualWeekdays,
-      defaultLandingContent.reserverIndividualWeekdays,
+    reserverIndividualWeekdays: normalizeLegacyReserverWeekdays(
+      parseItems(row.reserverIndividualWeekdays, []),
     ),
     reserverTechWomenMatch:
       row.reserverTechWomenMatch || defaultLandingContent.reserverTechWomenMatch,

@@ -2,19 +2,52 @@ import { CourseType, LocationType } from "@/generated/prisma/enums";
 import { seedBlogIfMissing } from "@/lib/blog";
 import { seedLandingContentIfMissing } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
+import {
+  parseSiteDateTimeLocal,
+  siteDayEndUtc,
+  siteDayStartUtc,
+  startOfSiteDay,
+  toSiteDateKey,
+} from "@/lib/site-timezone";
+
+export {
+  parseSiteDateTimeLocal,
+  siteDayEndUtc,
+  siteDayStartUtc,
+  startOfSiteDay,
+  toSiteDateKey,
+} from "@/lib/site-timezone";
 
 export function formatDateFR(date: Date): string {
-  return date.toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short" });
+  return date.toLocaleString("fr-FR", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Europe/Paris",
+  });
 }
 
 export function formatTimeFR(date: Date): string {
-  return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Paris",
+  });
 }
 
 export function startOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+/** @deprecated Utiliser toSiteDateKey (fuseau Europe/Paris). */
+export function toLocalDateKey(date: Date): string {
+  return toSiteDateKey(date);
+}
+
+/** @deprecated Utiliser siteDayStartUtc. */
+export function parseLocalDateKey(isoDate: string): Date {
+  return siteDayStartUtc(isoDate);
 }
 
 export function addDays(date: Date, days: number): Date {

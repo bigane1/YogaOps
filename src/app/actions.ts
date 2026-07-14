@@ -15,6 +15,7 @@ import { defaultLandingContent, getLandingContent, isCustomUploadedImage, isStoc
 import { resolveHomepageSectionOrder } from "@/lib/homepage-sections-config";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
+import { parseSiteDateTimeLocal } from "@/lib/site-timezone";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
 import { resolveOrCreateSharedZoomLink } from "@/lib/booking-zoom";
 import { cancelZoomMeeting, createZoomMeeting } from "@/lib/zoom";
@@ -628,7 +629,7 @@ export async function createSlot(formData: FormData) {
   await prisma.timeSlot.create({
     data: {
       courseId,
-      startsAt: new Date(startsAt),
+      startsAt: parseSiteDateTimeLocal(startsAt),
       available,
       booked: 0,
     },
@@ -733,7 +734,7 @@ export async function updateSlot(formData: FormData) {
   await prisma.timeSlot.update({
     where: { id },
     data: {
-      startsAt: startsAt ? new Date(startsAt) : undefined,
+      startsAt: startsAt ? parseSiteDateTimeLocal(startsAt) : undefined,
       available: Math.max(available, 0),
       booked: Math.max(booked, 0),
       ...(zoomLinkRaw !== undefined ? { zoomLink: zoomLinkRaw || null } : {}),
@@ -1278,18 +1279,9 @@ export async function updateLandingContent(formData: FormData) {
     homepageSectionOrder: resolveHomepageSectionOrder(
       toItems(formData.get("homepageSectionOrder"), defaultLandingContent.homepageSectionOrder),
     ),
-    reserverCollectiveWeekdays: toItems(
-      formData.get("reserverCollectiveWeekdays"),
-      defaultLandingContent.reserverCollectiveWeekdays,
-    ),
-    reserverTechWomenWeekdays: toItems(
-      formData.get("reserverTechWomenWeekdays"),
-      defaultLandingContent.reserverTechWomenWeekdays,
-    ),
-    reserverIndividualWeekdays: toItems(
-      formData.get("reserverIndividualWeekdays"),
-      defaultLandingContent.reserverIndividualWeekdays,
-    ),
+    reserverCollectiveWeekdays: toItems(formData.get("reserverCollectiveWeekdays"), []),
+    reserverTechWomenWeekdays: toItems(formData.get("reserverTechWomenWeekdays"), []),
+    reserverIndividualWeekdays: toItems(formData.get("reserverIndividualWeekdays"), []),
     reserverTechWomenMatch: toText(
       formData.get("reserverTechWomenMatch"),
       defaultLandingContent.reserverTechWomenMatch,

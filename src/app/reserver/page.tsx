@@ -9,18 +9,21 @@ import { ReserverSubscriptionUnlock } from "@/components/reserver-subscription-u
 import { reserveSlot } from "@/app/actions";
 import { SubscriptionStatus } from "@/generated/prisma/enums";
 import {
+  addDays,
   ensureSeedData,
   formatDateFR,
   formatTimeFR,
-  startOfDay,
-  addDays,
+  siteDayEndUtc,
+  siteDayStartUtc,
+  startOfSiteDay,
   startOfWeekMonday,
+  toSiteDateKey,
 } from "@/lib/db";
 import { getLandingContent } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
 import {
   getReserverWeekdaysForGroup,
-  isDateOnEnabledWeekday,
+  getVisibleReserverDays,
   matchCourseBookingGroup,
   resolveReserverBookingGroup,
   type ReserverBookingGroup,
@@ -47,10 +50,12 @@ export default async function ReserverPage({ searchParams }: Props) {
   await ensureSeedData();
   const landing = await getLandingContent();
   const params = await searchParams;
-  const today = startOfDay(new Date());
+  const todayStart = startOfSiteDay();
+  const todayKey = toSiteDateKey(new Date());
   const bookingGroup = resolveReserverBookingGroup(params.type);
   const enabledWeekdays = getReserverWeekdaysForGroup(bookingGroup, landing);
-  const selectedDate = params.date ? startOfDay(new Date(params.date)) : today;
+  const selectedDateKey = params.date ?? todayKey;
+  const selectedDate = siteDayStartUtc(selectedDateKey);
   const selectedSlotId = params.slotId ? String(params.slotId) : null;
 
   const emailParamRaw = params.email ? String(params.email) : "";
@@ -67,20 +72,45 @@ export default async function ReserverPage({ searchParams }: Props) {
     : "";
   const typeQuery = `&type=${bookingGroup}`;
 
-  const allDays = Array.from({ length: 14 }).map((_, idx) => addDays(today, idx));
-  const visibleDays = allDays.filter((d) => isDateOnEnabledWeekday(d, enabledWeekdays));
+  const allDays = Array.from({ length: 14 }, (_, idx) => {
+    const day = new Date(todayStart);
+    day.setUTCDate(day.getUTCDate() + idx);
+    return day;
+  });
+  const horizonEnd = new Date(todayStart);
+  horizonEnd.setUTCDate(horizonEnd.getUTCDate() + 14);
 
-  if (
-    visibleDays.length > 0 &&
-    !isDateOnEnabledWeekday(selectedDate, enabledWeekdays)
-  ) {
-    const firstVisible = visibleDays[0].toISOString().slice(0, 10);
+  const upcomingSlots = await prisma.timeSlot.findMany({
+    where: {
+      startsAt: { gte: todayStart, lt: horizonEnd },
+      available: { gt: 0 },
+      course: { isWorkshop: false, isActive: true },
+    },
+    include: { course: true },
+    orderBy: { startsAt: "asc" },
+  });
+
+  const slotDayKeys = new Set(
+    upcomingSlots
+      .filter(
+        (slot) =>
+          matchCourseBookingGroup(slot.course, landing.reserverTechWomenMatch) === bookingGroup,
+      )
+      .map((slot) => toSiteDateKey(slot.startsAt)),
+  );
+
+  const visibleDays = getVisibleReserverDays(allDays, enabledWeekdays, slotDayKeys, toSiteDateKey);
+
+  if (visibleDays.length > 0 && !visibleDays.some(
+    (d) => toSiteDateKey(d) === selectedDateKey,
+  )) {
+    const firstVisible = toSiteDateKey(visibleDays[0]);
     const slotQuery = selectedSlotId ? `&slotId=${encodeURIComponent(selectedSlotId)}` : "";
     redirect(`/reserver?date=${firstVisible}${typeQuery}${emailQuery}${subscriptionQuery}${slotQuery}`);
   }
 
   const dayStart = selectedDate;
-  const dayEnd = addDays(selectedDate, 1);
+  const dayEnd = siteDayEndUtc(selectedDateKey);
 
   const weekStart = startOfWeekMonday(selectedDate);
 
@@ -156,6 +186,24 @@ export default async function ReserverPage({ searchParams }: Props) {
     (slot) =>
       matchCourseBookingGroup(slot.course, landing.reserverTechWomenMatch) === bookingGroup,
   );
+
+  const otherGroupSlots = slotsRaw.filter(
+    (slot) =>
+      matchCourseBookingGroup(slot.course, landing.reserverTechWomenMatch) !== bookingGroup,
+  );
+
+  const bookingGroupLabels: Record<ReserverBookingGroup, string> = {
+    collective: landing.offerCollectiveLabel,
+    techWomen: landing.offerTechLabel,
+    individual: landing.offerIndividualLabel,
+  };
+  const otherGroupsWithSlots = [
+    ...new Set(
+      otherGroupSlots.map((slot) =>
+        matchCourseBookingGroup(slot.course, landing.reserverTechWomenMatch),
+      ),
+    ),
+  ];
 
   const selectedSlot = selectedSlotId
     ? slots.find((s) => s.id === selectedSlotId) ?? null
@@ -236,8 +284,8 @@ export default async function ReserverPage({ searchParams }: Props) {
                   </p>
                 ) : null}
                 {visibleDays.map((d) => {
-                  const iso = d.toISOString().slice(0, 10);
-                  const isActive = iso === selectedDate.toISOString().slice(0, 10);
+                  const iso = toSiteDateKey(d);
+                  const isActive = iso === selectedDateKey;
                   return (
                     <ReserverQueryLink
                       key={iso}
@@ -261,7 +309,13 @@ export default async function ReserverPage({ searchParams }: Props) {
             </div>
             <div className="text-sm opacity-80 md:text-base">
               <span className="font-medium" style={{ color: "var(--brand)" }}>
-                {formatDateFR(selectedDate)}
+                {selectedDate.toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  timeZone: "Europe/Paris",
+                })}
               </span>
             </div>
 
@@ -292,7 +346,19 @@ export default async function ReserverPage({ searchParams }: Props) {
           <div className="mt-3 grid gap-3 sm:grid-cols-2 sm:gap-4">
             {slots.length === 0 ? (
               <div className="brand-alert rounded-xl p-4 sm:col-span-2">
-                Aucun creneau disponible pour cette date.
+                <p>Aucun creneau disponible pour cette date dans « {bookingGroupLabels[bookingGroup]} ».</p>
+                {otherGroupsWithSlots.length > 0 ? (
+                  <p className="mt-2 text-sm opacity-90">
+                    Des creneaux existent ce jour-la dans :{" "}
+                    {otherGroupsWithSlots.map((group) => bookingGroupLabels[group]).join(", ")}.
+                    Changez d&apos;onglet ci-dessus.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm opacity-90">
+                    Verifiez dans le backoffice que le creneau est bien publie, avec des places
+                    disponibles, et que le type de cours correspond a l&apos;onglet choisi.
+                  </p>
+                )}
               </div>
             ) : null}
 
@@ -349,7 +415,7 @@ export default async function ReserverPage({ searchParams }: Props) {
 
                   <div className="mt-4">
                     <ReserverQueryLink
-                      href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&type=${bookingGroup}&slotId=${slot.id}${emailQuery}${subscriptionQuery}`}
+                      href={`/reserver?date=${selectedDateKey}&type=${bookingGroup}&slotId=${slot.id}${emailQuery}${subscriptionQuery}`}
                       className={`brand-btn-sm inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium md:w-auto md:py-2 ${
                         isSelected ? "brand-btn" : "brand-btn-secondary"
                       }`}
@@ -412,7 +478,7 @@ export default async function ReserverPage({ searchParams }: Props) {
                         hint: "Redirection securisee vers Stripe.",
                       },
                     ];
-                const dateIso = selectedDate.toISOString().slice(0, 10);
+                const dateIso = selectedDateKey;
                 return (
               <form action={reserveSlot} className="mt-4 grid gap-3 max-w-xl">
                 <input type="hidden" name="slotId" value={selectedSlotForForm.id} />
@@ -519,7 +585,7 @@ export default async function ReserverPage({ searchParams }: Props) {
                 );
               })()}
               <ReserverQueryLink
-                href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&type=${bookingGroup}`}
+                href={`/reserver?date=${selectedDateKey}&type=${bookingGroup}`}
                 className="mt-3 inline-block text-sm opacity-80 underline"
               >
                 Annuler

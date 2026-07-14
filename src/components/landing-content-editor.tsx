@@ -131,7 +131,8 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         <BlockHeading>Page Reserver (/reserver)</BlockHeading>
         <p className="text-xs text-[var(--muted)]">
           Jours visibles dans le calendrier par type de cours (1 ligne = 1 jour : lundi, mardi, mercredi…).
-          Laissez vide pour afficher tous les jours.
+          Laissez vide pour n&apos;afficher que les jours avec un creneau publie dans « Cours &amp; creneaux ».
+          Les jours avec creneau restent toujours visibles, meme hors de cette liste.
         </p>
         <FieldLabel>Seances collectives — jours affiches</FieldLabel>
         <textarea

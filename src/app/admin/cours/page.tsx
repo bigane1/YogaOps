@@ -134,6 +134,11 @@ export default async function AdminCoursPage() {
 
         <section className="brand-card mt-6 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Creneaux</h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver ». Les jours affiches
+            se reglent dans Admin &gt; Landing page &gt; Page Reserver (laissez vide pour montrer
+            uniquement les jours avec creneau).
+          </p>
           <form action={createSlot} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
             <select name="courseId" className={fieldMd}>{courses.map((course) => (<option key={course.id} value={course.id}>{course.title}</option>))}</select>
             <input name="startsAt" type="datetime-local" required placeholder="Date et heure" className={fieldMd} />
