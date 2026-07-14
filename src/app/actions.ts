@@ -13,6 +13,7 @@ import {
 import { sendBookingConfirmationEmail, sendContactEmail, sendSubscriptionActivationEmail } from "@/lib/mail";
 import { defaultLandingContent, getLandingContent, isCustomUploadedImage, isStockPlaceholderImage, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
 import { resolveHomepageSectionOrder } from "@/lib/homepage-sections-config";
+import { isOnlineCollectiveSlotCourse } from "@/lib/reserver-config";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { parseSiteDateTimeLocal } from "@/lib/site-timezone";
@@ -625,6 +626,14 @@ export async function createSlot(formData: FormData) {
   const startsAt = String(formData.get("startsAt") ?? "");
   const available = toNumber(formData.get("available"), 1);
   if (!courseId || !startsAt) return;
+
+  const [course, landing] = await Promise.all([
+    prisma.course.findUnique({ where: { id: courseId } }),
+    getLandingContent(),
+  ]);
+  if (!course || !course.isActive || !isOnlineCollectiveSlotCourse(course, landing.reserverTechWomenMatch)) {
+    return;
+  }
 
   await prisma.timeSlot.create({
     data: {

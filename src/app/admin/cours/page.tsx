@@ -6,6 +6,8 @@ import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
 import { adminLogin, adminLogout, createCourse, createSlot, deleteCourse, deleteSlot, updateCourse, updateSlot } from "@/app/actions";
 import { ensureSeedData, formatDateFR, toSiteDateTimeLocalInputValue } from "@/lib/db";
+import { getLandingContent } from "@/lib/landing-content";
+import { isOnlineCollectiveSlotCourse } from "@/lib/reserver-config";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
@@ -29,10 +31,15 @@ export default async function AdminCoursPage() {
     );
   }
 
-  const [courses, slots] = await Promise.all([
+  const [courses, slots, landing] = await Promise.all([
     prisma.course.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } }),
     prisma.timeSlot.findMany({ include: { course: true }, orderBy: { startsAt: "asc" } }),
+    getLandingContent(),
   ]);
+
+  const slotCourses = courses.filter((course) =>
+    isOnlineCollectiveSlotCourse(course, landing.reserverTechWomenMatch),
+  );
 
   return (
     <div className="page-shell">
@@ -135,15 +142,31 @@ export default async function AdminCoursPage() {
         <section className="brand-card mt-6 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Creneaux</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver ». Les jours affiches
-            se reglent dans Admin &gt; Landing page &gt; Page Reserver (laissez vide pour montrer
-            uniquement les jours avec creneau).
+            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver » (onglet
+            « Seances collectives en ligne »). Seuls les cours collectifs en ligne sont proposés
+            ici — pas Femmes Tech, presentiel ni individuel.
           </p>
           <form action={createSlot} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
-            <select name="courseId" className={fieldMd}>{courses.map((course) => (<option key={course.id} value={course.id}>{course.title}</option>))}</select>
+            <select name="courseId" className={fieldMd} required>
+              {slotCourses.length === 0 ? (
+                <option value="">Aucun cours collectif en ligne disponible</option>
+              ) : (
+                slotCourses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.title}
+                  </option>
+                ))
+              )}
+            </select>
             <input name="startsAt" type="datetime-local" required placeholder="Date et heure" className={fieldMd} />
             <input name="available" type="number" defaultValue={8} placeholder="Places disponibles" className={fieldMd} />
-            <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2">Ajouter creneau</button>
+            <button
+              type="submit"
+              disabled={slotCourses.length === 0}
+              className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2 disabled:opacity-50"
+            >
+              Ajouter creneau
+            </button>
           </form>
           <ul className="mt-3 space-y-3 text-sm">
             {slots.map((slot) => (

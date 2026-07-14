@@ -92,6 +92,17 @@ export function matchCourseBookingGroup(
   return "collective";
 }
 
+/** Cours proposés dans le formulaire « Ajouter creneau » (collectif en ligne, hors Femmes Tech). */
+export function isOnlineCollectiveSlotCourse(
+  course: { type: string; title: string; location: string; isWorkshop: boolean },
+  techWomenMatch: string,
+): boolean {
+  if (course.isWorkshop) return false;
+  if (course.type !== "collectif") return false;
+  if (course.location !== "en_ligne") return false;
+  return matchCourseBookingGroup(course, techWomenMatch) === "collective";
+}
+
 export function getReserverWeekdaysForGroup(
   group: ReserverBookingGroup,
   config: {
