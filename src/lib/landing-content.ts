@@ -1,4 +1,17 @@
 import { prisma } from "@/lib/prisma";
+import {
+  DEFAULT_HOMEPAGE_SECTION_ORDER,
+  resolveHomepageSectionOrder,
+  type HomepageSectionId,
+} from "@/lib/homepage-sections-config";
+
+export type { HomepageSectionId } from "@/lib/homepage-sections-config";
+export {
+  DEFAULT_HOMEPAGE_SECTION_ORDER,
+  HOMEPAGE_SECTION_IDS,
+  HOMEPAGE_SECTION_LABELS,
+  resolveHomepageSectionOrder,
+} from "@/lib/homepage-sections-config";
 
 const CGV_TEMPLATE = `CGV - Conditions Generales de Vente (Micro-entreprise)
 
@@ -121,6 +134,11 @@ Nom et coordonnees du mediateur: a completer.
 8. Contact
 Pour toute question juridique ou relative a vos donnees, vous pouvez contacter YogaOps via l email indique ci-dessus.`;
 
+export type WorkshopItem = {
+  title: string;
+  description: string;
+};
+
 export type LandingContent = {
   heroTitle: string;
   heroSubtitle: string;
@@ -130,11 +148,28 @@ export type LandingContent = {
   collectiveOfferImageUrl: string;
   individualOfferImageUrl: string;
   presentielOfferImageUrl: string;
+  techWomenOfferImageUrl: string;
   whyTitle: string;
   whyParagraphs: string[];
   formatTitle: string;
   formatText: string;
   formatItems: string[];
+  techWomenLabel: string;
+  techWomenTitle: string;
+  techWomenParagraphs: string[];
+  techWomenCtaLabel: string;
+  offerCollectiveLabel: string;
+  offerCollectiveTitle: string;
+  offerCollectiveDescription: string;
+  offerCollectiveMeta: string[];
+  offerTechLabel: string;
+  offerTechTitle: string;
+  offerTechDescription: string;
+  offerTechMeta: string[];
+  offerIndividualLabel: string;
+  offerIndividualTitle: string;
+  offerIndividualDescription: string;
+  offerIndividualMeta: string[];
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -146,6 +181,22 @@ export type LandingContent = {
   chairYogaText: string;
   chairYogaItems: string[];
   chairYogaImageUrl: string;
+  entreprisesHeroTitle: string;
+  entreprisesHeroText: string;
+  entreprisesWhyTitle: string;
+  entreprisesWhyItems: string[];
+  entreprisesHowTitle: string;
+  entreprisesHowItems: string[];
+  entreprisesCtaLabel: string;
+  ateliersPageTitle: string;
+  ateliersPageIntro: string;
+  ateliersWorkshops: string;
+  ateliersAnnounceText: string;
+  ateliersSignupTitle: string;
+  ateliersSignupButtonLabel: string;
+  ateliersBlogTitle: string;
+  ateliersBlogIntro: string;
+  homepageSectionOrder: HomepageSectionId[];
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -193,6 +244,45 @@ export function withImageCacheBust(url: string, version: string): string {
   return `${url}${separator}v=${encodeURIComponent(version)}`;
 }
 
+export const defaultWorkshopItems: WorkshopItem[] = [
+  {
+    title: 'Atelier "Reprise / Transition"',
+    description:
+      "Pense pour les periodes de reprise (post-maternite, changement d entreprise, de poste, nouvelle organisation) : retrouver un rythme corporel stable dans une periode de changement.",
+  },
+  {
+    title: 'Atelier "Pic de charge"',
+    description:
+      "Pour les periodes de forte intensite (sprint, cloture, pic recrutement IT, deadline) : des outils rapides a mobiliser quand le temps manque.",
+  },
+  {
+    title: 'Atelier "Sommeil et recuperation"',
+    description:
+      "Un temps plus long et plus calme (relachement guide) pour travailler sur la qualite de la recuperation.",
+  },
+];
+
+export function serializeWorkshopItems(items: WorkshopItem[]): string {
+  return items.map((item) => `${item.title}|${item.description}`).join("\n");
+}
+
+export function parseWorkshopItems(raw: string | null | undefined, fallback: WorkshopItem[]): WorkshopItem[] {
+  if (!raw) return fallback;
+  const items = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separator = line.indexOf("|");
+      if (separator === -1) return { title: line, description: "" };
+      return {
+        title: line.slice(0, separator).trim(),
+        description: line.slice(separator + 1).trim(),
+      };
+    });
+  return items.length > 0 ? items : fallback;
+}
+
 export const defaultLandingContent: LandingContent = {
   heroTitle: "Yoga doux pour les femmes actives",
   heroSubtitle: "Une parenthese au coeur de vos journees bien remplies",
@@ -215,14 +305,41 @@ export const defaultLandingContent: LandingContent = {
     "Des seances courtes, accessibles et sans performance, concues pour s integrer naturellement dans vos journees.",
   ],
   formatTitle: "Une pratique adaptee a votre rythme",
-  formatText:
-    "Des formats simples et flexibles, penses pour s adapter a votre realite.",
+  formatText: "",
   formatItems: [
     "Cours en ligne",
     "Petits groupes",
     "Accompagnement individuel",
     "Yoga en entreprise sur demande",
   ],
+  techWomenLabel: "Femmes de la tech",
+  techWomenTitle: "Une attention particuliere aux femmes de la tech",
+  techWomenParagraphs: [
+    "Dev, PM, data, RH tech, freelances… Le quotidien de la tech ajoute souvent une couche : environnements majoritairement masculins, charge mentale liee a la disponibilite permanente, sentiment de devoir constamment prouver sa legitimite.",
+    "YogaOps propose un creneau et un espace penses specifiquement pour les femmes de la tech — un moment ou souffler ne demande aucune justification.",
+  ],
+  techWomenCtaLabel: "Decouvrir la session Femmes Tech",
+  offerCollectiveLabel: "Seances collectives en ligne",
+  offerCollectiveTitle: "Seances collectives en ligne",
+  offerCollectiveDescription: "40 minutes de mouvement, respiration et relachement.",
+  offerCollectiveMeta: [
+    "Mardi et jeudi midi",
+    "En ligne",
+    "5 personnes max",
+    "Premiere seance offerte",
+  ],
+  techWomenOfferImageUrl:
+    "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  offerTechLabel: "Seance Femmes Tech",
+  offerTechTitle: "Seance Femmes Tech",
+  offerTechDescription:
+    "40 minutes de mouvement, respiration et relachement, dans un groupe compose uniquement de femmes travaillant dans la tech.",
+  offerTechMeta: ["Vendredi midi", "En ligne", "5 personnes max", "Premiere seance offerte"],
+  offerIndividualLabel: "Accompagnement individuel",
+  offerIndividualTitle: "Accompagnement individuel",
+  offerIndividualDescription:
+    "Pour ralentir a votre rythme et retrouver de la clarte mentale.",
+  offerIndividualMeta: ["1h", "En ligne ou en presentiel", "Sur rendez-vous"],
   specializationMessage:
     "sortir du mode automatique",
   fatigueMessage:
@@ -249,11 +366,40 @@ export const defaultLandingContent: LandingContent = {
   ],
   chairYogaImageUrl:
     "https://images.pexels.com/photos/7173032/pexels-photo-7173032.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  entreprisesHeroTitle:
+    "Offrez a vos equipes une vraie pause, sans qu elles quittent leur poste",
+  entreprisesHeroText:
+    "Les journees en entreprise tech et digitale sont denses : sprints, deadlines, reunions a la chaine. YogaOps propose des seances de mouvement et de respiration directement integrees a la journee de travail — en ligne ou sur site.",
+  entreprisesWhyTitle: "Pourquoi le proposer a vos equipes",
+  entreprisesWhyItems: [
+    "Prevenir les tensions liees a la sedentarite et au travail d ecran prolonge",
+    "Offrir une vraie coupure au milieu d une journee chargee, sans organisation complexe",
+    "Renforcer la marque employeur et l attention portee au bien-etre au travail",
+    "Un format particulierement pertinent pour les equipes avec une forte proportion de femmes dans la tech",
+  ],
+  entreprisesHowTitle: "Comment ca fonctionne",
+  entreprisesHowItems: [
+    "Seances ponctuelles ou programme sur plusieurs semaines",
+    "Format 30 a 45 minutes, en ligne ou sur site",
+    "Adapte au niveau et au rythme de vos equipes, aucune experience requise",
+  ],
+  entreprisesCtaLabel: "Demander une pause sur mesure pour mon equipe",
+  ateliersPageTitle: "Des temps forts autour de ce qui pese le plus dans votre quotidien",
+  ateliersPageIntro:
+    "Au-dela des seances regulieres, les ateliers YogaOps prennent le temps d aller plus loin sur une thematique precise.",
+  ateliersWorkshops: serializeWorkshopItems(defaultWorkshopItems),
+  ateliersAnnounceText:
+    "Les prochains ateliers, dates et lieux, seront annonces tres prochainement. Envie d etre prevenue en priorite ?",
+  ateliersSignupTitle: "Etre informee des prochaines dates",
+  ateliersSignupButtonLabel: "Etre informee des prochaines dates",
+  ateliersBlogTitle: "Le blog YogaOps",
+  ateliersBlogIntro: "Mini articles simples et utiles pour le quotidien.",
+  homepageSectionOrder: [...DEFAULT_HOMEPAGE_SECTION_ORDER],
   teacherPhotoUrl:
     "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=800",
   teacherBioTitle: "Une pratique ancree dans la vraie vie",
   teacherBioText:
-    "Je suis Basma, ancienne recruteuse IT et aujourd hui professeure de yoga certifiee en Hatha et Vinyasa.\n\nJ ai cree YogaOps apres plusieurs annees dans le digital, a vivre des journees intenses, passees devant les ecrans, entre pression et charge mentale.\n\nLe yoga m a permis de retrouver de l equilibre, de relacher les tensions et de mieux vivre ce rythme.",
+    "Je suis Basma. Recruteuse IT freelance. Certifiee en Hatha, Vinyasa et Nidra. Formee au mouvement, a la respiration et au relachement.\n\nJ ai passe plusieurs annees dans le recrutement tech. Les ecrans. Les reunions, les entretiens qui s enchainent. Une charge mentale qui ne s arrete jamais vraiment.\n\nLe mouvement et la respiration m ont appris a prendre soin de moi. Entre deux appels, dans des journees qui ne laissaient aucune place pour souffler.\n\nEn en parlant autour de moi, j ai compris que je n etais pas la seule. Beaucoup de femmes du digital et de la tech vivent le meme rythme, sans espace pour le relacher.\n\nYogaOps est ne de ce constat.",
   practicalInfoTitle: "Ce que ces seances vous apportent",
   practicalInfoItems: [
     "Apaisement du stress et de la charge mentale",
@@ -264,7 +410,7 @@ export const defaultLandingContent: LandingContent = {
   ],
   finalCtaTitle: "Prete a faire une vraie pause ?",
   finalCtaText: "Premiere seance offerte",
-  finalCtaButtonLabel: "Reserver une seance decouverte",
+  finalCtaButtonLabel: "Reserver ma pause decouverte",
   footerAddress: "Adresse: 12 rue du Bien-Etre, 75000 Paris",
   footerPhone: "Telephone: +33 6 00 00 00 00",
   footerEmail: "Email: contact@yogaops.fr",
@@ -345,6 +491,7 @@ export async function ensureLandingContentTable() {
     "collectiveOfferImageUrl",
     "individualOfferImageUrl",
     "presentielOfferImageUrl",
+    "techWomenOfferImageUrl",
     "teacherPhotoUrl",
     "chairYogaTitle",
     "chairYogaText",
@@ -356,6 +503,38 @@ export async function ensureLandingContentTable() {
     "formatTitle",
     "formatText",
     "formatItems",
+    "techWomenLabel",
+    "techWomenTitle",
+    "techWomenParagraphs",
+    "techWomenCtaLabel",
+    "offerCollectiveLabel",
+    "offerCollectiveTitle",
+    "offerCollectiveDescription",
+    "offerCollectiveMeta",
+    "offerTechLabel",
+    "offerTechTitle",
+    "offerTechDescription",
+    "offerTechMeta",
+    "offerIndividualLabel",
+    "offerIndividualTitle",
+    "offerIndividualDescription",
+    "offerIndividualMeta",
+    "entreprisesHeroTitle",
+    "entreprisesHeroText",
+    "entreprisesWhyTitle",
+    "entreprisesWhyItems",
+    "entreprisesHowTitle",
+    "entreprisesHowItems",
+    "entreprisesCtaLabel",
+    "ateliersPageTitle",
+    "ateliersPageIntro",
+    "ateliersWorkshops",
+    "ateliersAnnounceText",
+    "ateliersSignupTitle",
+    "ateliersSignupButtonLabel",
+    "ateliersBlogTitle",
+    "ateliersBlogIntro",
+    "homepageSectionOrder",
   ];
 
   for (const column of requiredColumns) {
@@ -458,11 +637,28 @@ type LandingRow = {
   collectiveOfferImageUrl: string;
   individualOfferImageUrl: string;
   presentielOfferImageUrl: string;
+  techWomenOfferImageUrl: string;
   whyTitle: string;
   whyParagraphs: string;
   formatTitle: string;
   formatText: string;
   formatItems: string;
+  techWomenLabel: string;
+  techWomenTitle: string;
+  techWomenParagraphs: string;
+  techWomenCtaLabel: string;
+  offerCollectiveLabel: string;
+  offerCollectiveTitle: string;
+  offerCollectiveDescription: string;
+  offerCollectiveMeta: string;
+  offerTechLabel: string;
+  offerTechTitle: string;
+  offerTechDescription: string;
+  offerTechMeta: string;
+  offerIndividualLabel: string;
+  offerIndividualTitle: string;
+  offerIndividualDescription: string;
+  offerIndividualMeta: string;
   specializationMessage: string;
   fatigueMessage: string;
   enterpriseMessage: string;
@@ -474,6 +670,22 @@ type LandingRow = {
   chairYogaText: string;
   chairYogaItems: string;
   chairYogaImageUrl: string;
+  entreprisesHeroTitle: string;
+  entreprisesHeroText: string;
+  entreprisesWhyTitle: string;
+  entreprisesWhyItems: string;
+  entreprisesHowTitle: string;
+  entreprisesHowItems: string;
+  entreprisesCtaLabel: string;
+  ateliersPageTitle: string;
+  ateliersPageIntro: string;
+  ateliersWorkshops: string;
+  ateliersAnnounceText: string;
+  ateliersSignupTitle: string;
+  ateliersSignupButtonLabel: string;
+  ateliersBlogTitle: string;
+  ateliersBlogIntro: string;
+  homepageSectionOrder: string;
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -567,12 +779,89 @@ export async function upgradeHomeSectionsIfEmpty() {
   );
 }
 
+async function upgradeColumnIfEmpty(column: string, value: string) {
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET ${column} = ? WHERE id = 1 AND (${column} IS NULL OR ${column} = '')`,
+    value,
+  );
+}
+
+export async function upgradeExpandedSectionsIfEmpty() {
+  await ensureLandingContentTable();
+
+  const textColumns: Array<[keyof LandingContent, string]> = [
+    ["techWomenLabel", defaultLandingContent.techWomenLabel],
+    ["techWomenTitle", defaultLandingContent.techWomenTitle],
+    ["techWomenCtaLabel", defaultLandingContent.techWomenCtaLabel],
+    ["offerCollectiveLabel", defaultLandingContent.offerCollectiveLabel],
+    ["offerCollectiveTitle", defaultLandingContent.offerCollectiveTitle],
+    ["offerCollectiveDescription", defaultLandingContent.offerCollectiveDescription],
+    ["offerTechLabel", defaultLandingContent.offerTechLabel],
+    ["offerTechTitle", defaultLandingContent.offerTechTitle],
+    ["offerTechDescription", defaultLandingContent.offerTechDescription],
+    ["offerIndividualLabel", defaultLandingContent.offerIndividualLabel],
+    ["offerIndividualTitle", defaultLandingContent.offerIndividualTitle],
+    ["offerIndividualDescription", defaultLandingContent.offerIndividualDescription],
+    ["entreprisesHeroTitle", defaultLandingContent.entreprisesHeroTitle],
+    ["entreprisesHeroText", defaultLandingContent.entreprisesHeroText],
+    ["entreprisesWhyTitle", defaultLandingContent.entreprisesWhyTitle],
+    ["entreprisesHowTitle", defaultLandingContent.entreprisesHowTitle],
+    ["entreprisesCtaLabel", defaultLandingContent.entreprisesCtaLabel],
+    ["ateliersPageTitle", defaultLandingContent.ateliersPageTitle],
+    ["ateliersPageIntro", defaultLandingContent.ateliersPageIntro],
+    ["ateliersWorkshops", defaultLandingContent.ateliersWorkshops],
+    ["ateliersAnnounceText", defaultLandingContent.ateliersAnnounceText],
+    ["ateliersSignupTitle", defaultLandingContent.ateliersSignupTitle],
+    ["ateliersSignupButtonLabel", defaultLandingContent.ateliersSignupButtonLabel],
+    ["ateliersBlogTitle", defaultLandingContent.ateliersBlogTitle],
+    ["ateliersBlogIntro", defaultLandingContent.ateliersBlogIntro],
+    ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder.join("\n")],
+    ["techWomenOfferImageUrl", defaultLandingContent.techWomenOfferImageUrl],
+  ];
+
+  for (const [column, value] of textColumns) {
+    await upgradeColumnIfEmpty(column, value);
+  }
+
+  const arrayColumns: Array<[keyof LandingContent, string[]]> = [
+    ["techWomenParagraphs", defaultLandingContent.techWomenParagraphs],
+    ["offerCollectiveMeta", defaultLandingContent.offerCollectiveMeta],
+    ["offerTechMeta", defaultLandingContent.offerTechMeta],
+    ["offerIndividualMeta", defaultLandingContent.offerIndividualMeta],
+    ["entreprisesWhyItems", defaultLandingContent.entreprisesWhyItems],
+    ["entreprisesHowItems", defaultLandingContent.entreprisesHowItems],
+    ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder],
+  ];
+
+  for (const [column, value] of arrayColumns) {
+    await upgradeColumnIfEmpty(column, value.join("\n"));
+  }
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET finalCtaButtonLabel = ?
+     WHERE id = 1 AND finalCtaButtonLabel = 'Reserver une seance decouverte'`,
+    defaultLandingContent.finalCtaButtonLabel,
+  );
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent
+     SET teacherBioTitle = ?,
+         teacherBioText = ?
+     WHERE id = 1
+       AND teacherBioText LIKE '%ancienne recruteuse IT et aujourd hui professeure de yoga certifiee en Hatha et Vinyasa%'`,
+    defaultLandingContent.teacherBioTitle,
+    defaultLandingContent.teacherBioText,
+  );
+}
+
 export async function getLandingContent(): Promise<LandingContent> {
   await seedLandingContentIfMissing();
   await upgradeLegalTemplatesIfNeeded();
   await upgradeOfferImagesIfEmpty();
   await upgradeCollectiveOfferImageIfLegacy();
   await upgradeHomeSectionsIfEmpty();
+  await upgradeExpandedSectionsIfEmpty();
   const rows = (await prisma.$queryRawUnsafe<LandingRow[]>(
     "SELECT * FROM LandingContent WHERE id = 1 LIMIT 1",
   )) as LandingRow[];
@@ -586,8 +875,42 @@ export async function getLandingContent(): Promise<LandingContent> {
     whyTitle: row.whyTitle || defaultLandingContent.whyTitle,
     whyParagraphs: parseItems(row.whyParagraphs, defaultLandingContent.whyParagraphs),
     formatTitle: row.formatTitle || defaultLandingContent.formatTitle,
-    formatText: row.formatText || defaultLandingContent.formatText,
+    formatText: row.formatText ?? defaultLandingContent.formatText,
     formatItems: parseItems(row.formatItems, defaultLandingContent.formatItems),
+    techWomenLabel: row.techWomenLabel || defaultLandingContent.techWomenLabel,
+    techWomenTitle: row.techWomenTitle || defaultLandingContent.techWomenTitle,
+    techWomenParagraphs: parseItems(
+      row.techWomenParagraphs,
+      defaultLandingContent.techWomenParagraphs,
+    ),
+    techWomenCtaLabel: row.techWomenCtaLabel || defaultLandingContent.techWomenCtaLabel,
+    offerCollectiveLabel:
+      row.offerCollectiveLabel || defaultLandingContent.offerCollectiveLabel,
+    offerCollectiveTitle:
+      row.offerCollectiveTitle || defaultLandingContent.offerCollectiveTitle,
+    offerCollectiveDescription:
+      row.offerCollectiveDescription || defaultLandingContent.offerCollectiveDescription,
+    offerCollectiveMeta: parseItems(
+      row.offerCollectiveMeta,
+      defaultLandingContent.offerCollectiveMeta,
+    ),
+    techWomenOfferImageUrl:
+      row.techWomenOfferImageUrl || defaultLandingContent.techWomenOfferImageUrl,
+    offerTechLabel: row.offerTechLabel || defaultLandingContent.offerTechLabel,
+    offerTechTitle: row.offerTechTitle || defaultLandingContent.offerTechTitle,
+    offerTechDescription:
+      row.offerTechDescription || defaultLandingContent.offerTechDescription,
+    offerTechMeta: parseItems(row.offerTechMeta, defaultLandingContent.offerTechMeta),
+    offerIndividualLabel:
+      row.offerIndividualLabel || defaultLandingContent.offerIndividualLabel,
+    offerIndividualTitle:
+      row.offerIndividualTitle || defaultLandingContent.offerIndividualTitle,
+    offerIndividualDescription:
+      row.offerIndividualDescription || defaultLandingContent.offerIndividualDescription,
+    offerIndividualMeta: parseItems(
+      row.offerIndividualMeta,
+      defaultLandingContent.offerIndividualMeta,
+    ),
     heroImage1Url: row.heroImage1Url?.trim() || defaultLandingContent.heroImage1Url,
     heroImage2Url: row.heroImage2Url?.trim() || defaultLandingContent.heroImage2Url,
     collectiveOfferImageUrl:
@@ -609,6 +932,32 @@ export async function getLandingContent(): Promise<LandingContent> {
     chairYogaItems: parseItems(row.chairYogaItems, defaultLandingContent.chairYogaItems),
     chairYogaImageUrl:
       row.chairYogaImageUrl?.trim() || defaultLandingContent.chairYogaImageUrl,
+    entreprisesHeroTitle:
+      row.entreprisesHeroTitle || defaultLandingContent.entreprisesHeroTitle,
+    entreprisesHeroText: row.entreprisesHeroText || defaultLandingContent.entreprisesHeroText,
+    entreprisesWhyTitle: row.entreprisesWhyTitle || defaultLandingContent.entreprisesWhyTitle,
+    entreprisesWhyItems: parseItems(
+      row.entreprisesWhyItems,
+      defaultLandingContent.entreprisesWhyItems,
+    ),
+    entreprisesHowTitle: row.entreprisesHowTitle || defaultLandingContent.entreprisesHowTitle,
+    entreprisesHowItems: parseItems(
+      row.entreprisesHowItems,
+      defaultLandingContent.entreprisesHowItems,
+    ),
+    entreprisesCtaLabel: row.entreprisesCtaLabel || defaultLandingContent.entreprisesCtaLabel,
+    ateliersPageTitle: row.ateliersPageTitle || defaultLandingContent.ateliersPageTitle,
+    ateliersPageIntro: row.ateliersPageIntro || defaultLandingContent.ateliersPageIntro,
+    ateliersWorkshops: row.ateliersWorkshops || defaultLandingContent.ateliersWorkshops,
+    ateliersAnnounceText: row.ateliersAnnounceText || defaultLandingContent.ateliersAnnounceText,
+    ateliersSignupTitle: row.ateliersSignupTitle || defaultLandingContent.ateliersSignupTitle,
+    ateliersSignupButtonLabel:
+      row.ateliersSignupButtonLabel || defaultLandingContent.ateliersSignupButtonLabel,
+    ateliersBlogTitle: row.ateliersBlogTitle || defaultLandingContent.ateliersBlogTitle,
+    ateliersBlogIntro: row.ateliersBlogIntro || defaultLandingContent.ateliersBlogIntro,
+    homepageSectionOrder: resolveHomepageSectionOrder(
+      parseItems(row.homepageSectionOrder, defaultLandingContent.homepageSectionOrder),
+    ),
     teacherBioTitle: row.teacherBioTitle || defaultLandingContent.teacherBioTitle,
     teacherBioText: row.teacherBioText || defaultLandingContent.teacherBioText,
     teacherPhotoUrl: row.teacherPhotoUrl || "",
@@ -643,11 +992,28 @@ export async function updateLandingContentInDb(content: LandingContent) {
          collectiveOfferImageUrl = ?,
          individualOfferImageUrl = ?,
          presentielOfferImageUrl = ?,
+         techWomenOfferImageUrl = ?,
          whyTitle = ?,
          whyParagraphs = ?,
          formatTitle = ?,
          formatText = ?,
          formatItems = ?,
+         techWomenLabel = ?,
+         techWomenTitle = ?,
+         techWomenParagraphs = ?,
+         techWomenCtaLabel = ?,
+         offerCollectiveLabel = ?,
+         offerCollectiveTitle = ?,
+         offerCollectiveDescription = ?,
+         offerCollectiveMeta = ?,
+         offerTechLabel = ?,
+         offerTechTitle = ?,
+         offerTechDescription = ?,
+         offerTechMeta = ?,
+         offerIndividualLabel = ?,
+         offerIndividualTitle = ?,
+         offerIndividualDescription = ?,
+         offerIndividualMeta = ?,
          specializationMessage = ?,
          fatigueMessage = ?,
          enterpriseMessage = ?,
@@ -659,6 +1025,22 @@ export async function updateLandingContentInDb(content: LandingContent) {
          chairYogaText = ?,
          chairYogaItems = ?,
          chairYogaImageUrl = ?,
+         entreprisesHeroTitle = ?,
+         entreprisesHeroText = ?,
+         entreprisesWhyTitle = ?,
+         entreprisesWhyItems = ?,
+         entreprisesHowTitle = ?,
+         entreprisesHowItems = ?,
+         entreprisesCtaLabel = ?,
+         ateliersPageTitle = ?,
+         ateliersPageIntro = ?,
+         ateliersWorkshops = ?,
+         ateliersAnnounceText = ?,
+         ateliersSignupTitle = ?,
+         ateliersSignupButtonLabel = ?,
+         ateliersBlogTitle = ?,
+         ateliersBlogIntro = ?,
+         homepageSectionOrder = ?,
          teacherBioTitle = ?,
          teacherBioText = ?,
          teacherPhotoUrl = ?,
@@ -687,11 +1069,28 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.collectiveOfferImageUrl,
     content.individualOfferImageUrl,
     content.presentielOfferImageUrl,
+    content.techWomenOfferImageUrl,
     content.whyTitle,
     content.whyParagraphs.join("\n"),
     content.formatTitle,
     content.formatText,
     content.formatItems.join("\n"),
+    content.techWomenLabel,
+    content.techWomenTitle,
+    content.techWomenParagraphs.join("\n"),
+    content.techWomenCtaLabel,
+    content.offerCollectiveLabel,
+    content.offerCollectiveTitle,
+    content.offerCollectiveDescription,
+    content.offerCollectiveMeta.join("\n"),
+    content.offerTechLabel,
+    content.offerTechTitle,
+    content.offerTechDescription,
+    content.offerTechMeta.join("\n"),
+    content.offerIndividualLabel,
+    content.offerIndividualTitle,
+    content.offerIndividualDescription,
+    content.offerIndividualMeta.join("\n"),
     content.specializationMessage,
     content.fatigueMessage,
     content.enterpriseMessage,
@@ -703,6 +1102,22 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.chairYogaText,
     content.chairYogaItems.join("\n"),
     content.chairYogaImageUrl,
+    content.entreprisesHeroTitle,
+    content.entreprisesHeroText,
+    content.entreprisesWhyTitle,
+    content.entreprisesWhyItems.join("\n"),
+    content.entreprisesHowTitle,
+    content.entreprisesHowItems.join("\n"),
+    content.entreprisesCtaLabel,
+    content.ateliersPageTitle,
+    content.ateliersPageIntro,
+    content.ateliersWorkshops,
+    content.ateliersAnnounceText,
+    content.ateliersSignupTitle,
+    content.ateliersSignupButtonLabel,
+    content.ateliersBlogTitle,
+    content.ateliersBlogIntro,
+    content.homepageSectionOrder.join("\n"),
     content.teacherBioTitle,
     content.teacherBioText,
     content.teacherPhotoUrl,

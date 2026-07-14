@@ -3,6 +3,7 @@
 import { ImageUpload } from "@/components/image-upload";
 import { LandingBlockForm } from "@/components/landing-block-form";
 import type { LandingContent } from "@/lib/landing-content";
+import { HOMEPAGE_SECTION_IDS, HOMEPAGE_SECTION_LABELS } from "@/lib/homepage-sections-config";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
 
@@ -49,6 +50,8 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         <textarea name="heroIntro" defaultValue={landing.heroIntro} rows={3} className={fieldMd} />
         <FieldLabel>Phrase sous le bouton (ex. Premiere seance offerte)</FieldLabel>
         <input name="firstSessionOffer" defaultValue={landing.firstSessionOffer} className={fieldMd} />
+        <FieldLabel>Libelle du bouton principal</FieldLabel>
+        <input name="finalCtaButtonLabel" defaultValue={landing.finalCtaButtonLabel} className={fieldMd} />
         <ImageUpload
           key={`hero-1-${landing.heroImage1Url}`}
           name="heroImage1Url"
@@ -89,8 +92,116 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`presentiel-${landing.presentielOfferImageUrl}`}
           name="presentielOfferImageUrl"
           label="Image cours presentiel (Poissy)"
-          homepageHint="Page d accueil : carte « Cours presentiel »"
+          homepageHint="Page d accueil : carte accompagnement individuel (presentiel)"
           currentUrl={landing.presentielOfferImageUrl}
+          className={fieldMd}
+        />
+        <ImageUpload
+          key={`tech-women-offer-${landing.techWomenOfferImageUrl}`}
+          name="techWomenOfferImageUrl"
+          label="Image Seance Femmes Tech"
+          homepageHint="Page d accueil : carte « Seance Femmes Tech »"
+          currentUrl={landing.techWomenOfferImageUrl}
+          className={fieldMd}
+        />
+      </LandingBlockForm>
+
+      <LandingBlockForm blockId="homepageLayout" title="Ordre page accueil" className="mt-8 grid gap-3">
+        <BlockHeading>Ordre des sections (page d accueil)</BlockHeading>
+        <p className="text-xs text-[var(--muted)]">
+          Une ligne = une section. Utilisez les identifiants ci-dessous, dans l ordre souhaite.
+        </p>
+        <ul className="grid gap-1 rounded-md border border-[var(--border-soft)] bg-white/60 p-3 text-xs text-[var(--muted)]">
+          {HOMEPAGE_SECTION_IDS.map((id) => (
+            <li key={id}>
+              <code className="text-[var(--foreground)]">{id}</code> — {HOMEPAGE_SECTION_LABELS[id]}
+            </li>
+          ))}
+        </ul>
+        <FieldLabel>Ordre des blocs (1 ligne = 1 section)</FieldLabel>
+        <textarea
+          name="homepageSectionOrder"
+          defaultValue={landing.homepageSectionOrder.join("\n")}
+          rows={9}
+          className={fieldMd}
+        />
+      </LandingBlockForm>
+
+      <LandingBlockForm blockId="techWomen" title="Femmes de la tech" className="mt-8 grid gap-3">
+        <BlockHeading>Femmes de la tech (page d accueil)</BlockHeading>
+        <FieldLabel>Libelle de section</FieldLabel>
+        <input name="techWomenLabel" defaultValue={landing.techWomenLabel} className={fieldMd} />
+        <FieldLabel>Titre</FieldLabel>
+        <input name="techWomenTitle" defaultValue={landing.techWomenTitle} className={fieldMd} />
+        <FieldLabel>Paragraphes (1 ligne = 1 paragraphe)</FieldLabel>
+        <textarea
+          name="techWomenParagraphs"
+          defaultValue={landing.techWomenParagraphs.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Libelle du bouton</FieldLabel>
+        <input name="techWomenCtaLabel" defaultValue={landing.techWomenCtaLabel} className={fieldMd} />
+      </LandingBlockForm>
+
+      <LandingBlockForm blockId="offers" title="Offres / formats" className="mt-8 grid gap-3">
+        <BlockHeading>Offres / formats (page d accueil)</BlockHeading>
+        <FieldLabel>Titre de section</FieldLabel>
+        <input name="formatTitle" defaultValue={landing.formatTitle} className={fieldMd} />
+        <FieldLabel>Texte sous le titre (optionnel)</FieldLabel>
+        <textarea name="formatText" defaultValue={landing.formatText} rows={2} className={fieldMd} />
+        <FieldLabel>Collectif — libelle carte</FieldLabel>
+        <input name="offerCollectiveLabel" defaultValue={landing.offerCollectiveLabel} className={fieldMd} />
+        <FieldLabel>Collectif — titre</FieldLabel>
+        <input name="offerCollectiveTitle" defaultValue={landing.offerCollectiveTitle} className={fieldMd} />
+        <FieldLabel>Collectif — description</FieldLabel>
+        <textarea
+          name="offerCollectiveDescription"
+          defaultValue={landing.offerCollectiveDescription}
+          rows={2}
+          className={fieldMd}
+        />
+        <FieldLabel>Collectif — infos (1 ligne = 1 pastille)</FieldLabel>
+        <textarea
+          name="offerCollectiveMeta"
+          defaultValue={landing.offerCollectiveMeta.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Femmes Tech — libelle carte</FieldLabel>
+        <input name="offerTechLabel" defaultValue={landing.offerTechLabel} className={fieldMd} />
+        <FieldLabel>Femmes Tech — titre</FieldLabel>
+        <input name="offerTechTitle" defaultValue={landing.offerTechTitle} className={fieldMd} />
+        <FieldLabel>Femmes Tech — description</FieldLabel>
+        <textarea
+          name="offerTechDescription"
+          defaultValue={landing.offerTechDescription}
+          rows={2}
+          className={fieldMd}
+        />
+        <FieldLabel>Femmes Tech — infos (1 ligne = 1 pastille)</FieldLabel>
+        <textarea
+          name="offerTechMeta"
+          defaultValue={landing.offerTechMeta.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Individuel — libelle carte</FieldLabel>
+        <input name="offerIndividualLabel" defaultValue={landing.offerIndividualLabel} className={fieldMd} />
+        <FieldLabel>Individuel — titre</FieldLabel>
+        <input name="offerIndividualTitle" defaultValue={landing.offerIndividualTitle} className={fieldMd} />
+        <FieldLabel>Individuel — description</FieldLabel>
+        <textarea
+          name="offerIndividualDescription"
+          defaultValue={landing.offerIndividualDescription}
+          rows={2}
+          className={fieldMd}
+        />
+        <FieldLabel>Individuel — infos (1 ligne = 1 pastille)</FieldLabel>
+        <textarea
+          name="offerIndividualMeta"
+          defaultValue={landing.offerIndividualMeta.join("\n")}
+          rows={3}
           className={fieldMd}
         />
       </LandingBlockForm>
@@ -121,21 +232,6 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
-      <LandingBlockForm blockId="formats" title="Formats / offre" className="mt-8 grid gap-3">
-        <BlockHeading>Formats / offre</BlockHeading>
-        <FieldLabel>Titre section formats</FieldLabel>
-        <input name="formatTitle" defaultValue={landing.formatTitle} className={fieldMd} />
-        <FieldLabel>Texte sous les formats</FieldLabel>
-        <textarea name="formatText" defaultValue={landing.formatText} rows={2} className={fieldMd} />
-        <FieldLabel>Formats (1 ligne = 1 pastille)</FieldLabel>
-        <textarea
-          name="formatItems"
-          defaultValue={landing.formatItems.join("\n")}
-          rows={4}
-          className={fieldMd}
-        />
-      </LandingBlockForm>
-
       <LandingBlockForm blockId="testimonials" title="Temoignages" className="mt-8 grid gap-3">
         <BlockHeading>Temoignages</BlockHeading>
         <FieldLabel>Titre temoignages</FieldLabel>
@@ -149,27 +245,76 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
-      <LandingBlockForm blockId="chairYoga" title="Yoga en entreprise" className="mt-8 grid gap-3">
-        <BlockHeading>Yoga en entreprise (carte offres + page Entreprises)</BlockHeading>
-        <FieldLabel>Titre de la section</FieldLabel>
-        <input name="chairYogaTitle" defaultValue={landing.chairYogaTitle} className={fieldMd} />
-        <FieldLabel>Description</FieldLabel>
-        <textarea name="chairYogaText" defaultValue={landing.chairYogaText} rows={3} className={fieldMd} />
-        <ImageUpload
-          key={`chair-yoga-${landing.chairYogaImageUrl}`}
-          name="chairYogaImageUrl"
-          label="Image Yoga en entreprise"
-          homepageHint="Page d accueil : carte « Yoga en entreprise » + page /entreprises"
-          currentUrl={landing.chairYogaImageUrl}
+      <LandingBlockForm blockId="entreprises" title="Page Entreprises" className="mt-8 grid gap-3">
+        <BlockHeading>Page Entreprises (/entreprises)</BlockHeading>
+        <FieldLabel>Titre principal</FieldLabel>
+        <input name="entreprisesHeroTitle" defaultValue={landing.entreprisesHeroTitle} className={fieldMd} />
+        <FieldLabel>Texte d introduction</FieldLabel>
+        <textarea
+          name="entreprisesHeroText"
+          defaultValue={landing.entreprisesHeroText}
+          rows={3}
           className={fieldMd}
         />
-        <FieldLabel>Benefices (1 ligne = 1 point)</FieldLabel>
+        <FieldLabel>Titre « Pourquoi »</FieldLabel>
+        <input name="entreprisesWhyTitle" defaultValue={landing.entreprisesWhyTitle} className={fieldMd} />
+        <FieldLabel>Points « Pourquoi » (1 ligne = 1 point)</FieldLabel>
         <textarea
-          name="chairYogaItems"
-          defaultValue={landing.chairYogaItems.join("\n")}
+          name="entreprisesWhyItems"
+          defaultValue={landing.entreprisesWhyItems.join("\n")}
           rows={5}
           className={fieldMd}
         />
+        <FieldLabel>Titre « Comment ca fonctionne »</FieldLabel>
+        <input name="entreprisesHowTitle" defaultValue={landing.entreprisesHowTitle} className={fieldMd} />
+        <FieldLabel>Points « Comment » (1 ligne = 1 point)</FieldLabel>
+        <textarea
+          name="entreprisesHowItems"
+          defaultValue={landing.entreprisesHowItems.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Libelle du bouton CTA</FieldLabel>
+        <input name="entreprisesCtaLabel" defaultValue={landing.entreprisesCtaLabel} className={fieldMd} />
+        <ImageUpload
+          key={`entreprises-${landing.chairYogaImageUrl}`}
+          name="chairYogaImageUrl"
+          label="Image page Entreprises"
+          homepageHint="Page /entreprises : image principale"
+          currentUrl={landing.chairYogaImageUrl}
+          className={fieldMd}
+        />
+      </LandingBlockForm>
+
+      <LandingBlockForm blockId="ateliers" title="Page Ateliers" className="mt-8 grid gap-3">
+        <BlockHeading>Page Ateliers (/ateliers)</BlockHeading>
+        <FieldLabel>Titre principal</FieldLabel>
+        <input name="ateliersPageTitle" defaultValue={landing.ateliersPageTitle} className={fieldMd} />
+        <FieldLabel>Introduction</FieldLabel>
+        <textarea name="ateliersPageIntro" defaultValue={landing.ateliersPageIntro} rows={2} className={fieldMd} />
+        <FieldLabel>
+          Ateliers (1 ligne = 1 atelier, format : Titre|Description)
+        </FieldLabel>
+        <textarea name="ateliersWorkshops" defaultValue={landing.ateliersWorkshops} rows={5} className={fieldMd} />
+        <FieldLabel>Texte annonce prochaines dates</FieldLabel>
+        <textarea
+          name="ateliersAnnounceText"
+          defaultValue={landing.ateliersAnnounceText}
+          rows={2}
+          className={fieldMd}
+        />
+        <FieldLabel>Titre formulaire inscription</FieldLabel>
+        <input name="ateliersSignupTitle" defaultValue={landing.ateliersSignupTitle} className={fieldMd} />
+        <FieldLabel>Libelle bouton formulaire</FieldLabel>
+        <input
+          name="ateliersSignupButtonLabel"
+          defaultValue={landing.ateliersSignupButtonLabel}
+          className={fieldMd}
+        />
+        <FieldLabel>Titre section blog</FieldLabel>
+        <input name="ateliersBlogTitle" defaultValue={landing.ateliersBlogTitle} className={fieldMd} />
+        <FieldLabel>Introduction section blog</FieldLabel>
+        <textarea name="ateliersBlogIntro" defaultValue={landing.ateliersBlogIntro} rows={2} className={fieldMd} />
       </LandingBlockForm>
 
       <LandingBlockForm blockId="teacherBio" title="Bio du professeur" className="mt-8 grid gap-3">

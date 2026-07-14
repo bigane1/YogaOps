@@ -18,15 +18,6 @@ export const metadata: Metadata = {
   },
 };
 
-const benefits = [
-  "Reduire le stress et la charge mentale",
-  "Retrouver du focus et de la clarte mentale",
-  "Ameliorer la concentration au quotidien",
-  "Ramener du calme dans les environnements intenses",
-  "Diminuer les tensions liees au travail sur ecran",
-  "Renforcer la cohesion d equipe",
-];
-
 export default async function EntreprisesPage() {
   const landing = await getLandingContent();
   const enterpriseImageSrc = withImageCacheBust(
@@ -40,7 +31,7 @@ export default async function EntreprisesPage() {
     serviceType: "Yoga en entreprise",
     provider: { "@type": "Organization", name: "YogaOps" },
     areaServed: "France",
-    description: landing.chairYogaText,
+    description: landing.entreprisesHeroText,
   };
 
   return (
@@ -54,13 +45,10 @@ export default async function EntreprisesPage() {
 
         <section className="grid items-center gap-10 md:grid-cols-2">
           <div>
-            <h1 className="section-title">Yoga en entreprise</h1>
-            <p className="section-subtitle mt-4">
-              Des seances pensees pour les equipes du digital et de la tech afin de reduire la
-              charge mentale et ramener du calme dans des environnements de travail exigeants.
-            </p>
+            <h1 className="section-title">{landing.entreprisesHeroTitle}</h1>
+            <p className="section-subtitle mt-4">{landing.entreprisesHeroText}</p>
             <Link href="/#contact-form" className="brand-btn mt-8 inline-flex rounded-lg px-5 py-2.5">
-              Demander un devis
+              {landing.entreprisesCtaLabel}
             </Link>
           </div>
           <div className="hero-banner aspect-[4/3] min-h-[16rem] w-full">
@@ -75,16 +63,16 @@ export default async function EntreprisesPage() {
               />
             ) : (
               <div className="flex h-full min-h-[16rem] items-center justify-center px-6 text-center text-sm text-[var(--muted)]">
-                Image modifiable dans le backoffice (bloc « Yoga en entreprise »).
+                Image modifiable dans le backoffice (bloc « Page Entreprises »).
               </div>
             )}
           </div>
         </section>
 
         <section className="section-block">
-          <h2 className="font-display text-xl font-medium">Benefices</h2>
+          <h2 className="font-display text-xl font-medium">{landing.entreprisesWhyTitle}</h2>
           <ul className="mt-6 grid gap-3 sm:grid-cols-2">
-            {benefits.map((item) => (
+            {landing.entreprisesWhyItems.map((item) => (
               <li
                 key={item}
                 className="brand-card-soft rounded-xl px-4 py-3 text-sm text-[var(--muted)]"
@@ -93,15 +81,25 @@ export default async function EntreprisesPage() {
               </li>
             ))}
           </ul>
-          <p className="mt-8 max-w-2xl text-[var(--muted)] leading-relaxed">
-            Format flexible selon vos besoins : en ligne ou sur site, avec une approche adaptee aux
-            contraintes des environnements tech et digitaux.
-          </p>
+        </section>
+
+        <section className="section-block">
+          <h2 className="font-display text-xl font-medium">{landing.entreprisesHowTitle}</h2>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+            {landing.entreprisesHowItems.map((item) => (
+              <li
+                key={item}
+                className="brand-card-soft rounded-xl px-4 py-3 text-sm text-[var(--muted)]"
+              >
+                {item}
+              </li>
+            ))}
+          </ul>
           <Link
             href="/#contact-form"
             className="brand-btn mt-8 inline-flex rounded-lg px-5 py-2.5"
           >
-            Demander un devis
+            {landing.entreprisesCtaLabel}
           </Link>
         </section>
       </main>

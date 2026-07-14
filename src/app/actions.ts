@@ -12,6 +12,7 @@ import {
 } from "@/lib/blog";
 import { sendBookingConfirmationEmail, sendContactEmail, sendSubscriptionActivationEmail } from "@/lib/mail";
 import { defaultLandingContent, getLandingContent, isCustomUploadedImage, isStockPlaceholderImage, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
+import { resolveHomepageSectionOrder } from "@/lib/homepage-sections-config";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
@@ -160,6 +161,7 @@ function revalidatePublicAndAdmin() {
   revalidatePath("/reserver");
   revalidatePath("/tarifs");
   revalidatePath("/blog");
+  revalidatePath("/ateliers");
   revalidatePath("/entreprises");
   revalidatePath("/cgv");
   revalidatePath("/cgu");
@@ -921,6 +923,7 @@ const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = 
     "heroSubtitle",
     "heroIntro",
     "firstSessionOffer",
+    "finalCtaButtonLabel",
     "heroImage1Url",
     "heroImage2Url",
   ],
@@ -928,12 +931,54 @@ const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = 
     "collectiveOfferImageUrl",
     "individualOfferImageUrl",
     "presentielOfferImageUrl",
+    "techWomenOfferImageUrl",
+  ],
+  techWomen: [
+    "techWomenLabel",
+    "techWomenTitle",
+    "techWomenParagraphs",
+    "techWomenCtaLabel",
+  ],
+  offers: [
+    "formatTitle",
+    "formatText",
+    "offerCollectiveLabel",
+    "offerCollectiveTitle",
+    "offerCollectiveDescription",
+    "offerCollectiveMeta",
+    "offerTechLabel",
+    "offerTechTitle",
+    "offerTechDescription",
+    "offerTechMeta",
+    "offerIndividualLabel",
+    "offerIndividualTitle",
+    "offerIndividualDescription",
+    "offerIndividualMeta",
   ],
   why: ["whyTitle", "whyParagraphs"],
   benefits: ["practicalInfoTitle", "practicalInfoItems"],
-  formats: ["formatTitle", "formatText", "formatItems"],
   testimonials: ["socialProofTitle", "socialProofItems"],
-  chairYoga: ["chairYogaTitle", "chairYogaText", "chairYogaItems", "chairYogaImageUrl"],
+  entreprises: [
+    "entreprisesHeroTitle",
+    "entreprisesHeroText",
+    "entreprisesWhyTitle",
+    "entreprisesWhyItems",
+    "entreprisesHowTitle",
+    "entreprisesHowItems",
+    "entreprisesCtaLabel",
+    "chairYogaImageUrl",
+  ],
+  ateliers: [
+    "ateliersPageTitle",
+    "ateliersPageIntro",
+    "ateliersWorkshops",
+    "ateliersAnnounceText",
+    "ateliersSignupTitle",
+    "ateliersSignupButtonLabel",
+    "ateliersBlogTitle",
+    "ateliersBlogIntro",
+  ],
+  homepageLayout: ["homepageSectionOrder"],
   teacherBio: ["teacherBioTitle", "teacherBioText", "teacherPhotoUrl"],
   ctaFooter: [
     "finalCtaTitle",
@@ -958,6 +1003,13 @@ const LANDING_ARRAY_FIELDS = new Set<keyof LandingContent>([
   "socialProofItems",
   "chairYogaItems",
   "practicalInfoItems",
+  "techWomenParagraphs",
+  "offerCollectiveMeta",
+  "offerTechMeta",
+  "offerIndividualMeta",
+  "entreprisesWhyItems",
+  "entreprisesHowItems",
+  "homepageSectionOrder",
 ]);
 
 const LANDING_IMAGE_FIELDS = new Set<keyof LandingContent>([
@@ -966,6 +1018,7 @@ const LANDING_IMAGE_FIELDS = new Set<keyof LandingContent>([
   "collectiveOfferImageUrl",
   "individualOfferImageUrl",
   "presentielOfferImageUrl",
+  "techWomenOfferImageUrl",
   "chairYogaImageUrl",
   "teacherPhotoUrl",
 ]);
@@ -1032,6 +1085,9 @@ export async function updateLandingBlock(formData: FormData): Promise<LandingBlo
   try {
     const current = await getLandingContent();
     const merged = mergeLandingBlock(current, formData, fields);
+    if (blockId === "homepageLayout") {
+      merged.homepageSectionOrder = resolveHomepageSectionOrder(merged.homepageSectionOrder);
+    }
     await updateLandingContentInDb(merged);
     revalidatePublicAndAdmin();
     return { ok: true };
@@ -1063,11 +1119,64 @@ export async function updateLandingContent(formData: FormData) {
       formData.get("presentielOfferImageUrl"),
       defaultLandingContent.presentielOfferImageUrl,
     ),
+    techWomenOfferImageUrl: toText(
+      formData.get("techWomenOfferImageUrl"),
+      defaultLandingContent.techWomenOfferImageUrl,
+    ),
     whyTitle: toText(formData.get("whyTitle"), defaultLandingContent.whyTitle),
     whyParagraphs: toItems(formData.get("whyParagraphs"), defaultLandingContent.whyParagraphs),
     formatTitle: toText(formData.get("formatTitle"), defaultLandingContent.formatTitle),
     formatText: toText(formData.get("formatText"), defaultLandingContent.formatText),
     formatItems: toItems(formData.get("formatItems"), defaultLandingContent.formatItems),
+    techWomenLabel: toText(formData.get("techWomenLabel"), defaultLandingContent.techWomenLabel),
+    techWomenTitle: toText(formData.get("techWomenTitle"), defaultLandingContent.techWomenTitle),
+    techWomenParagraphs: toItems(
+      formData.get("techWomenParagraphs"),
+      defaultLandingContent.techWomenParagraphs,
+    ),
+    techWomenCtaLabel: toText(
+      formData.get("techWomenCtaLabel"),
+      defaultLandingContent.techWomenCtaLabel,
+    ),
+    offerCollectiveLabel: toText(
+      formData.get("offerCollectiveLabel"),
+      defaultLandingContent.offerCollectiveLabel,
+    ),
+    offerCollectiveTitle: toText(
+      formData.get("offerCollectiveTitle"),
+      defaultLandingContent.offerCollectiveTitle,
+    ),
+    offerCollectiveDescription: toText(
+      formData.get("offerCollectiveDescription"),
+      defaultLandingContent.offerCollectiveDescription,
+    ),
+    offerCollectiveMeta: toItems(
+      formData.get("offerCollectiveMeta"),
+      defaultLandingContent.offerCollectiveMeta,
+    ),
+    offerTechLabel: toText(formData.get("offerTechLabel"), defaultLandingContent.offerTechLabel),
+    offerTechTitle: toText(formData.get("offerTechTitle"), defaultLandingContent.offerTechTitle),
+    offerTechDescription: toText(
+      formData.get("offerTechDescription"),
+      defaultLandingContent.offerTechDescription,
+    ),
+    offerTechMeta: toItems(formData.get("offerTechMeta"), defaultLandingContent.offerTechMeta),
+    offerIndividualLabel: toText(
+      formData.get("offerIndividualLabel"),
+      defaultLandingContent.offerIndividualLabel,
+    ),
+    offerIndividualTitle: toText(
+      formData.get("offerIndividualTitle"),
+      defaultLandingContent.offerIndividualTitle,
+    ),
+    offerIndividualDescription: toText(
+      formData.get("offerIndividualDescription"),
+      defaultLandingContent.offerIndividualDescription,
+    ),
+    offerIndividualMeta: toItems(
+      formData.get("offerIndividualMeta"),
+      defaultLandingContent.offerIndividualMeta,
+    ),
     specializationMessage: toText(
       formData.get("specializationMessage"),
       defaultLandingContent.specializationMessage,
@@ -1096,6 +1205,69 @@ export async function updateLandingContent(formData: FormData) {
     chairYogaImageUrl: toText(
       formData.get("chairYogaImageUrl"),
       defaultLandingContent.chairYogaImageUrl,
+    ),
+    entreprisesHeroTitle: toText(
+      formData.get("entreprisesHeroTitle"),
+      defaultLandingContent.entreprisesHeroTitle,
+    ),
+    entreprisesHeroText: toText(
+      formData.get("entreprisesHeroText"),
+      defaultLandingContent.entreprisesHeroText,
+    ),
+    entreprisesWhyTitle: toText(
+      formData.get("entreprisesWhyTitle"),
+      defaultLandingContent.entreprisesWhyTitle,
+    ),
+    entreprisesWhyItems: toItems(
+      formData.get("entreprisesWhyItems"),
+      defaultLandingContent.entreprisesWhyItems,
+    ),
+    entreprisesHowTitle: toText(
+      formData.get("entreprisesHowTitle"),
+      defaultLandingContent.entreprisesHowTitle,
+    ),
+    entreprisesHowItems: toItems(
+      formData.get("entreprisesHowItems"),
+      defaultLandingContent.entreprisesHowItems,
+    ),
+    entreprisesCtaLabel: toText(
+      formData.get("entreprisesCtaLabel"),
+      defaultLandingContent.entreprisesCtaLabel,
+    ),
+    ateliersPageTitle: toText(
+      formData.get("ateliersPageTitle"),
+      defaultLandingContent.ateliersPageTitle,
+    ),
+    ateliersPageIntro: toText(
+      formData.get("ateliersPageIntro"),
+      defaultLandingContent.ateliersPageIntro,
+    ),
+    ateliersWorkshops: toText(
+      formData.get("ateliersWorkshops"),
+      defaultLandingContent.ateliersWorkshops,
+    ),
+    ateliersAnnounceText: toText(
+      formData.get("ateliersAnnounceText"),
+      defaultLandingContent.ateliersAnnounceText,
+    ),
+    ateliersSignupTitle: toText(
+      formData.get("ateliersSignupTitle"),
+      defaultLandingContent.ateliersSignupTitle,
+    ),
+    ateliersSignupButtonLabel: toText(
+      formData.get("ateliersSignupButtonLabel"),
+      defaultLandingContent.ateliersSignupButtonLabel,
+    ),
+    ateliersBlogTitle: toText(
+      formData.get("ateliersBlogTitle"),
+      defaultLandingContent.ateliersBlogTitle,
+    ),
+    ateliersBlogIntro: toText(
+      formData.get("ateliersBlogIntro"),
+      defaultLandingContent.ateliersBlogIntro,
+    ),
+    homepageSectionOrder: resolveHomepageSectionOrder(
+      toItems(formData.get("homepageSectionOrder"), defaultLandingContent.homepageSectionOrder),
     ),
     teacherBioTitle: toText(formData.get("teacherBioTitle"), defaultLandingContent.teacherBioTitle),
     teacherBioText: toText(formData.get("teacherBioText"), defaultLandingContent.teacherBioText),
@@ -1160,6 +1332,33 @@ export async function sendContactMessage(formData: FormData) {
   }
 
   redirect("/?contact=ok#contact-form");
+}
+
+export async function notifyAtelierInterest(formData: FormData) {
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const website = String(formData.get("website") ?? "").trim();
+
+  if (website) {
+    redirect("/ateliers?signup=ok#atelier-signup");
+  }
+
+  if (!firstName || !email) {
+    redirect("/ateliers?signup=error#atelier-signup");
+  }
+
+  try {
+    await sendContactEmail({
+      fullName: firstName,
+      email,
+      message:
+        "Inscription a la liste d attente des prochains ateliers YogaOps (prenom + email).",
+    });
+  } catch {
+    redirect("/ateliers?signup=error#atelier-signup");
+  }
+
+  redirect("/ateliers?signup=ok#atelier-signup");
 }
 
 export type BlogPostResult = { ok: true } | { ok: false; error: string };

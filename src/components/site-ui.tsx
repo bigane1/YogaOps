@@ -84,3 +84,15 @@ export function excerptParagraphs(text: string, max = 3): string[] {
     .filter(Boolean)
     .slice(0, max);
 }
+
+export function splitBioParagraphs(text: string): string[] {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  if (paragraphs.length > 0) return paragraphs;
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
