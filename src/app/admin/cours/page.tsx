@@ -141,8 +141,9 @@ export default async function AdminCoursPage() {
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Creneaux</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
             Les creneaux ajoutes ici apparaissent sur la page publique « Reserver », dans l&apos;onglet
-            correspondant au type de cours (collectif, Femmes Tech ou individuel). Les ateliers
-            thematiques ne sont pas proposés ici.
+            correspondant au type de cours (collectif, Femmes Tech ou individuel). Pour Femmes Tech,
+            le titre du cours doit contenir « {landing.reserverTechWomenMatch} » (modifiable dans
+            Landing page &gt; Page Reserver).
           </p>
           <form action={createSlot} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
             <select name="courseId" className={fieldMd} required>
