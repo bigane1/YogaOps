@@ -4,6 +4,7 @@ import {
   resolveHomepageSectionOrder,
   type HomepageSectionId,
 } from "@/lib/homepage-sections-config";
+import { DEFAULT_RESERVER_WEEKDAYS } from "@/lib/reserver-config";
 
 export type { HomepageSectionId } from "@/lib/homepage-sections-config";
 export {
@@ -197,6 +198,10 @@ export type LandingContent = {
   ateliersBlogTitle: string;
   ateliersBlogIntro: string;
   homepageSectionOrder: HomepageSectionId[];
+  reserverCollectiveWeekdays: string[];
+  reserverTechWomenWeekdays: string[];
+  reserverIndividualWeekdays: string[];
+  reserverTechWomenMatch: string;
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -395,6 +400,10 @@ export const defaultLandingContent: LandingContent = {
   ateliersBlogTitle: "Le blog YogaOps",
   ateliersBlogIntro: "Mini articles simples et utiles pour le quotidien.",
   homepageSectionOrder: [...DEFAULT_HOMEPAGE_SECTION_ORDER],
+  reserverCollectiveWeekdays: [...DEFAULT_RESERVER_WEEKDAYS.collective],
+  reserverTechWomenWeekdays: [...DEFAULT_RESERVER_WEEKDAYS.techWomen],
+  reserverIndividualWeekdays: [...DEFAULT_RESERVER_WEEKDAYS.individual],
+  reserverTechWomenMatch: "femmes tech",
   teacherPhotoUrl:
     "https://images.pexels.com/photos/3822863/pexels-photo-3822863.jpeg?auto=compress&cs=tinysrgb&w=800",
   teacherBioTitle: "Une pratique ancree dans la vraie vie",
@@ -535,6 +544,10 @@ export async function ensureLandingContentTable() {
     "ateliersBlogTitle",
     "ateliersBlogIntro",
     "homepageSectionOrder",
+    "reserverCollectiveWeekdays",
+    "reserverTechWomenWeekdays",
+    "reserverIndividualWeekdays",
+    "reserverTechWomenMatch",
   ];
 
   for (const column of requiredColumns) {
@@ -686,6 +699,10 @@ type LandingRow = {
   ateliersBlogTitle: string;
   ateliersBlogIntro: string;
   homepageSectionOrder: string;
+  reserverCollectiveWeekdays: string;
+  reserverTechWomenWeekdays: string;
+  reserverIndividualWeekdays: string;
+  reserverTechWomenMatch: string;
   teacherBioTitle: string;
   teacherBioText: string;
   teacherPhotoUrl: string;
@@ -816,6 +833,10 @@ export async function upgradeExpandedSectionsIfEmpty() {
     ["ateliersBlogTitle", defaultLandingContent.ateliersBlogTitle],
     ["ateliersBlogIntro", defaultLandingContent.ateliersBlogIntro],
     ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder.join("\n")],
+    ["reserverCollectiveWeekdays", defaultLandingContent.reserverCollectiveWeekdays.join("\n")],
+    ["reserverTechWomenWeekdays", defaultLandingContent.reserverTechWomenWeekdays.join("\n")],
+    ["reserverIndividualWeekdays", defaultLandingContent.reserverIndividualWeekdays.join("\n")],
+    ["reserverTechWomenMatch", defaultLandingContent.reserverTechWomenMatch],
     ["techWomenOfferImageUrl", defaultLandingContent.techWomenOfferImageUrl],
   ];
 
@@ -831,6 +852,9 @@ export async function upgradeExpandedSectionsIfEmpty() {
     ["entreprisesWhyItems", defaultLandingContent.entreprisesWhyItems],
     ["entreprisesHowItems", defaultLandingContent.entreprisesHowItems],
     ["homepageSectionOrder", defaultLandingContent.homepageSectionOrder],
+    ["reserverCollectiveWeekdays", defaultLandingContent.reserverCollectiveWeekdays],
+    ["reserverTechWomenWeekdays", defaultLandingContent.reserverTechWomenWeekdays],
+    ["reserverIndividualWeekdays", defaultLandingContent.reserverIndividualWeekdays],
   ];
 
   for (const [column, value] of arrayColumns) {
@@ -958,6 +982,20 @@ export async function getLandingContent(): Promise<LandingContent> {
     homepageSectionOrder: resolveHomepageSectionOrder(
       parseItems(row.homepageSectionOrder, defaultLandingContent.homepageSectionOrder),
     ),
+    reserverCollectiveWeekdays: parseItems(
+      row.reserverCollectiveWeekdays,
+      defaultLandingContent.reserverCollectiveWeekdays,
+    ),
+    reserverTechWomenWeekdays: parseItems(
+      row.reserverTechWomenWeekdays,
+      defaultLandingContent.reserverTechWomenWeekdays,
+    ),
+    reserverIndividualWeekdays: parseItems(
+      row.reserverIndividualWeekdays,
+      defaultLandingContent.reserverIndividualWeekdays,
+    ),
+    reserverTechWomenMatch:
+      row.reserverTechWomenMatch || defaultLandingContent.reserverTechWomenMatch,
     teacherBioTitle: row.teacherBioTitle || defaultLandingContent.teacherBioTitle,
     teacherBioText: row.teacherBioText || defaultLandingContent.teacherBioText,
     teacherPhotoUrl: row.teacherPhotoUrl || "",
@@ -1041,6 +1079,10 @@ export async function updateLandingContentInDb(content: LandingContent) {
          ateliersBlogTitle = ?,
          ateliersBlogIntro = ?,
          homepageSectionOrder = ?,
+         reserverCollectiveWeekdays = ?,
+         reserverTechWomenWeekdays = ?,
+         reserverIndividualWeekdays = ?,
+         reserverTechWomenMatch = ?,
          teacherBioTitle = ?,
          teacherBioText = ?,
          teacherPhotoUrl = ?,
@@ -1118,6 +1160,10 @@ export async function updateLandingContentInDb(content: LandingContent) {
     content.ateliersBlogTitle,
     content.ateliersBlogIntro,
     content.homepageSectionOrder.join("\n"),
+    content.reserverCollectiveWeekdays.join("\n"),
+    content.reserverTechWomenWeekdays.join("\n"),
+    content.reserverIndividualWeekdays.join("\n"),
+    content.reserverTechWomenMatch,
     content.teacherBioTitle,
     content.teacherBioText,
     content.teacherPhotoUrl,

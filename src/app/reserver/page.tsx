@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { SiteNav } from "@/components/site-nav";
 import { OfferCard } from "@/components/site-ui";
 import { ReserverQueryLink } from "@/components/reserver-query-link";
@@ -15,12 +16,20 @@ import {
   addDays,
   startOfWeekMonday,
 } from "@/lib/db";
-import { prisma } from "@/lib/prisma";
 import { getLandingContent } from "@/lib/landing-content";
+import { prisma } from "@/lib/prisma";
+import {
+  getReserverWeekdaysForGroup,
+  isDateOnEnabledWeekday,
+  matchCourseBookingGroup,
+  resolveReserverBookingGroup,
+  type ReserverBookingGroup,
+} from "@/lib/reserver-config";
 
 type Props = {
   searchParams: Promise<{
     date?: string;
+    type?: string;
     slotId?: string;
     email?: string;
     subscriptionId?: string;
@@ -39,11 +48,10 @@ export default async function ReserverPage({ searchParams }: Props) {
   const landing = await getLandingContent();
   const params = await searchParams;
   const today = startOfDay(new Date());
+  const bookingGroup = resolveReserverBookingGroup(params.type);
+  const enabledWeekdays = getReserverWeekdaysForGroup(bookingGroup, landing);
   const selectedDate = params.date ? startOfDay(new Date(params.date)) : today;
   const selectedSlotId = params.slotId ? String(params.slotId) : null;
-
-  const dayStart = selectedDate;
-  const dayEnd = addDays(selectedDate, 1);
 
   const emailParamRaw = params.email ? String(params.email) : "";
   const emailNorm = emailParamRaw.trim().toLowerCase();
@@ -52,6 +60,27 @@ export default async function ReserverPage({ searchParams }: Props) {
     ? String(params.subscriptionId)
     : "";
   const errorParam = params.error ? String(params.error) : "";
+
+  const emailQuery = emailParam ? `&email=${encodeURIComponent(emailParam)}` : "";
+  const subscriptionQuery = subscriptionIdParam
+    ? `&subscriptionId=${encodeURIComponent(subscriptionIdParam)}`
+    : "";
+  const typeQuery = `&type=${bookingGroup}`;
+
+  const allDays = Array.from({ length: 14 }).map((_, idx) => addDays(today, idx));
+  const visibleDays = allDays.filter((d) => isDateOnEnabledWeekday(d, enabledWeekdays));
+
+  if (
+    visibleDays.length > 0 &&
+    !isDateOnEnabledWeekday(selectedDate, enabledWeekdays)
+  ) {
+    const firstVisible = visibleDays[0].toISOString().slice(0, 10);
+    const slotQuery = selectedSlotId ? `&slotId=${encodeURIComponent(selectedSlotId)}` : "";
+    redirect(`/reserver?date=${firstVisible}${typeQuery}${emailQuery}${subscriptionQuery}${slotQuery}`);
+  }
+
+  const dayStart = selectedDate;
+  const dayEnd = addDays(selectedDate, 1);
 
   const weekStart = startOfWeekMonday(selectedDate);
 
@@ -104,19 +133,29 @@ export default async function ReserverPage({ searchParams }: Props) {
   const slotTimeGte = subscriptionActive ? (subscription!.startsAt > dayStart ? subscription!.startsAt : dayStart) : dayStart;
   const slotTimeLt = subscriptionActive ? (subscription!.endsAt < dayEnd ? subscription!.endsAt : dayEnd) : dayEnd;
 
-  const slots = await prisma.timeSlot.findMany({
+  const slotsRaw = await prisma.timeSlot.findMany({
     where: {
       startsAt: shouldFilterBySubscription
         ? { gte: slotTimeGte, lt: slotTimeLt }
         : { gte: dayStart, lt: dayEnd },
       available: { gt: 0 },
-      ...(shouldFilterBySubscription && subscription!.package.allowedCourseType
-        ? { course: { type: subscription!.package.allowedCourseType } }
-        : {}),
+      course:
+        shouldFilterBySubscription && subscription!.package.allowedCourseType
+          ? {
+              type: subscription!.package.allowedCourseType,
+              isWorkshop: false,
+              isActive: true,
+            }
+          : { isWorkshop: false, isActive: true },
     },
     include: { course: true },
     orderBy: { startsAt: "asc" },
   });
+
+  const slots = slotsRaw.filter(
+    (slot) =>
+      matchCourseBookingGroup(slot.course, landing.reserverTechWomenMatch) === bookingGroup,
+  );
 
   const selectedSlot = selectedSlotId
     ? slots.find((s) => s.id === selectedSlotId) ?? null
@@ -131,17 +170,17 @@ export default async function ReserverPage({ searchParams }: Props) {
             id: selectedSlotId,
             available: { gt: 0 },
             startsAt: { gte: dayStart, lt: dayEnd },
+            course: { isWorkshop: false, isActive: true },
           },
           include: { course: true },
         })
       : null);
 
-  const emailQuery = emailParam ? `&email=${encodeURIComponent(emailParam)}` : "";
-  const subscriptionQuery = subscriptionIdParam
-    ? `&subscriptionId=${encodeURIComponent(subscriptionIdParam)}`
-    : "";
-
-  const days = Array.from({ length: 14 }).map((_, idx) => addDays(today, idx));
+  const courseTypeOptions: Array<{ id: ReserverBookingGroup; label: string }> = [
+    { id: "collective", label: landing.offerCollectiveLabel },
+    { id: "techWomen", label: landing.offerTechLabel },
+    { id: "individual", label: landing.offerIndividualLabel },
+  ];
 
   return (
     <div className="page-shell">
@@ -162,21 +201,47 @@ export default async function ReserverPage({ searchParams }: Props) {
         <section id="choisir-creneau" className="booking-panel mt-8">
           <h2 className="font-display text-lg font-medium">Choisir un creneau</h2>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            Selectionnez une date puis un horaire disponible.
+            Selectionnez un type de cours, une date puis un horaire disponible.
           </p>
           <div className="flex flex-col gap-3">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-70 md:text-sm md:normal-case md:tracking-normal">
+              Type de cours
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {courseTypeOptions.map((option) => {
+                const isActive = bookingGroup === option.id;
+                return (
+                  <ReserverQueryLink
+                    key={option.id}
+                    href={`/reserver?type=${option.id}${emailQuery}${subscriptionQuery}`}
+                    className={`rounded-lg px-4 py-2 text-sm ${
+                      isActive
+                        ? "brand-btn font-semibold"
+                        : "brand-btn-secondary border border-[var(--border-soft)] bg-white"
+                    }`}
+                  >
+                    {option.label}
+                  </ReserverQueryLink>
+                );
+              })}
+            </div>
             <p className="text-xs font-medium uppercase tracking-wide opacity-70 md:text-sm md:normal-case md:tracking-normal">
               Choisir une date
             </p>
             <div className="-mx-4 px-4 md:mx-0 md:px-0">
               <div className="scrollbar-hide flex gap-2 overflow-x-auto overflow-y-hidden pb-1 md:flex-wrap md:overflow-visible">
-                {days.map((d) => {
+                {visibleDays.length === 0 ? (
+                  <p className="text-sm text-[var(--muted)]">
+                    Aucun jour affiche pour ce type de cours. Modifiez les jours dans le backoffice.
+                  </p>
+                ) : null}
+                {visibleDays.map((d) => {
                   const iso = d.toISOString().slice(0, 10);
                   const isActive = iso === selectedDate.toISOString().slice(0, 10);
                   return (
                     <ReserverQueryLink
                       key={iso}
-                      href={`/reserver?date=${iso}${emailQuery}${subscriptionQuery}`}
+                      href={`/reserver?date=${iso}${typeQuery}${emailQuery}${subscriptionQuery}`}
                       className={`shrink-0 snap-start rounded-xl px-4 py-3 text-center text-sm shadow-sm md:rounded-lg md:px-3 md:py-2 md:shadow-none ${
                         isActive
                           ? "brand-badge-ok font-semibold ring-2 ring-[var(--brand)] ring-offset-2 ring-offset-[var(--background)]"
@@ -284,7 +349,7 @@ export default async function ReserverPage({ searchParams }: Props) {
 
                   <div className="mt-4">
                     <ReserverQueryLink
-                      href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&slotId=${slot.id}${emailQuery}${subscriptionQuery}`}
+                      href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&type=${bookingGroup}&slotId=${slot.id}${emailQuery}${subscriptionQuery}`}
                       className={`brand-btn-sm inline-flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-medium md:w-auto md:py-2 ${
                         isSelected ? "brand-btn" : "brand-btn-secondary"
                       }`}
@@ -454,7 +519,7 @@ export default async function ReserverPage({ searchParams }: Props) {
                 );
               })()}
               <ReserverQueryLink
-                href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}`}
+                href={`/reserver?date=${selectedDate.toISOString().slice(0, 10)}&type=${bookingGroup}`}
                 className="mt-3 inline-block text-sm opacity-80 underline"
               >
                 Annuler

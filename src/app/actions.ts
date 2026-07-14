@@ -979,6 +979,12 @@ const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = 
     "ateliersBlogIntro",
   ],
   homepageLayout: ["homepageSectionOrder"],
+  reserver: [
+    "reserverCollectiveWeekdays",
+    "reserverTechWomenWeekdays",
+    "reserverIndividualWeekdays",
+    "reserverTechWomenMatch",
+  ],
   teacherBio: ["teacherBioTitle", "teacherBioText", "teacherPhotoUrl"],
   ctaFooter: [
     "finalCtaTitle",
@@ -1010,6 +1016,9 @@ const LANDING_ARRAY_FIELDS = new Set<keyof LandingContent>([
   "entreprisesWhyItems",
   "entreprisesHowItems",
   "homepageSectionOrder",
+  "reserverCollectiveWeekdays",
+  "reserverTechWomenWeekdays",
+  "reserverIndividualWeekdays",
 ]);
 
 const LANDING_IMAGE_FIELDS = new Set<keyof LandingContent>([
@@ -1268,6 +1277,22 @@ export async function updateLandingContent(formData: FormData) {
     ),
     homepageSectionOrder: resolveHomepageSectionOrder(
       toItems(formData.get("homepageSectionOrder"), defaultLandingContent.homepageSectionOrder),
+    ),
+    reserverCollectiveWeekdays: toItems(
+      formData.get("reserverCollectiveWeekdays"),
+      defaultLandingContent.reserverCollectiveWeekdays,
+    ),
+    reserverTechWomenWeekdays: toItems(
+      formData.get("reserverTechWomenWeekdays"),
+      defaultLandingContent.reserverTechWomenWeekdays,
+    ),
+    reserverIndividualWeekdays: toItems(
+      formData.get("reserverIndividualWeekdays"),
+      defaultLandingContent.reserverIndividualWeekdays,
+    ),
+    reserverTechWomenMatch: toText(
+      formData.get("reserverTechWomenMatch"),
+      defaultLandingContent.reserverTechWomenMatch,
     ),
     teacherBioTitle: toText(formData.get("teacherBioTitle"), defaultLandingContent.teacherBioTitle),
     teacherBioText: toText(formData.get("teacherBioText"), defaultLandingContent.teacherBioText),

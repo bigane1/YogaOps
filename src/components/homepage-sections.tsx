@@ -100,7 +100,7 @@ export function HomepageSection({
     case "offres":
       return (
         <section id="offres" className="section-block">
-          <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
+          <ScrollReveal className="mx-auto w-full max-w-7xl px-5 md:px-8">
             <div className="text-center">
               <SectionLabel>Offres</SectionLabel>
               <h2 className="section-title mt-3">{landing.formatTitle}</h2>
@@ -108,9 +108,8 @@ export function HomepageSection({
                 <p className="section-subtitle mx-auto mt-3">{landing.formatText}</p>
               ) : null}
             </div>
-            <ScrollStagger className="mt-10 grid gap-6 md:grid-cols-2" staggerMs={120}>
+            <ScrollStagger className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3" staggerMs={120}>
               <OfferCard
-                wide
                 label={landing.offerCollectiveLabel}
                 title={landing.offerCollectiveTitle}
                 description={landing.offerCollectiveDescription}
@@ -122,7 +121,6 @@ export function HomepageSection({
                 variant="primary"
               />
               <OfferCard
-                wide
                 label={landing.offerTechLabel}
                 title={landing.offerTechTitle}
                 description={landing.offerTechDescription}
@@ -134,7 +132,6 @@ export function HomepageSection({
                 variant="primary"
               />
               <OfferCard
-                wide
                 label={landing.offerIndividualLabel}
                 title={landing.offerIndividualTitle}
                 description={landing.offerIndividualDescription}

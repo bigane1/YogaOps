@@ -127,6 +127,41 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
+      <LandingBlockForm blockId="reserver" title="Page Reserver" className="mt-8 grid gap-3">
+        <BlockHeading>Page Reserver (/reserver)</BlockHeading>
+        <p className="text-xs text-[var(--muted)]">
+          Jours visibles dans le calendrier par type de cours (1 ligne = 1 jour : lundi, mardi, mercredi…).
+          Laissez vide pour afficher tous les jours.
+        </p>
+        <FieldLabel>Seances collectives — jours affiches</FieldLabel>
+        <textarea
+          name="reserverCollectiveWeekdays"
+          defaultValue={landing.reserverCollectiveWeekdays.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Seance Femmes Tech — jours affiches</FieldLabel>
+        <textarea
+          name="reserverTechWomenWeekdays"
+          defaultValue={landing.reserverTechWomenWeekdays.join("\n")}
+          rows={3}
+          className={fieldMd}
+        />
+        <FieldLabel>Accompagnement individuel — jours affiches</FieldLabel>
+        <textarea
+          name="reserverIndividualWeekdays"
+          defaultValue={landing.reserverIndividualWeekdays.join("\n")}
+          rows={4}
+          className={fieldMd}
+        />
+        <FieldLabel>Mot-cle pour reconnaitre le cours Femmes Tech (dans le titre)</FieldLabel>
+        <input
+          name="reserverTechWomenMatch"
+          defaultValue={landing.reserverTechWomenMatch}
+          className={fieldMd}
+        />
+      </LandingBlockForm>
+
       <LandingBlockForm blockId="techWomen" title="Femmes de la tech" className="mt-8 grid gap-3">
         <BlockHeading>Femmes de la tech (page d accueil)</BlockHeading>
         <FieldLabel>Libelle de section</FieldLabel>
