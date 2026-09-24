@@ -26,7 +26,7 @@ export default async function AdminPage() {
             Backoffice prof
           </h1>
           <p className="mt-2 opacity-90">
-            Entrez le code admin pour gerer cours, creneaux et abonnements.
+            Entrez le code admin pour gerer cours, cartes, planning et clients.
           </p>
           <form action={adminLogin} className="brand-card mt-6 rounded-xl p-6">
             <input
@@ -51,14 +51,14 @@ export default async function AdminPage() {
     coursesCount,
     slotsCount,
     bookingsPendingCount,
-    subscriptionsActiveCount,
+    membersCount,
     landing,
     blogPosts,
   ] = await Promise.all([
     prisma.course.count({ where: { isActive: true } }),
     prisma.timeSlot.count({ where: { startsAt: { gte: today, lt: weekEnd } } }),
     prisma.booking.count({ where: { status: "pending" } }),
-    prisma.subscription.count({ where: { status: "active" } }),
+    prisma.member.count(),
     getLandingContent(),
     listAdminBlogPosts(),
   ]);
@@ -127,13 +127,13 @@ export default async function AdminPage() {
               <p className="mt-1 text-2xl font-semibold">{bookingsPendingCount}</p>
             </div>
             <div className="rounded-lg border border-[var(--border-soft)] bg-white p-4">
-              <p className="text-xs opacity-70">Abonnes actifs</p>
-              <p className="mt-1 text-2xl font-semibold">{subscriptionsActiveCount}</p>
+              <p className="text-xs opacity-70">Membres inscrits</p>
+              <p className="mt-1 text-2xl font-semibold">{membersCount}</p>
             </div>
           </div>
           <p className="mt-4 text-sm opacity-80">
-            Utilisez le menu ci-dessus pour gerer separement le planning, les reservations, les
-            cours/creneaux et les abonnes.
+            Utilisez le menu pour gerer les cours, cartes de credits, planning, clients et
+            reservations.
           </p>
         </section>
       </main>

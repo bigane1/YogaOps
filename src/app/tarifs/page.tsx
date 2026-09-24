@@ -4,23 +4,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { ensureSeedData } from "@/lib/db";
+import { eligibilityLabel } from "@/lib/credits";
 import { prisma } from "@/lib/prisma";
-import { buySubscriptionStripe } from "@/app/actions";
 
 export const metadata: Metadata = {
-  title: "Tarifs yoga femmes et entreprise | YogaOps",
+  title: "Tarifs yoga | YogaOps",
   description:
-    "Decouvrez les prix des seances de yoga individuelles, collectives, en ligne, sur place et les abonnements.",
+    "Prix des séances à l'unité et cartes de crédits YogaOps (collectif et individuel).",
 };
 
 export default async function TarifsPage() {
   await ensureSeedData();
-  const [allCourses, packages] = await Promise.all([
+  const [allCourses, packs] = await Promise.all([
     prisma.course.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } }),
-    prisma.packagePlan.findMany({
+    prisma.creditPack.findMany({
       where: { isActive: true },
-      include: { fixedCourse: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ creditCount: "asc" }, { priceEur: "asc" }],
     }),
   ]);
   const courses = allCourses.filter((c) => !c.isWorkshop);
@@ -32,24 +31,25 @@ export default async function TarifsPage() {
         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>
           Tarifs
         </h1>
-        <p className="mt-2 max-w-2xl opacity-90">
-          Liste des prix a la seance et abonnements.
+        <p className="mt-2 max-w-2xl text-[var(--muted)]">
+          Séance à l&apos;unité ou carte de crédits (1 crédit = 1 séance, valable 1 an).
         </p>
 
         <section className="mt-8">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
-            Cours a la seance
+            Séance à l&apos;unité
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             {courses.map((course) => (
               <article key={course.id} className="brand-card rounded-xl p-5">
                 <h3 className="font-medium">{course.title}</h3>
-                <p className="mt-1 text-sm opacity-80">{course.description}</p>
-                <p className="mt-2 text-sm opacity-80">
-                  Type de cours: {course.location === "en_ligne" ? "En ligne" : "Presentiel"}
+                <p className="mt-1 text-sm text-[var(--muted)]">{course.description}</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  {course.type === "individuel" ? "Individuel" : "Collectif"} ·{" "}
+                  {course.location === "en_ligne" ? "En ligne" : "Présentiel"}
                 </p>
                 <p className="mt-3 text-lg font-semibold" style={{ color: "var(--brand)" }}>
-                  {course.priceEur} EUR
+                  {course.priceEur} €
                 </p>
               </article>
             ))}
@@ -58,125 +58,47 @@ export default async function TarifsPage() {
 
         <section className="mt-10">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
-            Abonnements
+            Cartes de crédits
           </h2>
-          <p className="mt-1 text-sm opacity-80">
-            Sans engagement · résiliable 1 mois avant le renouvellement · prelevement automatique
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Paiement unique par carte bancaire. Connectez-vous pour acheter.
           </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {packages.map((item) => (
-              <article key={item.id} className="brand-card rounded-xl p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-medium">{item.name}</h3>
-                  {item.billingIntervalMonths && (
-                    <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                      Récurrent
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1 text-sm opacity-80">{item.description}</p>
-
-                {item.fixedCourse ? (
-                  <p className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-800">
-                    📅 Cours fixe : {item.fixedCourse.title}
-                    <span className="ml-1 font-normal opacity-80">
-                      — 1 créneau par semaine, automatiquement réservé
-                    </span>
+          {packs.length === 0 ? (
+            <p className="mt-4 text-sm text-[var(--muted)]">Aucune carte disponible pour le moment.</p>
+          ) : (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {packs.map((pack) => (
+                <article key={pack.id} className="brand-card rounded-xl p-5">
+                  <h3 className="font-medium">{pack.name}</h3>
+                  {pack.description ? (
+                    <p className="mt-1 text-sm text-[var(--muted)]">{pack.description}</p>
+                  ) : null}
+                  <p className="mt-3 text-lg font-semibold" style={{ color: "var(--brand)" }}>
+                    {pack.priceEur} €
                   </p>
-                ) : (
-                  <p className="mt-3 text-sm opacity-90">
-                    {item.sessionCount} séance{item.sessionCount > 1 ? "s" : ""} / semaine
+                  <p className="mt-1 text-sm text-[var(--muted)]">
+                    {pack.creditCount} crédit{pack.creditCount > 1 ? "s" : ""} ·{" "}
+                    {eligibilityLabel(pack.eligibility)} · {pack.validityDays} jours
                   </p>
-                )}
-
-                {item.billingIntervalMonths ? (
-                  <p className="mt-1 text-sm opacity-80">
-                    Durée {item.billingIntervalMonths} mois · renouvellement automatique · sans engagement
-                  </p>
-                ) : (
-                  <p className="mt-1 text-sm opacity-80">Validité {item.validityDays} jours</p>
-                )}
-                {!item.fixedCourse && (
-                  <p className="mt-1 text-sm opacity-80">
-                    Type de cours :{" "}
-                    {item.allowedCourseType === "individuel"
-                      ? "Individuel"
-                      : item.allowedCourseType === "collectif"
-                        ? "Collectif"
-                        : "Individuel + Collectif"}
-                  </p>
-                )}
-                {item.billingIntervalMonths ? (
-                  <div className="mt-3">
-                    <p className="text-2xl font-bold" style={{ color: "var(--brand)" }}>
-                      {Math.round(item.priceEur / item.billingIntervalMonths)} EUR
-                      <span className="text-base font-medium opacity-70"> / mois</span>
-                    </p>
-                    <p className="mt-0.5 text-xs opacity-60">
-                      soit {item.priceEur} EUR prélevés tous les {item.billingIntervalMonths} mois
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-2 text-lg font-semibold" style={{ color: "var(--brand)" }}>
-                    {item.priceEur} EUR
-                  </p>
-                )}
-
-                <form action={buySubscriptionStripe} className="mt-4 grid gap-2">
-                  <input type="hidden" name="packageId" value={item.id} />
-                  <input
-                    name="customerName"
-                    required
-                    placeholder="Votre nom"
-                    className="brand-field px-3 py-2 text-sm"
-                  />
-                  <input
-                    name="customerEmail"
-                    type="email"
-                    required
-                    placeholder="Votre email"
-                    className="brand-field px-3 py-2 text-sm"
-                  />
-                  <button
-                    type="submit"
-                    className="brand-btn brand-btn-sm rounded-lg px-4 py-2"
-                  >
-                    {item.billingIntervalMonths ? "S'abonner via Stripe" : "Acheter via Stripe"}
-                  </button>
-                </form>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          )}
+          <Link
+            href="/compte/cartes"
+            className="brand-btn mt-6 inline-flex rounded-lg px-5 py-2.5 text-sm"
+          >
+            Acheter une carte
+          </Link>
         </section>
-        <section className="mt-10">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>
-              Ateliers thématiques
-            </h2>
-            <Link
-              href="/ateliers"
-              className="text-sm font-medium underline underline-offset-2"
-              style={{ color: "var(--brand)" }}
-            >
-              Voir tous les ateliers →
-            </Link>
-          </div>
-          <p className="mt-1 text-sm opacity-80">
-            Événements ponctuels sur un thème précis · Places limitées · Inscription en ligne
-          </p>
-          <div className="brand-card mt-4 rounded-xl p-5">
-            <p className="opacity-80 text-sm">
-              Yoga Nidra, gestion du stress, respiration, souplesse… Retrouvez tous nos prochains
-              ateliers sur la page dédiée.
-            </p>
-            <Link
-              href="/ateliers"
-              className="brand-btn brand-btn-sm mt-4 inline-block rounded-lg px-4 py-2"
-            >
-              Voir les ateliers disponibles
-            </Link>
-          </div>
-        </section>
+
+        <p className="mt-10 text-sm text-[var(--muted)]">
+          Pour réserver une séance :{" "}
+          <Link href="/reserver" className="underline underline-offset-2">
+            page Réserver
+          </Link>
+          .
+        </p>
       </main>
     </div>
   );

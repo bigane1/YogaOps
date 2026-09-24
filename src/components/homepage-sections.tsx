@@ -90,7 +90,7 @@ export function HomepageSection({
                 <p key={paragraph.slice(0, 40)}>{paragraph}</p>
               ))}
             </div>
-            <Link href="/reserver" className="brand-btn mt-8 inline-flex rounded-lg px-5 py-2.5">
+            <Link href="/yoga-femmes" className="brand-btn mt-8 inline-flex rounded-lg px-5 py-2.5">
               {landing.techWomenCtaLabel}
             </Link>
           </ScrollReveal>
@@ -101,35 +101,30 @@ export function HomepageSection({
       return (
         <section id="offres" className="section-block">
           <ScrollReveal className="mx-auto w-full max-w-7xl px-5 md:px-8">
-            <div className="text-center">
-              <SectionLabel>Offres</SectionLabel>
-              <h2 className="section-title mt-3">{landing.formatTitle}</h2>
+            <div className="mx-auto max-w-3xl text-center">
+              <h2 className="section-title">{landing.formatTitle}</h2>
               {landing.formatText ? (
                 <p className="section-subtitle mx-auto mt-3">{landing.formatText}</p>
               ) : null}
             </div>
-            <ScrollStagger className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3" staggerMs={120}>
+            <ScrollStagger className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" staggerMs={120}>
               <OfferCard
                 label={landing.offerCollectiveLabel}
                 title={landing.offerCollectiveTitle}
                 description={landing.offerCollectiveDescription}
                 imageUrl={collectiveOfferSrc}
-                imageAlt="Seances collectives de yoga en ligne"
+                imageAlt="Séances collectives de yoga en ligne"
                 meta={landing.offerCollectiveMeta}
-                href="/reserver"
-                cta="Reserver"
-                variant="primary"
+                href="/reserver?type=collective#creneaux"
               />
               <OfferCard
                 label={landing.offerTechLabel}
                 title={landing.offerTechTitle}
                 description={landing.offerTechDescription}
                 imageUrl={techWomenOfferSrc}
-                imageAlt="Seance Femmes Tech en ligne"
+                imageAlt="Séance Femmes Tech en ligne"
                 meta={landing.offerTechMeta}
-                href="/reserver"
-                cta="Reserver"
-                variant="primary"
+                href="/reserver?type=techWomen#creneaux"
               />
               <OfferCard
                 label={landing.offerIndividualLabel}
@@ -138,8 +133,7 @@ export function HomepageSection({
                 imageUrl={individualOfferSrc}
                 imageAlt="Accompagnement individuel en yoga"
                 meta={landing.offerIndividualMeta}
-                href="/reserver"
-                cta="Decouvrir"
+                href="/reserver?type=individual#creneaux"
               />
             </ScrollStagger>
           </ScrollReveal>
@@ -165,7 +159,7 @@ export function HomepageSection({
       return (
         <section id="benefices" className="section-block bg-[var(--beige)]">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
-            <SectionLabel>Benefices</SectionLabel>
+            <SectionLabel>Bénéfices</SectionLabel>
             <h2 className="section-title mt-3">{landing.practicalInfoTitle}</h2>
             <ul className="mt-8 grid gap-4 sm:grid-cols-2">
               {landing.practicalInfoItems.map((item) => (
@@ -213,7 +207,7 @@ export function HomepageSection({
               ) : null}
             </div>
             <div>
-              <SectionLabel>A propos</SectionLabel>
+              <SectionLabel>À propos</SectionLabel>
               <h2 className="section-title mt-3">{landing.teacherBioTitle}</h2>
               <div className="mt-5 space-y-4 text-[var(--muted)] leading-relaxed">
                 {bioParagraphs.map((paragraph) => (
@@ -230,7 +224,7 @@ export function HomepageSection({
         <section id="temoignages" className="section-block">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="text-center">
-              <SectionLabel>Temoignages</SectionLabel>
+              <SectionLabel>Témoignages</SectionLabel>
               <h2 className="section-title mt-3">{landing.socialProofTitle}</h2>
             </div>
             <ScrollStagger className="mt-10 grid gap-5 md:grid-cols-3" staggerMs={100}>
@@ -249,8 +243,8 @@ export function HomepageSection({
         <section id="contact" className="section-block bg-[var(--beige)]">
           <ScrollReveal className="mx-auto w-full max-w-5xl px-5 md:px-8">
             <div className="text-center">
-              <SectionLabel>Communaute</SectionLabel>
-              <h2 className="section-title mt-3">L univers YogaOps</h2>
+              <SectionLabel>Communauté</SectionLabel>
+              <h2 className="section-title mt-3">L&apos;univers YogaOps</h2>
               <p className="section-subtitle mx-auto mt-3">
                 Instagram, LinkedIn, Facebook — suivez le quotidien de YogaOps.
               </p>

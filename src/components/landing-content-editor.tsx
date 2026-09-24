@@ -76,7 +76,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`collective-${landing.collectiveOfferImageUrl}`}
           name="collectiveOfferImageUrl"
           label="Image cours collectif (en ligne)"
-          homepageHint="Page d accueil : carte « Cours collectifs en ligne »"
+          homepageHint="Accueil + /reserver : carte Collectif"
           currentUrl={landing.collectiveOfferImageUrl}
           className={fieldMd}
         />
@@ -84,7 +84,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`individual-${landing.individualOfferImageUrl}`}
           name="individualOfferImageUrl"
           label="Image cours individuel (visio / telephone)"
-          homepageHint="Page d accueil : carte « Cours individuel »"
+          homepageHint="Accueil + /reserver : carte Individuel"
           currentUrl={landing.individualOfferImageUrl}
           className={fieldMd}
         />
@@ -92,7 +92,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`presentiel-${landing.presentielOfferImageUrl}`}
           name="presentielOfferImageUrl"
           label="Image cours presentiel (Poissy)"
-          homepageHint="Page d accueil : carte accompagnement individuel (presentiel)"
+          homepageHint="Page /reserver : bandeau presentiel"
           currentUrl={landing.presentielOfferImageUrl}
           className={fieldMd}
         />
@@ -100,7 +100,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           key={`tech-women-offer-${landing.techWomenOfferImageUrl}`}
           name="techWomenOfferImageUrl"
           label="Image Seance Femmes Tech"
-          homepageHint="Page d accueil : carte « Seance Femmes Tech »"
+          homepageHint="Accueil + /reserver : carte Femmes Tech"
           currentUrl={landing.techWomenOfferImageUrl}
           className={fieldMd}
         />

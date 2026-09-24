@@ -4,19 +4,21 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { BookingStatus, CourseType, LocationType, PaymentMethod, SubscriptionStatus } from "@/generated/prisma/enums";
+import { BookingStatus, CourseType, LocationType, MemberCreditStatus, PaymentMethod, SubscriptionStatus } from "@/generated/prisma/enums";
 import {
   createBlogPostInDb,
   deleteBlogPostInDb,
   updateBlogPostInDb,
 } from "@/lib/blog";
+import { packMatchesCourseType } from "@/lib/credits";
 import { sendBookingConfirmationEmail, sendContactEmail, sendSubscriptionActivationEmail } from "@/lib/mail";
 import { defaultLandingContent, getLandingContent, isCustomUploadedImage, isStockPlaceholderImage, updateLandingContentInDb, type LandingContent } from "@/lib/landing-content";
 import { resolveHomepageSectionOrder } from "@/lib/homepage-sections-config";
+import { getCurrentMember, isMemberProfileComplete, memberDisplayName } from "@/lib/member-auth";
 import { isReserverSlotCourse } from "@/lib/reserver-config";
 import { prisma } from "@/lib/prisma";
 import { startOfWeekMonday } from "@/lib/db";
-import { parseSiteDateTimeLocal } from "@/lib/site-timezone";
+import { parseSiteDateTimeLocal, toSiteDateTimeLocalInputValue } from "@/lib/site-timezone";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
 import { resolveOrCreateSharedZoomLink } from "@/lib/booking-zoom";
 import { cancelZoomMeeting, createZoomMeeting } from "@/lib/zoom";
@@ -172,19 +174,36 @@ function revalidatePublicAndAdmin() {
 
 export async function reserveSlot(formData: FormData) {
   const slotId = String(formData.get("slotId") ?? "");
-  const customerName = String(formData.get("customerName") ?? "").trim();
-  const customerEmailRaw = String(formData.get("customerEmail") ?? "").trim();
-  const customerEmail = customerEmailRaw.toLowerCase();
-  const paymentMethodInput = String(formData.get("paymentMethod") ?? "on_site");
+  const paymentMethodInput = String(formData.get("paymentMethod") ?? "stripe");
+  const creditCardId = String(formData.get("creditCardId") ?? "").trim();
 
-  if (!slotId || !customerName || !customerEmail) return;
+  const member = await getCurrentMember();
+  if (!member) {
+    redirect(`/compte/connexion?next=${encodeURIComponent("/reserver")}`);
+  }
+  if (!isMemberProfileComplete(member) || !member.profileComplete) {
+    redirect(`/compte/profil?next=${encodeURIComponent("/reserver")}`);
+  }
+
+  const customerName = memberDisplayName(member);
+  const customerEmail = member.email.toLowerCase();
+
+  if (!slotId) return;
 
   const paymentMethod =
-    paymentMethodInput === "stripe"
-      ? PaymentMethod.stripe
-      : paymentMethodInput === "subscription"
-        ? PaymentMethod.subscription
-        : PaymentMethod.on_site;
+    paymentMethodInput === "credit_pack"
+      ? PaymentMethod.credit_pack
+      : PaymentMethod.stripe;
+
+  if (
+    paymentMethodInput === "subscription" ||
+    paymentMethodInput === "on_site" ||
+    paymentMethodInput === "trial"
+  ) {
+    throw new Error(
+      "Ce mode de paiement n'est plus disponible. Utilisez une carte de crédits ou le paiement CB.",
+    );
+  }
 
   const booking = await prisma.$transaction(async (tx) => {
     const slot = await tx.timeSlot.findUnique({
@@ -193,71 +212,61 @@ export async function reserveSlot(formData: FormData) {
     });
 
     if (!slot || slot.available <= 0) {
-      throw new Error("Ce creneau n'est plus disponible.");
+      throw new Error("Ce créneau n'est plus disponible.");
     }
 
-    let subscriptionId: string | undefined;
+    const alreadyBooked = await tx.booking.findFirst({
+      where: {
+        slotId,
+        memberId: member.id,
+        status: { in: [BookingStatus.pending, BookingStatus.confirmed] },
+      },
+      select: { id: true },
+    });
+    if (alreadyBooked) {
+      throw new Error("Vous avez déjà réservé ce créneau.");
+    }
 
-    if (paymentMethod === PaymentMethod.subscription) {
-      const subscription = await tx.subscription.findFirst({
+    if (paymentMethod === PaymentMethod.stripe && !slot.course.acceptsUnitPayment) {
+      throw new Error("Ce cours n'accepte pas le paiement à la séance.");
+    }
+    if (paymentMethod === PaymentMethod.credit_pack && !slot.course.acceptsCreditPayment) {
+      throw new Error("Ce cours n'accepte pas les cartes de crédits.");
+    }
+
+    let memberCreditCardId: string | undefined;
+
+    if (paymentMethod === PaymentMethod.credit_pack) {
+      if (!creditCardId) {
+        throw new Error("Choisissez une carte de crédits.");
+      }
+      const card = await tx.memberCreditCard.findFirst({
         where: {
-          OR: [{ customerEmail }, { customerEmail: customerEmailRaw }],
-          status: SubscriptionStatus.active,
-          startsAt: { lte: slot.startsAt },
-          endsAt: { gt: slot.startsAt },
-          package: { isActive: true },
+          id: creditCardId,
+          memberId: member.id,
+          status: MemberCreditStatus.active,
+          remainingCredits: { gt: 0 },
+          expiresAt: { gt: slot.startsAt },
         },
-        include: { package: true },
-        orderBy: { createdAt: "desc" },
+        include: { pack: true },
       });
-
-      if (!subscription) {
-        throw new Error("Abonnement introuvable ou invalide.");
+      if (!card) {
+        throw new Error("Carte de crédits invalide ou expirée.");
+      }
+      if (!packMatchesCourseType(card.pack.eligibility, slot.course.type)) {
+        throw new Error("Cette carte n'est pas valable pour ce type de cours.");
       }
 
-      if (
-        subscription.package.allowedCourseType &&
-        subscription.package.allowedCourseType !== slot.course.type
-      ) {
-        throw new Error(
-          "Cet abonnement n'est pas valable pour ce type de cours."
-        );
-      }
-
-      const weekStart = startOfWeekMonday(slot.startsAt);
-      const weekRecord = await tx.subscriptionWeek.findUnique({
-        where: {
-          subscriptionId_weekStart: {
-            subscriptionId: subscription.id,
-            weekStart,
-          },
+      const nextRemaining = card.remainingCredits - 1;
+      await tx.memberCreditCard.update({
+        where: { id: card.id },
+        data: {
+          remainingCredits: nextRemaining,
+          status:
+            nextRemaining <= 0 ? MemberCreditStatus.exhausted : MemberCreditStatus.active,
         },
       });
-
-      const sessionCountPerWeek = subscription.package.sessionCount;
-      if (sessionCountPerWeek <= 0) {
-        throw new Error("Abonnement sans seances disponibles.");
-      }
-
-      if (!weekRecord) {
-        await tx.subscriptionWeek.create({
-          data: {
-            subscriptionId: subscription.id,
-            weekStart,
-            remainingSessions: sessionCountPerWeek - 1,
-          },
-        });
-      } else {
-        if (weekRecord.remainingSessions <= 0) {
-          throw new Error("Plus de seances disponibles cette semaine.");
-        }
-        await tx.subscriptionWeek.update({
-          where: { id: weekRecord.id },
-          data: { remainingSessions: weekRecord.remainingSessions - 1 },
-        });
-      }
-
-      subscriptionId = subscription.id;
+      memberCreditCardId = card.id;
     }
 
     await tx.timeSlot.update({
@@ -270,13 +279,37 @@ export async function reserveSlot(formData: FormData) {
         customerName,
         customerEmail,
         slotId,
-        subscriptionId,
+        memberId: member.id,
+        memberCreditCardId,
         paymentMethod,
-        status: "pending",
+        status:
+          paymentMethod === PaymentMethod.credit_pack
+            ? BookingStatus.confirmed
+            : BookingStatus.pending,
       },
       include: { slot: { include: { course: true } } },
     });
   });
+
+  if (paymentMethod === PaymentMethod.credit_pack) {
+    try {
+      await sendBookingConfirmationEmail({
+        bookingId: booking.id,
+        customerEmail,
+        customerName,
+        courseTitle: booking.slot.course.title,
+        startsAt: booking.slot.startsAt,
+        zoomLink: booking.slot.zoomLink,
+        priceEur: 0,
+      });
+    } catch {
+      // email optionnel
+    }
+    revalidatePath("/reserver");
+    revalidatePath("/compte");
+    revalidatePath("/admin");
+    redirect(`/confirmation?bookingId=${booking.id}`);
+  }
 
   if (paymentMethod === PaymentMethod.stripe) {
     try {
@@ -285,8 +318,8 @@ export async function reserveSlot(formData: FormData) {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         customer_email: customerEmail,
-        success_url: `${baseUrl}/confirmation?bookingId=${booking.id}`,
-        cancel_url: `${baseUrl}/confirmation?bookingId=${booking.id}`,
+        success_url: `${baseUrl}/confirmation?bookingId=${booking.id}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/confirmation?bookingId=${booking.id}&cancelled=1`,
         line_items: [
           {
             quantity: 1,
@@ -322,12 +355,7 @@ export async function reserveSlot(formData: FormData) {
           data: { available: slot.available + 1, booked: Math.max(slot.booked - 1, 0) },
         });
       });
-      const slotDate = booking.slot.startsAt.toISOString().slice(0, 10);
-      redirect(
-        `/reserver?date=${slotDate}&slotId=${slotId}&email=${encodeURIComponent(
-          customerEmail
-        )}&error=stripe_checkout`
-      );
+      redirect(`/reserver?error=stripe_checkout`);
     }
   }
 
@@ -356,21 +384,7 @@ export async function buySubscriptionStripe(formData: FormData) {
   const stripe = getStripeClient();
   const baseUrl = getBaseUrl();
 
-  // Abonnement récurrent Stripe Billing
-  if (pkg.stripePriceId && pkg.billingIntervalMonths) {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      customer_email: customerEmail,
-      line_items: [{ price: pkg.stripePriceId, quantity: 1 }],
-      metadata: { packageId: pkg.id, customerEmail, customerName },
-      success_url: `${baseUrl}/abonnement?email=${encodeURIComponent(customerEmail)}&success=1`,
-      cancel_url: `${baseUrl}/tarifs`,
-    });
-    if (session.url) redirect(session.url);
-    return redirect("/tarifs");
-  }
-
-  // Paiement unique (ancien comportement)
+  // Renouvellement manuel uniquement : toujours un paiement unique (pas de reconduction auto Stripe).
   const endsAt = new Date(Date.now() + pkg.validityDays * 24 * 60 * 60 * 1000);
 
   const subscription = await prisma.subscription.create({
@@ -471,7 +485,9 @@ export async function createCourse(formData: FormData) {
   const priceEur = toNumber(formData.get("priceEur"), 15);
   const durationMin = toNumber(formData.get("durationMin"), 60);
   const capacity = toNumber(formData.get("capacity"), type === "individuel" ? 1 : 10);
-  const isWorkshop = formData.get("isWorkshop") === "1";
+  const isWorkshop = formData.getAll("isWorkshop").includes("1");
+  const acceptsUnitPayment = formData.getAll("acceptsUnitPayment").includes("1");
+  const acceptsCreditPayment = formData.getAll("acceptsCreditPayment").includes("1");
 
   await prisma.course.create({
     data: {
@@ -485,6 +501,8 @@ export async function createCourse(formData: FormData) {
       durationMin,
       capacity,
       isWorkshop,
+      acceptsUnitPayment,
+      acceptsCreditPayment,
     },
   });
 
@@ -514,21 +532,8 @@ export async function createPackage(formData: FormData) {
     ? billingIntervalMonths * 30
     : toNumber(formData.get("validityDays"), 30);
 
-  let stripePriceId: string | null = null;
-  if (billingIntervalMonths) {
-    const stripe = getStripeClient();
-    const product = await stripe.products.create({
-      name: `${name} - YogaOps`,
-      description: description || undefined,
-    });
-    const price = await stripe.prices.create({
-      product: product.id,
-      currency: "eur",
-      unit_amount: priceEur * 100,
-      recurring: { interval: "month", interval_count: billingIntervalMonths },
-    });
-    stripePriceId = price.id;
-  }
+  // Pas de prix Stripe récurrent : renouvellement manuel uniquement (paiement unique).
+  const stripePriceId: string | null = null;
 
   const fixedCourseIdRaw = String(formData.get("fixedCourseId") ?? "").trim();
   let fixedCourseId = fixedCourseIdRaw || null;
@@ -644,6 +649,70 @@ export async function createSlot(formData: FormData) {
   revalidatePublicAndAdmin();
 }
 
+/** Crée le même créneau chaque semaine (même jour / heure) pendant N semaines. */
+export async function createWeeklySlots(formData: FormData) {
+  if (!(await isAdmin())) return;
+
+  const courseId = String(formData.get("courseId") ?? "");
+  const startsAtRaw = String(formData.get("startsAt") ?? "");
+  const weeks = Math.min(Math.max(toNumber(formData.get("weeks"), 1), 1), 52);
+  const available = toNumber(formData.get("available"), 1);
+  if (!courseId || !startsAtRaw) return;
+
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course || !course.isActive || !isReserverSlotCourse(course)) {
+    return;
+  }
+
+  const first = parseSiteDateTimeLocal(startsAtRaw);
+  const firstLocal = toSiteDateTimeLocalInputValue(first);
+  const [datePart, timePart = "00:00"] = firstLocal.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+
+  const rows = Array.from({ length: weeks }, (_, i) => {
+    const cursor = new Date(Date.UTC(year, month - 1, day + i * 7));
+    const y = cursor.getUTCFullYear();
+    const m = String(cursor.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(cursor.getUTCDate()).padStart(2, "0");
+    return {
+      courseId,
+      startsAt: parseSiteDateTimeLocal(`${y}-${m}-${d}T${timePart}`),
+      available,
+      booked: 0,
+    };
+  });
+
+  for (const row of rows) {
+    const existing = await prisma.timeSlot.findUnique({
+      where: {
+        courseId_startsAt: { courseId: row.courseId, startsAt: row.startsAt },
+      },
+      select: { id: true },
+    });
+    if (existing) continue;
+    await prisma.timeSlot.create({ data: row });
+  }
+
+  revalidatePublicAndAdmin();
+}
+
+async function slotIsLocked(slotId: string): Promise<boolean> {
+  const slot = await prisma.timeSlot.findUnique({
+    where: { id: slotId },
+    select: { booked: true },
+  });
+  if (!slot) return true;
+  if (slot.booked > 0) return true;
+
+  const activeBookings = await prisma.booking.count({
+    where: {
+      slotId,
+      status: { in: [BookingStatus.pending, BookingStatus.confirmed] },
+    },
+  });
+  return activeBookings > 0;
+}
+
 export async function updateCourse(formData: FormData) {
   if (!(await isAdmin())) return;
   const id = String(formData.get("id") ?? "");
@@ -651,7 +720,9 @@ export async function updateCourse(formData: FormData) {
 
   const type = String(formData.get("type") ?? "collectif");
   const location = String(formData.get("location") ?? "en_ligne");
-  const isWorkshop = formData.get("isWorkshop") === "1";
+  const isWorkshop = formData.getAll("isWorkshop").includes("1");
+  const acceptsUnitPayment = formData.getAll("acceptsUnitPayment").includes("1");
+  const acceptsCreditPayment = formData.getAll("acceptsCreditPayment").includes("1");
 
   await prisma.course.update({
     where: { id },
@@ -666,6 +737,8 @@ export async function updateCourse(formData: FormData) {
       priceEur: toNumber(formData.get("priceEur"), 15),
       capacity: toNumber(formData.get("capacity"), 10),
       isWorkshop,
+      acceptsUnitPayment,
+      acceptsCreditPayment,
     },
   });
 
@@ -730,12 +803,31 @@ export async function updateSlot(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
 
-  const startsAt = String(formData.get("startsAt") ?? "");
-  const available = toNumber(formData.get("available"), 0);
-  const booked = toNumber(formData.get("booked"), 0);
+  const locked = await slotIsLocked(id);
   const zoomLinkRaw = formData.has("zoomLink")
     ? String(formData.get("zoomLink") ?? "").trim()
     : undefined;
+
+  if (locked) {
+    // Créneau déjà réservé : seule la mise à jour du lien Zoom est autorisée.
+    if (zoomLinkRaw === undefined) return;
+    await prisma.timeSlot.update({
+      where: { id },
+      data: { zoomLink: zoomLinkRaw || null },
+    });
+    if (zoomLinkRaw) {
+      await prisma.booking.updateMany({
+        where: { slotId: id, status: BookingStatus.confirmed },
+        data: { zoomLink: zoomLinkRaw },
+      });
+    }
+    revalidatePublicAndAdmin();
+    return;
+  }
+
+  const startsAt = String(formData.get("startsAt") ?? "");
+  const available = toNumber(formData.get("available"), 0);
+  const booked = toNumber(formData.get("booked"), 0);
 
   await prisma.timeSlot.update({
     where: { id },
@@ -762,6 +854,8 @@ export async function deleteSlot(formData: FormData) {
   if (!(await isAdmin())) return;
   const id = String(formData.get("id") ?? "");
   if (!id) return;
+
+  if (await slotIsLocked(id)) return;
 
   await prisma.timeSlot.delete({ where: { id } });
   revalidatePublicAndAdmin();

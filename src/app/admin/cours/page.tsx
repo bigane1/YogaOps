@@ -1,13 +1,12 @@
 export const dynamic = "force-dynamic";
 
+import Link from "next/link";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout, createCourse, createSlot, deleteCourse, deleteSlot, updateCourse, updateSlot } from "@/app/actions";
-import { ensureSeedData, formatDateFR, toSiteDateTimeLocalInputValue } from "@/lib/db";
-import { getLandingContent } from "@/lib/landing-content";
-import { formatSlotCourseLabel, isReserverSlotCourse } from "@/lib/reserver-config";
+import { adminLogin, adminLogout, createCourse, deleteCourse, updateCourse } from "@/app/actions";
+import { ensureSeedData } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
 const fieldMd = "brand-field rounded-md px-3 py-2 text-sm";
@@ -31,13 +30,7 @@ export default async function AdminCoursPage() {
     );
   }
 
-  const [courses, slots, landing] = await Promise.all([
-    prisma.course.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } }),
-    prisma.timeSlot.findMany({ include: { course: true }, orderBy: { startsAt: "asc" } }),
-    getLandingContent(),
-  ]);
-
-  const slotCourses = courses.filter((course) => isReserverSlotCourse(course));
+  const courses = await prisma.course.findMany({ where: { isActive: true }, orderBy: { createdAt: "desc" } });
 
   return (
     <div className="page-shell">
@@ -76,6 +69,28 @@ export default async function AdminCoursPage() {
               <input type="hidden" name="isWorkshop" value="0" />
               <input type="checkbox" name="isWorkshop" value="1" className="size-4 accent-[var(--brand)]" />
               C&apos;est un atelier thématique (événement ponctuel)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="hidden" name="acceptsUnitPayment" value="0" />
+              <input
+                type="checkbox"
+                name="acceptsUnitPayment"
+                value="1"
+                defaultChecked
+                className="size-4 accent-[var(--brand)]"
+              />
+              Ouvert au paiement à la séance (CB)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="hidden" name="acceptsCreditPayment" value="0" />
+              <input
+                type="checkbox"
+                name="acceptsCreditPayment"
+                value="1"
+                defaultChecked
+                className="size-4 accent-[var(--brand)]"
+              />
+              Ouvert aux cartes de crédits
             </label>
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2 sm:col-span-2">
               Créer
@@ -126,6 +141,28 @@ export default async function AdminCoursPage() {
                     <input type="checkbox" name="isWorkshop" value="1" defaultChecked={course.isWorkshop} className="size-3 accent-[var(--brand)]" />
                     Atelier
                   </label>
+                  <label className="flex items-center gap-1 text-xs sm:col-span-2">
+                    <input type="hidden" name="acceptsUnitPayment" value="0" />
+                    <input
+                      type="checkbox"
+                      name="acceptsUnitPayment"
+                      value="1"
+                      defaultChecked={course.acceptsUnitPayment}
+                      className="size-3 accent-[var(--brand)]"
+                    />
+                    Paiement unitaire CB
+                  </label>
+                  <label className="flex items-center gap-1 text-xs sm:col-span-2">
+                    <input type="hidden" name="acceptsCreditPayment" value="0" />
+                    <input
+                      type="checkbox"
+                      name="acceptsCreditPayment"
+                      value="1"
+                      defaultChecked={course.acceptsCreditPayment}
+                      className="size-3 accent-[var(--brand)]"
+                    />
+                    Cartes de crédits
+                  </label>
                   <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 sm:col-span-2">Modifier</button>
                 </form>
                 <form action={deleteCourse} className="mt-2">
@@ -138,53 +175,14 @@ export default async function AdminCoursPage() {
         </section>
 
         <section className="brand-card mt-6 rounded-xl p-6">
-          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Creneaux</h2>
+          <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Créneaux</h2>
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Les creneaux ajoutes ici apparaissent sur la page publique « Reserver », dans l&apos;onglet
-            correspondant au type de cours (collectif, Femmes Tech ou individuel). Pour Femmes Tech,
-            le titre du cours doit contenir « {landing.reserverTechWomenMatch} » (modifiable dans
-            Landing page &gt; Page Reserver).
+            La planification des créneaux (filtre par type, dates, séries hebdomadaires) se fait sur
+            la page dédiée.
           </p>
-          <form action={createSlot} className="mb-4 mt-3 grid gap-2 sm:grid-cols-2">
-            <select name="courseId" className={fieldMd} required>
-              {slotCourses.length === 0 ? (
-                <option value="">Aucun cours disponible</option>
-              ) : (
-                slotCourses.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {formatSlotCourseLabel(course, landing.reserverTechWomenMatch)}
-                  </option>
-                ))
-              )}
-            </select>
-            <input name="startsAt" type="datetime-local" required placeholder="Date et heure" className={fieldMd} />
-            <input name="available" type="number" defaultValue={8} placeholder="Places disponibles" className={fieldMd} />
-            <button
-              type="submit"
-              disabled={slotCourses.length === 0}
-              className="brand-btn brand-btn-sm w-fit rounded-lg px-4 py-2 disabled:opacity-50"
-            >
-              Ajouter creneau
-            </button>
-          </form>
-          <ul className="mt-3 space-y-3 text-sm">
-            {slots.map((slot) => (
-              <li key={slot.id} className="brand-list-item p-3">
-                <p className="mb-2 opacity-90">{slot.course.title} - {formatDateFR(slot.startsAt)} - {slot.course.location === "en_ligne" ? "En ligne" : "Presentiel"}</p>
-                <form action={updateSlot} className="grid gap-2 sm:grid-cols-4">
-                  <input type="hidden" name="id" value={slot.id} />
-                  <input name="startsAt" type="datetime-local" defaultValue={toSiteDateTimeLocalInputValue(slot.startsAt)} className={fieldSm} />
-                  <input name="booked" type="number" defaultValue={slot.booked} placeholder="Nb reserves" className={fieldSm} />
-                  <input name="available" type="number" defaultValue={slot.available} placeholder="Nb disponibles" className={fieldSm} />
-                  <button type="submit" className="brand-btn brand-btn-sm rounded px-3 py-1 text-white">Modifier</button>
-                </form>
-                <form action={deleteSlot} className="mt-2">
-                  <input type="hidden" name="id" value={slot.id} />
-                  <button type="submit" className="rounded border border-red-300 bg-red-50 px-3 py-1 text-sm text-red-800 hover:bg-red-100">Supprimer</button>
-                </form>
-              </li>
-            ))}
-          </ul>
+          <Link href="/admin/creneaux" className="brand-btn brand-btn-sm mt-4 inline-flex rounded-lg px-4 py-2">
+            Ouvrir les créneaux
+          </Link>
         </section>
       </main>
     </div>

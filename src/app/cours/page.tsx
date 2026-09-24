@@ -50,7 +50,7 @@ export default async function CoursPage() {
               Réserver une séance
             </Link>
             <Link href="/tarifs" className="brand-btn-secondary rounded-lg px-5 py-2.5">
-              Voir les tarifs & abonnements
+              Voir les tarifs & cartes
             </Link>
           </div>
         </section>

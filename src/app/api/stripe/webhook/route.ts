@@ -38,8 +38,18 @@ export async function POST(req: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     const bookingId = session.metadata?.bookingId;
     const subscriptionId = session.metadata?.subscriptionId;
+    const creditPackType = session.metadata?.type;
+    const packId = session.metadata?.packId;
+    const memberId = session.metadata?.memberId;
 
-    if (bookingId) {
+    if (creditPackType === "credit_pack" && packId && memberId) {
+      const { activateCreditPackFromStripe } = await import("@/app/member-actions");
+      await activateCreditPackFromStripe({
+        packId,
+        memberId,
+        stripeSessionId: session.id,
+      });
+    } else if (bookingId) {
       // Paiement séance unique → confirmer la réservation
       await prisma.$transaction(async (tx) => {
         const booking = await tx.booking.findUnique({

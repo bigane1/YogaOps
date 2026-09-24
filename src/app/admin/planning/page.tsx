@@ -102,7 +102,8 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
               <option value="all">Tous paiements</option>
               <option value="stripe">Carte en ligne (Stripe)</option>
               <option value="on_site">Sur place</option>
-              <option value="subscription">Abonnement</option>
+              <option value="credit_pack">Carte crédits</option>
+              <option value="stripe">Paiement CB</option>
             </select>
             <input name="q" defaultValue={q} placeholder="Nom, email, reference" className="brand-field rounded-md px-3 py-2 text-sm" />
             <button type="submit" className="brand-btn brand-btn-sm w-fit rounded-md px-3 py-2 text-sm">

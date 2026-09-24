@@ -13,18 +13,34 @@ export const HOMEPAGE_SECTION_IDS = [
 export type HomepageSectionId = (typeof HOMEPAGE_SECTION_IDS)[number];
 
 export const HOMEPAGE_SECTION_LABELS: Record<HomepageSectionId, string> = {
-  hero: "Bandeau d accueil (hero)",
+  hero: "Bandeau d'accueil (hero)",
   "femmes-tech": "Femmes de la tech",
   offres: "Offres / formats",
   pourquoi: "Pourquoi YogaOps",
-  benefices: "Benefices",
-  cta: "Appel a l action intermediaire",
-  apropos: "A propos (Basma)",
-  temoignages: "Temoignages",
-  contact: "Communaute et contact",
+  benefices: "Bénéfices",
+  cta: "Appel à l'action intermédiaire",
+  apropos: "À propos (Basma)",
+  temoignages: "Témoignages",
+  contact: "Communauté et contact",
 };
 
-export const DEFAULT_HOMEPAGE_SECTION_ORDER: HomepageSectionId[] = [...HOMEPAGE_SECTION_IDS];
+/** Accueil slim : hero → à propos → vision → univers social. */
+export const DEFAULT_HOMEPAGE_SECTION_ORDER: HomepageSectionId[] = [
+  "hero",
+  "apropos",
+  "pourquoi",
+  "contact",
+];
+
+/** Contenu regroupé sur /yoga-femmes. */
+export const YOGA_FEMMES_SECTION_ORDER: HomepageSectionId[] = [
+  "femmes-tech",
+  "pourquoi",
+  "benefices",
+  "offres",
+  "cta",
+  "temoignages",
+];
 
 export function resolveHomepageSectionOrder(
   raw: string[] | null | undefined,

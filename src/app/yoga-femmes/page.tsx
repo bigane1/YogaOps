@@ -3,47 +3,28 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { HomepageSection } from "@/components/homepage-sections";
 import { SiteNav } from "@/components/site-nav";
-import { splitBioParagraphs } from "@/components/site-ui";
+import { SectionLabel, splitBioParagraphs } from "@/components/site-ui";
+import { ScrollReveal } from "@/components/scroll-reveal";
 import { ensureSeedData } from "@/lib/db";
-import { DEFAULT_HOMEPAGE_SECTION_ORDER } from "@/lib/homepage-sections-config";
+import { YOGA_FEMMES_SECTION_ORDER } from "@/lib/homepage-sections-config";
 import {
   getLandingContent,
   resolveHeroBannerImageUrl,
   withImageCacheBust,
 } from "@/lib/landing-content";
 
-type Props = {
-  searchParams: Promise<{ contact?: string }>;
-};
-
 export const metadata: Metadata = {
-  title: "Yoga doux pour les femmes actives | YogaOps",
+  title: "Yoga pour femmes actives | YogaOps",
   description:
-    "Des seances en ligne pour apaiser le mental, relacher les tensions et retrouver l equilibre entre corps et esprit.",
+    "Séances de yoga douces pour les femmes derrière un écran : collectif, Femmes Tech et accompagnement individuel.",
 };
 
-export default async function Home({ searchParams }: Props) {
-  const params = await searchParams;
-  const contactStatus = params.contact;
+export default async function YogaFemmesPage() {
   await ensureSeedData();
   const landing = await getLandingContent();
 
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    name: "YogaOps",
-    url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://yogaops.fr",
-    image: [landing.heroImage1Url],
-    telephone: landing.footerPhone,
-    email: landing.footerEmail.replace(/^Email:\s*/i, ""),
-    address: landing.footerAddress.replace(/^Adresse:\s*/i, ""),
-    description: landing.heroIntro,
-    sameAs: [landing.facebookUrl, landing.instagramUrl, landing.linkedinUrl],
-  };
-
   const sectionProps = {
     landing,
-    contactStatus,
     heroBannerSrc: withImageCacheBust(
       resolveHeroBannerImageUrl(landing.heroImage1Url, landing.heroImage2Url),
       landing.updatedAt ?? "",
@@ -68,12 +49,20 @@ export default async function Home({ searchParams }: Props) {
     <div className="page-shell">
       <SiteNav />
       <main>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }}
-        />
+        <section className="section-block">
+          <ScrollReveal className="mx-auto w-full max-w-3xl px-5 md:px-8">
+            <SectionLabel>Yoga femmes</SectionLabel>
+            <h1 className="section-title mt-3">
+              YogaOps pour femmes derrière un écran
+            </h1>
+            <p className="section-subtitle mt-4">
+              Des séances douces pour respirer, relâcher les tensions et retrouver de
+              l&apos;énergie — collectives, Femmes Tech ou individuelles.
+            </p>
+          </ScrollReveal>
+        </section>
 
-        {DEFAULT_HOMEPAGE_SECTION_ORDER.map((sectionId) => (
+        {YOGA_FEMMES_SECTION_ORDER.map((sectionId) => (
           <HomepageSection key={sectionId} id={sectionId} props={sectionProps} />
         ))}
       </main>

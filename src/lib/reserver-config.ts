@@ -30,9 +30,10 @@ const WEEKDAY_MAP: Record<string, number> = {
   sat: 6,
 };
 
+/** Collectif = mardi, Femmes Tech = vendredi. Individuel = contact, pas de calendrier. */
 export const DEFAULT_RESERVER_WEEKDAYS: Record<ReserverBookingGroup, string[]> = {
-  collective: [],
-  techWomen: [],
+  collective: ["mardi"],
+  techWomen: ["vendredi"],
   individual: [],
 };
 
@@ -42,16 +43,22 @@ export function normalizeLegacyReserverWeekdays(raw: string[] | null | undefined
   if (!raw || raw.length === 0) return [];
   const normalized = raw.map((line) => line.trim().toLowerCase()).filter(Boolean);
   const key = [...new Set(normalized)].sort().join(",");
-  if (key === "jeudi,mardi" || key === "mardi" || key === "jeudi") return [];
-  if (key === "vendredi") return [];
+  // Ancien défaut de test « mardi + jeudi » → on bascule sur mardi seul
+  if (key === "jeudi,mardi") return ["mardi"];
+  // Ancien « tous les jours » (7 lignes)
   if (normalized.length >= 7) return [];
   return raw.map((line) => line.trim()).filter(Boolean);
 }
-export function parseReserverWeekdays(raw: string[] | null | undefined): number[] {
+
+export function parseReserverWeekdays(
+  raw: string[] | null | undefined,
+  fallback: string[] = [],
+): number[] {
   const cleaned = normalizeLegacyReserverWeekdays(raw);
-  if (cleaned.length === 0) return ALL_WEEKDAYS;
+  const source = cleaned.length > 0 ? cleaned : fallback;
+  if (source.length === 0) return ALL_WEEKDAYS;
   const days = new Set<number>();
-  for (const line of cleaned) {
+  for (const line of source) {
     const key = line.trim().toLowerCase();
     if (!key) continue;
     if (key === "tous" || key === "all" || key === "*") {
@@ -102,7 +109,7 @@ export function formatSlotCourseLabel(
   techWomenMatch: string,
 ): string {
   const group = matchCourseBookingGroup(course, techWomenMatch);
-  const locationLabel = course.location === "presentiel" ? "presentiel" : "en ligne";
+  const locationLabel = course.location === "presentiel" ? "présentiel" : "en ligne";
   const groupLabels: Record<ReserverBookingGroup, string> = {
     collective: "Collectif",
     techWomen: "Femmes Tech",
@@ -120,12 +127,21 @@ export function getReserverWeekdaysForGroup(
   },
 ): number[] {
   if (group === "techWomen") {
-    return parseReserverWeekdays(config.reserverTechWomenWeekdays);
+    return parseReserverWeekdays(
+      config.reserverTechWomenWeekdays,
+      DEFAULT_RESERVER_WEEKDAYS.techWomen,
+    );
   }
   if (group === "individual") {
-    return parseReserverWeekdays(config.reserverIndividualWeekdays);
+    return parseReserverWeekdays(
+      config.reserverIndividualWeekdays,
+      DEFAULT_RESERVER_WEEKDAYS.individual,
+    );
   }
-  return parseReserverWeekdays(config.reserverCollectiveWeekdays);
+  return parseReserverWeekdays(
+    config.reserverCollectiveWeekdays,
+    DEFAULT_RESERVER_WEEKDAYS.collective,
+  );
 }
 
 export function getVisibleReserverDays(
@@ -134,19 +150,13 @@ export function getVisibleReserverDays(
   slotDayKeys: ReadonlySet<string>,
   toDateKey: (date: Date) => string,
 ): Date[] {
-  const restrictsWeekdays =
-    enabledWeekdays.length > 0 && enabledWeekdays.length < ALL_WEEKDAYS.length;
-
-  if (!restrictsWeekdays) {
-    if (slotDayKeys.size > 0) {
-      return allDays.filter((day) => slotDayKeys.has(toDateKey(day)));
-    }
-    return allDays;
+  // Page publique : n'afficher que les jours avec au moins un créneau publié.
+  // (Les jours de la semaine configurés sans créneau ne doivent pas apparaître vides.)
+  if (slotDayKeys.size > 0) {
+    return allDays.filter((day) => slotDayKeys.has(toDateKey(day)));
   }
 
-  return allDays.filter((day) => {
-    const key = toDateKey(day);
-    if (slotDayKeys.has(key)) return true;
-    return isDateOnEnabledWeekday(day, enabledWeekdays);
-  });
+  // Aucun créneau dans la fenêtre : pas de jours fantômes.
+  void enabledWeekdays;
+  return [];
 }

@@ -309,8 +309,8 @@ export const defaultLandingContent: LandingContent = {
     "YogaOps est un espace pour revenir a l essentiel : respirer, relacher, se recentrer.",
     "Des seances courtes, accessibles et sans performance, concues pour s integrer naturellement dans vos journees.",
   ],
-  formatTitle: "Une pratique adaptee a votre rythme",
-  formatText: "",
+  formatTitle: "Des séances adaptées à votre rythme",
+  formatText: "Et à votre emploi du temps.",
   formatItems: [
     "Cours en ligne",
     "Petits groupes",
@@ -324,27 +324,39 @@ export const defaultLandingContent: LandingContent = {
     "YogaOps propose un creneau et un espace penses specifiquement pour les femmes de la tech — un moment ou souffler ne demande aucune justification.",
   ],
   techWomenCtaLabel: "Decouvrir la session Femmes Tech",
-  offerCollectiveLabel: "Seances collectives en ligne",
-  offerCollectiveTitle: "Seances collectives en ligne",
-  offerCollectiveDescription: "40 minutes de mouvement, respiration et relachement.",
+  offerCollectiveLabel: "Séances collectives — en ligne",
+  offerCollectiveTitle: "Votre pause opérationnelle",
+  offerCollectiveDescription: "40 minutes de mouvement, respiration et relâchement.",
   offerCollectiveMeta: [
-    "Mardi et jeudi midi",
+    "Mardi midi",
     "En ligne",
     "5 personnes max",
-    "Premiere seance offerte",
+    "Première séance offerte",
+    "Séance à l'unité : 12 €",
+    "Carte de crédits disponible",
   ],
   techWomenOfferImageUrl:
     "https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  offerTechLabel: "Seance Femmes Tech",
-  offerTechTitle: "Seance Femmes Tech",
+  offerTechLabel: "Séances collectives Femmes Tech — en ligne",
+  offerTechTitle: "Votre reset, entre femmes tech",
   offerTechDescription:
-    "40 minutes de mouvement, respiration et relachement, dans un groupe compose uniquement de femmes travaillant dans la tech.",
-  offerTechMeta: ["Vendredi midi", "En ligne", "5 personnes max", "Premiere seance offerte"],
+    "40 minutes de mouvement, respiration et relâchement, dans un groupe composé uniquement de femmes travaillant dans la tech.",
+  offerTechMeta: [
+    "Vendredi midi",
+    "En ligne",
+    "5 personnes max",
+    "Première séance offerte",
+    "Séance à l'unité : 12 €",
+  ],
   offerIndividualLabel: "Accompagnement individuel",
-  offerIndividualTitle: "Accompagnement individuel",
+  offerIndividualTitle: "Votre pause, sur-mesure",
   offerIndividualDescription:
-    "Pour ralentir a votre rythme et retrouver de la clarte mentale.",
-  offerIndividualMeta: ["1h", "En ligne ou en presentiel", "Sur rendez-vous"],
+    "Une heure rien qu'à vous, pour travailler en profondeur sur ce qui vous pèse le plus — tensions, sommeil, période de transition.",
+  offerIndividualMeta: [
+    "1h",
+    "En ligne ou en présentiel",
+    "Sur rendez-vous",
+  ],
   specializationMessage:
     "sortir du mode automatique",
   fatigueMessage:
@@ -353,7 +365,7 @@ export const defaultLandingContent: LandingContent = {
     "deconnecter des ecrans",
   outdoorMessage:
     "retrouver du calme et de la clarte mentale",
-  firstSessionOffer: "Premiere seance offerte",
+  firstSessionOffer: "Première séance collective offerte",
   socialProofTitle: "Experiences vecues",
   socialProofItems: [
     "Super cours ! Basma explique tres bien, c est facile a suivre et tres relaxant. Je recommande. – Julia",
@@ -445,7 +457,26 @@ function parseItems(raw: string | null | undefined, fallback: string[]): string[
   return items.length > 0 ? items : fallback;
 }
 
+let ensureLandingContentTablePromise: Promise<void> | null = null;
+
 export async function ensureLandingContentTable() {
+  if (ensureLandingContentTablePromise) {
+    await ensureLandingContentTablePromise;
+    return;
+  }
+
+  ensureLandingContentTablePromise = (async () => {
+    await ensureLandingContentTableInner();
+  })();
+
+  try {
+    await ensureLandingContentTablePromise;
+  } finally {
+    ensureLandingContentTablePromise = null;
+  }
+}
+
+async function ensureLandingContentTableInner() {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS LandingContent (
       id INTEGER PRIMARY KEY,
@@ -479,10 +510,14 @@ export async function ensureLandingContentTable() {
     );
   `);
 
-  const columns = (await prisma.$queryRawUnsafe<{ name: string }[]>(
+  const columns = (await prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
     "PRAGMA table_info(LandingContent)",
-  )) as { name: string }[];
-  const existingColumns = new Set(columns.map((column) => column.name));
+  )) as Array<Record<string, unknown>>;
+  const existingColumns = new Set(
+    columns
+      .map((column) => String(column.name ?? column.Name ?? ""))
+      .filter(Boolean),
+  );
   const requiredColumns = [
     "specializationMessage",
     "footerAddress",
@@ -552,9 +587,20 @@ export async function ensureLandingContentTable() {
 
   for (const column of requiredColumns) {
     if (existingColumns.has(column)) continue;
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE LandingContent ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`,
-    );
+    try {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE LandingContent ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`,
+      );
+      existingColumns.add(column);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Course critique (plusieurs appels simultanés) ou colonne déjà présente.
+      if (/duplicate column name/i.test(message)) {
+        existingColumns.add(column);
+        continue;
+      }
+      throw error;
+    }
   }
 }
 
@@ -783,7 +829,7 @@ export async function upgradeHomeSectionsIfEmpty() {
     defaultLandingContent.whyParagraphs.join("\n"),
   );
   await prisma.$executeRawUnsafe(
-    `UPDATE LandingContent SET formatTitle = ? WHERE id = 1 AND (formatTitle IS NULL OR formatTitle = '')`,
+    `UPDATE LandingContent SET formatTitle = ? WHERE id = 1 AND (formatTitle IS NULL OR formatTitle = '' OR formatTitle = 'Une pratique adaptee a votre rythme')`,
     defaultLandingContent.formatTitle,
   );
   await prisma.$executeRawUnsafe(
@@ -793,6 +839,58 @@ export async function upgradeHomeSectionsIfEmpty() {
   await prisma.$executeRawUnsafe(
     `UPDATE LandingContent SET formatItems = ? WHERE id = 1 AND (formatItems IS NULL OR formatItems = '')`,
     defaultLandingContent.formatItems.join("\n"),
+  );
+}
+
+/** Remet les titres marketing des cartes offres si encore en version générique. */
+export async function upgradeOfferMarketingCopyIfLegacy() {
+  await ensureLandingContentTable();
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerCollectiveLabel = ? WHERE id = 1 AND offerCollectiveLabel IN ('Seances collectives en ligne', 'Séances collectives en ligne', 'Cours collectifs')`,
+    defaultLandingContent.offerCollectiveLabel,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerCollectiveTitle = ? WHERE id = 1 AND offerCollectiveTitle IN ('Seances collectives en ligne', 'Séances collectives en ligne', 'Yoga collectif en ligne')`,
+    defaultLandingContent.offerCollectiveTitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerCollectiveDescription = ? WHERE id = 1 AND offerCollectiveDescription IN ('40 minutes de mouvement, respiration et relachement.', 'Réservez un créneau à l''unité ou avec une carte de crédits.')`,
+    defaultLandingContent.offerCollectiveDescription,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerCollectiveMeta = ? WHERE id = 1 AND (offerCollectiveMeta LIKE 'Tous les mardis%' OR offerCollectiveMeta LIKE 'En ligne%Paiement CB%' OR offerCollectiveMeta = 'En ligne\nPaiement CB\nCartes de crédits')`,
+    defaultLandingContent.offerCollectiveMeta.join("\n"),
+  );
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerTechLabel = ? WHERE id = 1 AND offerTechLabel IN ('Séance Femmes Tech', 'Seance Femmes Tech')`,
+    defaultLandingContent.offerTechLabel,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerTechTitle = ? WHERE id = 1 AND offerTechTitle IN ('Séance Femmes Tech', 'Seance Femmes Tech')`,
+    defaultLandingContent.offerTechTitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerTechMeta = ? WHERE id = 1 AND offerTechMeta LIKE 'Tous les vendredis%'`,
+    defaultLandingContent.offerTechMeta.join("\n"),
+  );
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerIndividualLabel = ? WHERE id = 1 AND offerIndividualLabel IN ('Accompagnement individuel', 'Yoga individuel')`,
+    defaultLandingContent.offerIndividualLabel,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerIndividualTitle = ? WHERE id = 1 AND offerIndividualTitle IN ('Accompagnement individuel')`,
+    defaultLandingContent.offerIndividualTitle,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerIndividualDescription = ? WHERE id = 1 AND offerIndividualDescription IN ('Pour ralentir à votre rythme et retrouver de la clarté mentale.', 'Sur rendez-vous, en ligne. Paiement unitaire ou carte de crédits.')`,
+    defaultLandingContent.offerIndividualDescription,
+  );
+  await prisma.$executeRawUnsafe(
+    `UPDATE LandingContent SET offerIndividualMeta = ? WHERE id = 1 AND (offerIndividualMeta LIKE 'En ligne ou à Carrières%' OR offerIndividualMeta = 'En ligne\nÀ l''unité\nCartes de crédits')`,
+    defaultLandingContent.offerIndividualMeta.join("\n"),
   );
 }
 
@@ -949,6 +1047,7 @@ export async function getLandingContent(): Promise<LandingContent> {
   await upgradeOfferImagesIfEmpty();
   await upgradeCollectiveOfferImageIfLegacy();
   await upgradeHomeSectionsIfEmpty();
+  await upgradeOfferMarketingCopyIfLegacy();
   await upgradeExpandedSectionsIfEmpty();
   const rows = (await prisma.$queryRawUnsafe<LandingRow[]>(
     "SELECT * FROM LandingContent WHERE id = 1 LIMIT 1",
@@ -1046,12 +1145,18 @@ export async function getLandingContent(): Promise<LandingContent> {
     homepageSectionOrder: resolveHomepageSectionOrder(
       parseItems(row.homepageSectionOrder, defaultLandingContent.homepageSectionOrder),
     ),
-    reserverCollectiveWeekdays: normalizeLegacyReserverWeekdays(
-      parseItems(row.reserverCollectiveWeekdays, []),
-    ),
-    reserverTechWomenWeekdays: normalizeLegacyReserverWeekdays(
-      parseItems(row.reserverTechWomenWeekdays, []),
-    ),
+    reserverCollectiveWeekdays: (() => {
+      const days = normalizeLegacyReserverWeekdays(
+        parseItems(row.reserverCollectiveWeekdays, []),
+      );
+      return days.length > 0 ? days : [...DEFAULT_RESERVER_WEEKDAYS.collective];
+    })(),
+    reserverTechWomenWeekdays: (() => {
+      const days = normalizeLegacyReserverWeekdays(
+        parseItems(row.reserverTechWomenWeekdays, []),
+      );
+      return days.length > 0 ? days : [...DEFAULT_RESERVER_WEEKDAYS.techWomen];
+    })(),
     reserverIndividualWeekdays: normalizeLegacyReserverWeekdays(
       parseItems(row.reserverIndividualWeekdays, []),
     ),

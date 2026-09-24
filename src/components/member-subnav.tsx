@@ -4,27 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const items = [
-  { href: "/admin", label: "Accueil" },
-  { href: "/admin/cours", label: "Cours" },
-  { href: "/admin/creneaux", label: "Créneaux" },
-  { href: "/admin/cartes", label: "Cartes crédits" },
-  { href: "/admin/planning", label: "Planning" },
-  { href: "/admin/clients", label: "Clients" },
-  { href: "/admin/reservations", label: "Réservations" },
+  { href: "/compte", label: "Tableau de bord" },
+  { href: "/compte/cartes", label: "Mes cartes" },
+  { href: "/reserver", label: "Réserver" },
+  { href: "/compte/profil", label: "Mon profil" },
 ];
 
-export function AdminSubnav() {
+export function MemberSubnav() {
   const pathname = usePathname();
 
   return (
     <nav
       className="scrollbar-hide mt-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:overflow-visible"
-      aria-label="Navigation backoffice"
+      aria-label="Espace membre"
     >
       {items.map((item) => {
         const active =
-          item.href === "/admin"
-            ? pathname === "/admin"
+          item.href === "/compte"
+            ? pathname === "/compte"
             : pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link

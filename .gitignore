@@ -46,6 +46,8 @@ next-env.d.ts
 # base SQLite locale / CI / dev
 prisma/ci.db
 prisma/dev.db
+prisma/dev.local.db
+dev.db
 
 data/uploads/*
 !data/uploads/.gitkeep

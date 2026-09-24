@@ -32,6 +32,7 @@ enum PaymentMethod {
   stripe
   on_site
   subscription
+  credit_pack
 }
 
 enum SubscriptionStatus {
@@ -40,23 +41,83 @@ enum SubscriptionStatus {
   cancelled
 }
 
+enum CreditEligibility {
+  individuel
+  collectif
+  both
+}
+
+enum MemberCreditStatus {
+  active
+  exhausted
+  expired
+}
+
+model Member {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String?
+  firstName    String             @default("")
+  lastName     String             @default("")
+  phone        String             @default("")
+  googleId     String?            @unique
+  profileComplete Boolean         @default(false)
+  creditCards  MemberCreditCard[]
+  bookings     Booking[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model CreditPack {
+  id            String            @id @default(cuid())
+  name          String
+  description   String            @default("")
+  creditCount   Int
+  priceEur      Int
+  validityDays  Int               @default(365)
+  eligibility   CreditEligibility @default(both)
+  isActive      Boolean           @default(true)
+  memberCards   MemberCreditCard[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model MemberCreditCard {
+  id              String             @id @default(cuid())
+  memberId        String
+  member          Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  packId          String
+  pack            CreditPack         @relation(fields: [packId], references: [id])
+  remainingCredits Int
+  totalCredits    Int
+  status          MemberCreditStatus @default(active)
+  purchasedAt     DateTime           @default(now())
+  expiresAt       DateTime
+  stripeSessionId String?            @unique
+  bookings        Booking[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
 model Course {
-  id           String        @id @default(cuid())
-  title        String
-  description  String
-  benefits     String        @default("")
-  coverImage   String        @default("")
-  type         CourseType
-  location     LocationType
-  durationMin  Int
-  priceEur     Int
-  capacity     Int
-  isActive     Boolean       @default(true)
-  isWorkshop   Boolean       @default(false)
-  slots        TimeSlot[]
-  packagePlans PackagePlan[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                   String        @id @default(cuid())
+  title                String
+  description          String
+  benefits             String        @default("")
+  coverImage           String        @default("")
+  type                 CourseType
+  location             LocationType
+  durationMin          Int
+  priceEur             Int
+  capacity             Int
+  isActive             Boolean       @default(true)
+  isWorkshop           Boolean       @default(false)
+  acceptsUnitPayment   Boolean       @default(true)
+  acceptsCreditPayment Boolean       @default(true)
+  slots                TimeSlot[]
+  packagePlans         PackagePlan[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 }
 
 model TimeSlot {
@@ -75,17 +136,21 @@ model TimeSlot {
 }
 
 model Booking {
-  id            String        @id @default(cuid())
-  customerName  String
-  customerEmail String
-  status        BookingStatus @default(pending)
-  paymentMethod PaymentMethod
-  zoomLink      String?
-  slotId        String
-  slot          TimeSlot      @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  subscriptionId String?
-  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  createdAt     DateTime      @default(now())
+  id                 String            @id @default(cuid())
+  customerName       String
+  customerEmail      String
+  status             BookingStatus     @default(pending)
+  paymentMethod      PaymentMethod
+  zoomLink           String?
+  slotId             String
+  slot               TimeSlot          @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  subscriptionId     String?
+  subscription       Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  memberId           String?
+  member             Member?           @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberCreditCardId String?
+  memberCreditCard   MemberCreditCard? @relation(fields: [memberCreditCardId], references: [id], onDelete: SetNull)
+  createdAt          DateTime          @default(now())
 }
 
 model PackagePlan {

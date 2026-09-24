@@ -32,8 +32,11 @@ export async function SiteFooter() {
             <Link href="/tarifs" className="text-[var(--muted)] hover:text-[var(--foreground)]">
               Tarifs
             </Link>
-            <Link href="/abonnement" className="text-[var(--muted)] hover:text-[var(--foreground)]">
-              Abonnement
+            <Link href="/compte/cartes" className="text-[var(--muted)] hover:text-[var(--foreground)]">
+              Cartes crédits
+            </Link>
+            <Link href="/compte" className="text-[var(--muted)] hover:text-[var(--foreground)]">
+              Mon compte
             </Link>
             <Link href="/admin" className="text-[var(--muted)] hover:text-[var(--foreground)]">
               Admin

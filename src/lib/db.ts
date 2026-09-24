@@ -1,4 +1,4 @@
-import { CourseType, LocationType } from "@/generated/prisma/enums";
+import { CourseType, CreditEligibility, LocationType } from "@/generated/prisma/enums";
 import { seedBlogIfMissing } from "@/lib/blog";
 import { getLandingContent, seedLandingContentIfMissing } from "@/lib/landing-content";
 import { prisma } from "@/lib/prisma";
@@ -108,7 +108,7 @@ export async function ensureDefaultBookableCourses() {
         type: CourseType.individuel,
         location: LocationType.en_ligne,
         durationMin: 60,
-        priceEur: 35,
+        priceEur: 29,
         capacity: 1,
       },
     });
@@ -122,11 +122,21 @@ export async function ensureDefaultBookableCourses() {
         type: CourseType.collectif,
         location: LocationType.en_ligne,
         durationMin: 40,
-        priceEur: 15,
+        priceEur: 12,
         capacity: 5,
       },
     });
   }
+
+  // Harmonise les prix des cours collectifs / individuels existants (hors ateliers)
+  await prisma.course.updateMany({
+    where: { type: CourseType.collectif, isWorkshop: false, isActive: true },
+    data: { priceEur: 12 },
+  });
+  await prisma.course.updateMany({
+    where: { type: CourseType.individuel, isWorkshop: false, isActive: true },
+    data: { priceEur: 29 },
+  });
 }
 
 export async function ensureSeedData() {
@@ -174,7 +184,7 @@ export async function ensureSeedData() {
     await prisma.packagePlan.create({
       data: {
         name: "Nidra",
-        description: "Abonnement par defaut, modifiable dans le backoffice.",
+        description: "Plan legacy (non propose aux clientes).",
         priceEur: 79,
         sessionCount: 6,
         validityDays: 30,
@@ -203,4 +213,33 @@ export async function ensureSeedData() {
   }
 
   await ensureDefaultBookableCourses();
+  await ensureDefaultCreditPacks();
+}
+
+async function ensureDefaultCreditPacks() {
+  const count = await prisma.creditPack.count();
+  if (count > 0) return;
+
+  await prisma.creditPack.createMany({
+    data: [
+      {
+        name: "Carte 5 crédits",
+        description: "Idéale pour démarrer. 1 crédit = 1 séance. Valable 1 an.",
+        creditCount: 5,
+        priceEur: 55,
+        validityDays: 365,
+        eligibility: CreditEligibility.both,
+        isActive: true,
+      },
+      {
+        name: "Carte annuelle 60 crédits",
+        description: "Pratique régulière sur l'année. 1 crédit = 1 séance.",
+        creditCount: 60,
+        priceEur: 540,
+        validityDays: 365,
+        eligibility: CreditEligibility.both,
+        isActive: true,
+      },
+    ],
+  });
 }

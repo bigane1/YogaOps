@@ -6,9 +6,11 @@ import { BrandLogo } from "@/components/brand-logo";
 
 const links = [
   { href: "/", label: "Accueil" },
-  { href: "/entreprises", label: "Entreprises" },
+  { href: "/yoga-femmes", label: "Yoga femmes" },
+  { href: "/entreprises", label: "Entreprise" },
   { href: "/ateliers", label: "Ateliers" },
   { href: "/blog", label: "Blog" },
+  { href: "/compte", label: "Mon compte" },
 ];
 
 export function SiteNav() {
@@ -72,7 +74,7 @@ export function SiteNav() {
               href="/reserver"
               className="brand-btn brand-btn-sm ml-2 rounded-lg px-4 py-2"
             >
-              Reserver
+              Réserver
             </Link>
           </li>
         </ul>
@@ -108,7 +110,7 @@ export function SiteNav() {
                   className="brand-btn brand-btn-sm inline-flex rounded-lg px-4 py-2"
                   onClick={() => setOpen(false)}
                 >
-                  Reserver une seance
+                  Réserver une séance
                 </Link>
               </li>
             </ul>

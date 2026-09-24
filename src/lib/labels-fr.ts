@@ -3,11 +3,13 @@
 export function paymentMethodLabelFr(value: string): string {
   switch (value) {
     case "stripe":
-      return "Carte en ligne (Stripe)";
+      return "Carte bancaire";
     case "on_site":
       return "Sur place";
     case "subscription":
-      return "Abonnement";
+      return "Ancien abonnement";
+    case "credit_pack":
+      return "Carte de crédits";
     default:
       return value;
   }
