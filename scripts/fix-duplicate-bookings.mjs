@@ -34,7 +34,7 @@ async function main() {
   );
 
   // Deduplicate: same memberId+slotId keep oldest, cancel others + refund credit if needed
-  const seen = new Map<string, string>();
+  const seen = new Map();
   for (const b of bookings) {
     if (!b.memberId) continue;
     const key = `${b.memberId}::${b.slotId}`;
