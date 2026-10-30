@@ -17,28 +17,35 @@ function BlockHeading({ children }: { children: React.ReactNode }) {
   );
 }
 
+export type ContentEditorPage = "accueil" | "yoga-femmes" | "entreprise" | "ateliers";
+
 type LandingContentEditorProps = {
   landing: LandingContent;
+  page: ContentEditorPage;
 };
 
-export function LandingContentEditor({ landing }: LandingContentEditorProps) {
+export function LandingContentEditor({ landing, page }: LandingContentEditorProps) {
   return (
     <div>
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-        <p className="font-medium">Important : pas la section Blog</p>
-        <p className="mt-2">
-          Les images de la <strong>page d accueil</strong> sont modifiees ici, dans « Landing page ».
-          La section <strong>Blog</strong> en haut de page ne change que les articles du blog, pas
-          l accueil.
-        </p>
-      </div>
-      <div className="mt-4 rounded-lg border border-[var(--border-soft)] bg-[var(--beige)]/50 p-4 text-sm text-[var(--muted)]">
+      <div className="rounded-lg border border-[var(--border-soft)] bg-[var(--beige)]/50 p-4 text-sm text-[var(--muted)]">
         <p className="font-medium text-[var(--foreground)]">Chaque section a son bouton d enregistrement</p>
         <p className="mt-2">
           1. Choisissez la photo et attendez la miniature. 2. Cliquez « Enregistrer ce bloc » dans la
-          meme section (Hero, Images offres, Bio prof, etc.).
+          meme section.
         </p>
       </div>
+
+      {page === "accueil" ? <AccueilBlocks landing={landing} /> : null}
+      {page === "yoga-femmes" ? <YogaFemmesBlocks landing={landing} /> : null}
+      {page === "entreprise" ? <EntrepriseBlocks landing={landing} /> : null}
+      {page === "ateliers" ? <AteliersBlocks landing={landing} /> : null}
+    </div>
+  );
+}
+
+function AccueilBlocks({ landing }: { landing: LandingContent }) {
+  return (
+    <>
 
       <LandingBlockForm blockId="hero" title="Hero (bandeau d accueil)" className="mt-6 grid gap-3">
         <BlockHeading>Hero (bandeau d accueil)</BlockHeading>
@@ -70,41 +77,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
-      <LandingBlockForm blockId="offerImages" title="Images offres yoga" className="mt-8 grid gap-3">
-        <BlockHeading>Images offres yoga</BlockHeading>
-        <ImageUpload
-          key={`collective-${landing.collectiveOfferImageUrl}`}
-          name="collectiveOfferImageUrl"
-          label="Image cours collectif (en ligne)"
-          homepageHint="Accueil + /reserver : carte Collectif"
-          currentUrl={landing.collectiveOfferImageUrl}
-          className={fieldMd}
-        />
-        <ImageUpload
-          key={`individual-${landing.individualOfferImageUrl}`}
-          name="individualOfferImageUrl"
-          label="Image cours individuel (visio / telephone)"
-          homepageHint="Accueil + /reserver : carte Individuel"
-          currentUrl={landing.individualOfferImageUrl}
-          className={fieldMd}
-        />
-        <ImageUpload
-          key={`presentiel-${landing.presentielOfferImageUrl}`}
-          name="presentielOfferImageUrl"
-          label="Image cours presentiel (Poissy)"
-          homepageHint="Page /reserver : bandeau presentiel"
-          currentUrl={landing.presentielOfferImageUrl}
-          className={fieldMd}
-        />
-        <ImageUpload
-          key={`tech-women-offer-${landing.techWomenOfferImageUrl}`}
-          name="techWomenOfferImageUrl"
-          label="Image Seance Femmes Tech"
-          homepageHint="Accueil + /reserver : carte Femmes Tech"
-          currentUrl={landing.techWomenOfferImageUrl}
-          className={fieldMd}
-        />
-      </LandingBlockForm>
+      <WhyBlock landing={landing} />
 
       <LandingBlockForm blockId="homepageLayout" title="Ordre page accueil" className="mt-8 grid gap-3">
         <BlockHeading>Ordre des sections (page d accueil)</BlockHeading>
@@ -123,6 +96,51 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           name="homepageSectionOrder"
           defaultValue={landing.homepageSectionOrder.join("\n")}
           rows={9}
+          className={fieldMd}
+        />
+      </LandingBlockForm>
+
+      <TeacherBioBlock landing={landing} />
+      <FooterBlock landing={landing} />
+    </>
+  );
+}
+
+function YogaFemmesBlocks({ landing }: { landing: LandingContent }) {
+  return (
+    <>
+      <LandingBlockForm blockId="offerImages" title="Images offres yoga" className="mt-8 grid gap-3">
+        <BlockHeading>Images offres yoga</BlockHeading>
+        <ImageUpload
+          key={`collective-${landing.collectiveOfferImageUrl}`}
+          name="collectiveOfferImageUrl"
+          label="Image cours collectif (en ligne)"
+          homepageHint="Yoga femmes + /reserver : carte Collectif"
+          currentUrl={landing.collectiveOfferImageUrl}
+          className={fieldMd}
+        />
+        <ImageUpload
+          key={`individual-${landing.individualOfferImageUrl}`}
+          name="individualOfferImageUrl"
+          label="Image cours individuel (visio / telephone)"
+          homepageHint="Yoga femmes + /reserver : carte Individuel"
+          currentUrl={landing.individualOfferImageUrl}
+          className={fieldMd}
+        />
+        <ImageUpload
+          key={`presentiel-${landing.presentielOfferImageUrl}`}
+          name="presentielOfferImageUrl"
+          label="Image cours presentiel (Poissy)"
+          homepageHint="Page /reserver : bandeau presentiel"
+          currentUrl={landing.presentielOfferImageUrl}
+          className={fieldMd}
+        />
+        <ImageUpload
+          key={`tech-women-offer-${landing.techWomenOfferImageUrl}`}
+          name="techWomenOfferImageUrl"
+          label="Image Seance Femmes Tech"
+          homepageHint="Yoga femmes + /reserver : carte Femmes Tech"
+          currentUrl={landing.techWomenOfferImageUrl}
           className={fieldMd}
         />
       </LandingBlockForm>
@@ -164,7 +182,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
       </LandingBlockForm>
 
       <LandingBlockForm blockId="techWomen" title="Femmes de la tech" className="mt-8 grid gap-3">
-        <BlockHeading>Femmes de la tech (page d accueil)</BlockHeading>
+        <BlockHeading>Femmes de la tech</BlockHeading>
         <FieldLabel>Libelle de section</FieldLabel>
         <input name="techWomenLabel" defaultValue={landing.techWomenLabel} className={fieldMd} />
         <FieldLabel>Titre</FieldLabel>
@@ -181,7 +199,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
       </LandingBlockForm>
 
       <LandingBlockForm blockId="offers" title="Offres / formats" className="mt-8 grid gap-3">
-        <BlockHeading>Offres / formats (page d accueil)</BlockHeading>
+        <BlockHeading>Offres / formats</BlockHeading>
         <FieldLabel>Titre de section</FieldLabel>
         <input name="formatTitle" defaultValue={landing.formatTitle} className={fieldMd} />
         <FieldLabel>Texte sous le titre (optionnel)</FieldLabel>
@@ -242,18 +260,7 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
-      <LandingBlockForm blockId="why" title="Pourquoi YogaOps" className="mt-8 grid gap-3">
-        <BlockHeading>Pourquoi YogaOps</BlockHeading>
-        <FieldLabel>Titre section</FieldLabel>
-        <input name="whyTitle" defaultValue={landing.whyTitle} className={fieldMd} />
-        <FieldLabel>Paragraphes (1 ligne = 1 paragraphe)</FieldLabel>
-        <textarea
-          name="whyParagraphs"
-          defaultValue={landing.whyParagraphs.join("\n")}
-          rows={4}
-          className={fieldMd}
-        />
-      </LandingBlockForm>
+      <WhyBlock landing={landing} />
 
       <LandingBlockForm blockId="benefits" title="Benefices" className="mt-8 grid gap-3">
         <BlockHeading>Benefices</BlockHeading>
@@ -281,6 +288,14 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         />
       </LandingBlockForm>
 
+      <CtaBlock landing={landing} />
+    </>
+  );
+}
+
+function EntrepriseBlocks({ landing }: { landing: LandingContent }) {
+  return (
+    <>
       <LandingBlockForm blockId="entreprises" title="Page Entreprises" className="mt-8 grid gap-3">
         <BlockHeading>Page Entreprises (/entreprises)</BlockHeading>
         <FieldLabel>Titre principal</FieldLabel>
@@ -321,7 +336,13 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           className={fieldMd}
         />
       </LandingBlockForm>
+    </>
+  );
+}
 
+function AteliersBlocks({ landing }: { landing: LandingContent }) {
+  return (
+    <>
       <LandingBlockForm blockId="ateliers" title="Page Ateliers" className="mt-8 grid gap-3">
         <BlockHeading>Page Ateliers (/ateliers)</BlockHeading>
         <FieldLabel>Titre principal</FieldLabel>
@@ -352,7 +373,12 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         <FieldLabel>Introduction section blog</FieldLabel>
         <textarea name="ateliersBlogIntro" defaultValue={landing.ateliersBlogIntro} rows={2} className={fieldMd} />
       </LandingBlockForm>
+    </>
+  );
+}
 
+function TeacherBioBlock({ landing }: { landing: LandingContent }) {
+  return (
       <LandingBlockForm blockId="teacherBio" title="Bio du professeur" className="mt-8 grid gap-3">
         <BlockHeading>Bio du professeur</BlockHeading>
         <ImageUpload
@@ -368,15 +394,27 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
         <FieldLabel>Texte a propos (paragraphes separes par une ligne vide)</FieldLabel>
         <textarea name="teacherBioText" defaultValue={landing.teacherBioText} rows={5} className={fieldMd} />
       </LandingBlockForm>
+  );
+}
 
-      <LandingBlockForm blockId="ctaFooter" title="CTA et pied de page" className="mt-8 grid gap-3">
-        <BlockHeading>Appel a l action + pied de page</BlockHeading>
+function CtaBlock({ landing }: { landing: LandingContent }) {
+  return (
+      <LandingBlockForm blockId="cta" title="Appel a l action" className="mt-8 grid gap-3">
+        <BlockHeading>Appel a l action</BlockHeading>
         <FieldLabel>Titre CTA</FieldLabel>
         <input name="finalCtaTitle" defaultValue={landing.finalCtaTitle} className={fieldMd} />
         <FieldLabel>Texte sous le titre CTA</FieldLabel>
         <textarea name="finalCtaText" defaultValue={landing.finalCtaText} rows={2} className={fieldMd} />
         <FieldLabel>Libelle du bouton CTA</FieldLabel>
         <input name="finalCtaButtonLabel" defaultValue={landing.finalCtaButtonLabel} className={fieldMd} />
+      </LandingBlockForm>
+  );
+}
+
+function FooterBlock({ landing }: { landing: LandingContent }) {
+  return (
+      <LandingBlockForm blockId="footer" title="Contact et pied de page" className="mt-8 grid gap-3">
+        <BlockHeading>Contact et pied de page</BlockHeading>
         <FieldLabel>Adresse (footer)</FieldLabel>
         <input name="footerAddress" defaultValue={landing.footerAddress} className={fieldMd} />
         <FieldLabel>Telephone</FieldLabel>
@@ -403,6 +441,22 @@ export function LandingContentEditor({ landing }: LandingContentEditorProps) {
           className={fieldMd}
         />
       </LandingBlockForm>
-    </div>
+  );
+}
+
+function WhyBlock({ landing }: { landing: LandingContent }) {
+  return (
+    <LandingBlockForm blockId="why" title="Pourquoi YogaOps" className="mt-8 grid gap-3">
+      <BlockHeading>Pourquoi YogaOps</BlockHeading>
+      <FieldLabel>Titre section</FieldLabel>
+      <input name="whyTitle" defaultValue={landing.whyTitle} className={fieldMd} />
+      <FieldLabel>Paragraphes (1 ligne = 1 paragraphe)</FieldLabel>
+      <textarea
+        name="whyParagraphs"
+        defaultValue={landing.whyParagraphs.join("\n")}
+        rows={4}
+        className={fieldMd}
+      />
+    </LandingBlockForm>
   );
 }

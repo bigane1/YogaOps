@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink, updateSlot } from "@/app/actions";
+import { adminLogin, updateBookingStatus, updateBookingZoomLink, updateSlot } from "@/app/actions";
 import { addDays, ensureSeedData, formatSiteDate, formatTimeFR, startOfDay, toSiteDateKey } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
@@ -79,11 +79,6 @@ export default async function AdminPlanningPage({ searchParams }: Props) {
           Planning (7 jours)
         </h1>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm">
-            Deconnexion
-          </button>
-        </form>
 
         <section className="brand-card mt-6 rounded-xl p-4">
           <form className="grid gap-2 sm:grid-cols-4">

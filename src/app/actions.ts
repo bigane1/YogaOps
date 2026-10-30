@@ -1087,10 +1087,8 @@ const LANDING_BLOCK_FIELDS: Record<string, readonly (keyof LandingContent)[]> = 
     "reserverTechWomenMatch",
   ],
   teacherBio: ["teacherBioTitle", "teacherBioText", "teacherPhotoUrl"],
-  ctaFooter: [
-    "finalCtaTitle",
-    "finalCtaText",
-    "finalCtaButtonLabel",
+  cta: ["finalCtaTitle", "finalCtaText", "finalCtaButtonLabel"],
+  footer: [
     "footerAddress",
     "footerPhone",
     "footerEmail",

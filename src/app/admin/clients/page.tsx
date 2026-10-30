@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { MemberCreditStatus } from "@/generated/prisma/enums";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
-import { adminLogin, adminLogout } from "@/app/actions";
+import { adminLogin } from "@/app/actions";
 import { memberDisplayName } from "@/lib/member-auth";
 import { prisma } from "@/lib/prisma";
 
@@ -65,11 +65,6 @@ export default async function AdminClientsPage() {
           Membres inscrits, crédits restants et nombre de réservations.
         </p>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm">
-            Déconnexion
-          </button>
-        </form>
 
         <section className="brand-card mt-8 overflow-x-auto rounded-xl p-4 md:p-6">
           {members.length === 0 ? (

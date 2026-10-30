@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { cookies } from "next/headers";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
-import { adminLogin, adminLogout } from "@/app/actions";
+import { adminLogin } from "@/app/actions";
 import {
   createCreditPack,
   deleteCreditPack,
@@ -55,11 +55,6 @@ export default async function AdminCartesPage() {
           réservation = 1 crédit.
         </p>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm">
-            Déconnexion
-          </button>
-        </form>
 
         <section className="brand-card mt-8 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>

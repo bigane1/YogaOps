@@ -5,7 +5,7 @@ import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { ImageUpload } from "@/components/image-upload";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout, createCourse, deleteCourse, updateCourse } from "@/app/actions";
+import { adminLogin, createCourse, deleteCourse, updateCourse } from "@/app/actions";
 import { ensureSeedData } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 
@@ -38,9 +38,6 @@ export default async function AdminCoursPage() {
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>Cours & creneaux</h1>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm">Deconnexion</button>
-        </form>
 
         <section className="brand-card mt-6 rounded-xl p-6">
           <h2 className="text-xl font-medium" style={{ color: "var(--brand)" }}>Ajouter un cours ou atelier</h2>

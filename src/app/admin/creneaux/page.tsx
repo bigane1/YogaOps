@@ -6,7 +6,6 @@ import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import {
   adminLogin,
-  adminLogout,
   createSlot,
   createWeeklySlots,
   deleteSlot,
@@ -160,14 +159,6 @@ export default async function AdminCreneauxPage({ searchParams }: Props) {
           peut plus être modifié (sauf le lien Zoom).
         </p>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button
-            type="submit"
-            className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm"
-          >
-            Déconnexion
-          </button>
-        </form>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <section className="brand-card rounded-xl p-6">

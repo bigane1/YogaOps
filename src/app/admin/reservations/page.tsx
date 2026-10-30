@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { SiteNav } from "@/components/site-nav";
 import { AdminSubnav } from "@/components/admin-subnav";
 import { cookies } from "next/headers";
-import { adminLogin, adminLogout, updateBookingStatus, updateBookingZoomLink } from "@/app/actions";
+import { adminLogin, updateBookingStatus, updateBookingZoomLink } from "@/app/actions";
 import { ensureSeedData, formatDateFR } from "@/lib/db";
 import { prisma } from "@/lib/prisma";
 import { bookingStatusLabelFr, paymentMethodLabelFr } from "@/lib/labels-fr";
@@ -40,9 +40,6 @@ export default async function AdminReservationsPage() {
       <main className="mx-auto w-full max-w-6xl px-6 py-10">
         <h1 className="text-3xl font-semibold tracking-tight" style={{ color: "var(--brand)" }}>Reservations</h1>
         <AdminSubnav />
-        <form action={adminLogout} className="mt-3">
-          <button type="submit" className="brand-btn-secondary brand-btn-sm rounded-md px-3 py-1 text-sm">Deconnexion</button>
-        </form>
 
         <section className="brand-card mt-6 rounded-xl p-6">
           <ul className="space-y-3 text-sm">
