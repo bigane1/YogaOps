@@ -26,6 +26,7 @@ import {
   getReserverWeekdaysForGroup,
   getVisibleReserverDays,
   matchCourseBookingGroup,
+  RESERVER_HORIZON_DAYS,
   resolveReserverBookingGroup,
   type ReserverBookingGroup,
 } from "@/lib/reserver-config";
@@ -63,13 +64,13 @@ export default async function ReserverPage({ searchParams }: Props) {
   const errorParam = params.error ? String(params.error) : "";
   const typeQuery = `&type=${bookingGroup}`;
 
-  const allDays = Array.from({ length: 14 }, (_, idx) => {
+  const allDays = Array.from({ length: RESERVER_HORIZON_DAYS }, (_, idx) => {
     const day = new Date(todayStart);
     day.setUTCDate(day.getUTCDate() + idx);
     return day;
   });
   const horizonEnd = new Date(todayStart);
-  horizonEnd.setUTCDate(horizonEnd.getUTCDate() + 14);
+  horizonEnd.setUTCDate(horizonEnd.getUTCDate() + RESERVER_HORIZON_DAYS);
 
   const upcomingSlots = typeSelected
     ? await prisma.timeSlot.findMany({
@@ -402,8 +403,8 @@ export default async function ReserverPage({ searchParams }: Props) {
                   {visibleDays.length === 0 ? (
                     <div className="brand-alert rounded-xl p-4 text-sm">
                       <p>
-                        Aucun créneau publié pour « {bookingGroupLabels[bookingGroup]} » dans les
-                        2 prochaines semaines.
+                        Aucun créneau publié pour « {bookingGroupLabels[bookingGroup]} » dans les{" "}
+                        {RESERVER_HORIZON_DAYS} prochains jours.
                       </p>
                       <p className="mt-2 opacity-90">
                         {bookingGroup === "techWomen" ? (

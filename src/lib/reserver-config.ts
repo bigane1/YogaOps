@@ -30,6 +30,13 @@ const WEEKDAY_MAP: Record<string, number> = {
   sat: 6,
 };
 
+/**
+ * Fenêtre publique de /reserver, à partir d'aujourd'hui.
+ * Les créneaux publiés au-delà ne sont pas proposés à la réservation.
+ * 120 jours couvre une série hebdomadaire sur un trimestre (ex. novembre → début mars).
+ */
+export const RESERVER_HORIZON_DAYS = 120;
+
 /** Collectif = mardi, Femmes Tech = vendredi. Individuel = contact, pas de calendrier. */
 export const DEFAULT_RESERVER_WEEKDAYS: Record<ReserverBookingGroup, string[]> = {
   collective: ["mardi"],
